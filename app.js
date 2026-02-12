@@ -42,32 +42,39 @@ async function cargarEquivalencias() {
 
     try {
 
-        const response = await fetch("equivalencias.json");
-        const data = await response.arrayBuffer();
+        // Intentar cargar desde almacenamiento local primero
+        let datosGuardados = localStorage.getItem("equivalencias");
 
-        const workbook = XLSX.read(data);
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        if (datosGuardados) {
+            console.log("Cargando equivalencias desde almacenamiento local");
+            let datos = JSON.parse(datosGuardados);
 
-        for (let i = 1; i < rows.length; i++) {
+            datos.forEach(item => {
+                codigo_a_referencia[item.codigo] = item.referencia;
+                referencia_a_descripcion[item.referencia] = item.descripcion;
+            });
 
-            let descripcion = rows[i][0];
-            let codigo = rows[i][1];
-            let referencia = rows[i][2];
-
-            if (codigo && referencia) {
-                codigo_a_referencia[String(codigo)] = String(referencia);
-                referencia_a_descripcion[String(referencia)] = descripcion;
-            }
+            return;
         }
 
-        console.log("Equivalencias cargadas");
+        // Si no existen, descargarlas
+        console.log("Descargando equivalencias por primera vez");
+
+        const response = await fetch("/equivalencias.json");
+        const datos = await response.json();
+
+        // Guardarlas en el móvil
+        localStorage.setItem("equivalencias", JSON.stringify(datos));
+
+        datos.forEach(item => {
+            codigo_a_referencia[item.codigo] = item.referencia;
+            referencia_a_descripcion[item.referencia] = item.descripcion;
+        });
 
     } catch (error) {
-        console.log("Error cargando equivalencias (modo offline):", error);
+        console.log("Error cargando equivalencias:", error);
     }
 }
-
 
 // ----------------------------
 // EMPEZAR INVENTARIO
