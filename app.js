@@ -1,137 +1,234 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inventario Offline</title>
+// ----------------------------
+// VARIABLES GLOBALES
+// ----------------------------
+let codigo_a_referencia = {};
+let referencia_a_descripcion = {};
 
-<link rel="manifest" href="manifest.json">
+let inventario = {
+    fecha: "",
+    almacen: "",
+    vendedor: "",
+    articulos: {}
+};
 
-<script src="quagga.min.js"></script>
-<script src="xlsx.full.min.js"></script>
-<script defer src="app.js"></script>
+let permitirEscaneo = false;
 
-<style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#f2f2f2;
+
+// ----------------------------
+// INICIO
+// ----------------------------
+document.addEventListener("DOMContentLoaded", async () => {
+
+    document.getElementById("fecha").value =
+        new Date().toISOString().split("T")[0];
+
+    await cargarEquivalencias();
+    iniciarScanner();
+    registrarServiceWorker();
+});
+
+
+// ----------------------------
+// CARGAR EXCEL EQUIVALENCIAS
+// ----------------------------
+async function cargarEquivalencias() {
+
+    const response = await fetch("equivalencias.xlsx");
+    const data = await response.arrayBuffer();
+
+    const workbook = XLSX.read(data);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    for (let i = 1; i < rows.length; i++) {
+
+        let descripcion = rows[i][0];
+        let codigo = rows[i][1];
+        let referencia = rows[i][2];
+
+        if (codigo && referencia) {
+            codigo_a_referencia[String(codigo)] = String(referencia);
+            referencia_a_descripcion[String(referencia)] = descripcion;
+        }
+    }
+
+    console.log("Equivalencias cargadas");
 }
 
-header{
-  background:#111;
-  color:white;
-  padding:15px;
-  text-align:center;
-  font-size:18px;
+
+// ----------------------------
+// EMPEZAR INVENTARIO
+// ----------------------------
+function empezar() {
+
+    const fechaInput = document.getElementById("fecha");
+    const almacenInput = document.getElementById("almacen");
+    const vendedorInput = document.getElementById("vendedor");
+
+    if (!fechaInput.value || !almacenInput.value || !vendedorInput.value) {
+        alert("Completa todos los campos");
+        return;
+    }
+
+    inventario.fecha = fechaInput.value;
+    inventario.almacen = almacenInput.value;
+    inventario.vendedor = vendedorInput.value;
+    inventario.articulos = {};
+
+    document.getElementById("pantallaInicio").style.display = "none";
+    document.getElementById("pantallaEscaner").style.display = "block";
 }
 
-.container{
-  padding:20px;
+
+// ----------------------------
+// INICIAR ESCÁNER
+// ----------------------------
+function iniciarScanner() {
+
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector('#scanner'),
+            constraints: { facingMode: "environment" }
+        },
+        decoder: { readers: ["ean_reader"] },
+        locate: true
+    }, function (err) {
+        if (!err) {
+            Quagga.start();
+        }
+    });
+
+    document.getElementById("scanner")
+        .addEventListener("click", () => permitirEscaneo = true);
+
+    Quagga.onDetected(function (result) {
+
+        if (!permitirEscaneo) return;
+
+        let code = result.codeResult.code;
+
+        if (!/^\d{13}$/.test(code)) return;
+
+        permitirEscaneo = false;
+
+        procesarCodigo(code);
+    });
 }
 
-.card{
-  background:white;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.1);
+
+// ----------------------------
+// PROCESAR CÓDIGO
+// ----------------------------
+function procesarCodigo(codigo) {
+
+    let cantidad = parseInt(document.getElementById("cantidad").value);
+
+    let referencia = codigo_a_referencia[codigo];
+
+    if (!referencia) {
+        mostrarMensaje("❌ Código no encontrado", "error");
+        return;
+    }
+
+    if (inventario.articulos[referencia]) {
+        inventario.articulos[referencia] += cantidad;
+    } else {
+        inventario.articulos[referencia] = cantidad;
+    }
+
+    document.getElementById("cantidad").value = 1;
+
+    mostrarMensaje("✅ Artículo añadido", "ok");
+    actualizarLista();
 }
 
-input, button{
-  width:100%;
-  padding:14px;
-  margin:8px 0;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:16px;
+
+// ----------------------------
+// ACTUALIZAR LISTA
+// ----------------------------
+function actualizarLista() {
+
+    let ul = document.getElementById("listaArticulos");
+    ul.innerHTML = "";
+
+    for (let ref in inventario.articulos) {
+
+        let li = document.createElement("li");
+
+        li.innerHTML = `
+            <b>${referencia_a_descripcion[ref] || "Artículo no encontrado"}</b><br>
+            Ref: ${ref} — Cantidad: ${inventario.articulos[ref]}
+        `;
+
+        ul.appendChild(li);
+    }
 }
 
-button{
-  background:#111;
-  color:white;
-  border:none;
+
+// ----------------------------
+// MENSAJE VERDE / ROJO
+// ----------------------------
+function mostrarMensaje(texto, tipo) {
+
+    let m = document.getElementById("mensajeEstado");
+
+    m.className = "mensaje " + tipo;
+    m.innerHTML = texto;
+    m.style.display = "block";
+
+    setTimeout(() => {
+        m.style.display = "none";
+    }, 1000);
 }
 
-button.secondary{
-  background:#555;
+
+// ----------------------------
+// FINALIZAR Y GENERAR EXCEL
+// ----------------------------
+function finalizar() {
+
+    let datos = [];
+
+    for (let ref in inventario.articulos) {
+
+        datos.push({
+            fecha: inventario.fecha,
+            almacen: inventario.almacen,
+            referencia: ref,
+            cantidad: inventario.articulos[ref],
+            numero_vendedor: inventario.vendedor,
+            descripcion: referencia_a_descripcion[ref] || ""
+        });
+    }
+
+    let wb = XLSX.utils.book_new();
+    let ws = XLSX.utils.json_to_sheet(datos);
+    XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+
+    let nombre = `inventario.${inventario.almacen}.${inventario.fecha}.xlsx`;
+
+    XLSX.writeFile(wb, nombre);
+
+    location.reload();
 }
 
-#scanner{
-  width:100%;
-  height:260px;
-  border-radius:12px;
-  overflow:hidden;
-  margin-top:10px;
+
+// ----------------------------
+// SERVICE WORKER
+// ----------------------------
+function registrarServiceWorker() {
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(function (registration) {
+                    console.log('Service Worker registrado:', registration.scope);
+                })
+                .catch(function (error) {
+                    console.log('Error registrando Service Worker:', error);
+                });
+        });
+    }
 }
-
-.mensaje{
-  display:none;
-  padding:12px;
-  border-radius:8px;
-  text-align:center;
-  font-weight:bold;
-  margin-bottom:10px;
-}
-
-.ok{
-  background:#d4edda;
-  color:#155724;
-}
-
-.error{
-  background:#f8d7da;
-  color:#721c24;
-}
-
-ul{
-  list-style:none;
-  padding:0;
-}
-
-li{
-  padding:8px 0;
-  border-bottom:1px solid #ddd;
-}
-</style>
-</head>
-
-<body>
-
-<header>Inventario Offline</header>
-
-<div class="container">
-
-<!-- PANTALLA 1 -->
-<div id="pantallaInicio" class="card">
-  <h3>Inicio Inventario</h3>
-  <input type="date" id="fecha">
-  <input type="text" id="almacen" placeholder="Almacén">
-  <input type="text" id="vendedor" placeholder="Número vendedor">
-  <button onclick="empezar()">Empezar</button>
-</div>
-
-<!-- PANTALLA 2 -->
-<div id="pantallaEscaner" style="display:none">
-
-  <div class="mensaje" id="mensajeEstado"></div>
-
-  <div class="card">
-    <label>Cantidad</label>
-    <input type="number" id="cantidad" value="1" min="1">
-
-    <div id="scanner"></div>
-
-    <button class="secondary" onclick="finalizar()">Finalizar Inventario</button>
-  </div>
-
-  <div class="card" style="margin-top:15px;">
-    <h4>Artículos Escaneados</h4>
-    <ul id="listaArticulos"></ul>
-  </div>
-
-</div>
-
-</div>
-
-</body>
-</html>
