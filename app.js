@@ -295,25 +295,45 @@ function esIOS() {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }
 
+function esSafari() {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+}
+
 function estaEnModoStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 }
 
 if (esIOS() && !estaEnModoStandalone()) {
+
   const aviso = document.createElement("div");
+
   aviso.style.position = "fixed";
   aviso.style.bottom = "0";
   aviso.style.left = "0";
   aviso.style.right = "0";
-  aviso.style.background = "#000";
+  aviso.style.background = "#111";
   aviso.style.color = "#fff";
   aviso.style.padding = "15px";
   aviso.style.textAlign = "center";
   aviso.style.zIndex = "9999";
-  aviso.innerHTML = `
-    Para instalar esta app en iPhone:<br>
-    1️⃣ Pulsa el botón Compartir<br>
-    2️⃣ Elige "Añadir a pantalla de inicio"
-  `;
+  aviso.style.fontSize = "14px";
+
+  if (!esSafari()) {
+    aviso.innerHTML = `
+      ⚠️ Para instalar esta app en iPhone:<br><br>
+      1️⃣ Abre esta página en <b>Safari</b><br>
+      2️⃣ Pulsa el botón 📤<br>
+      3️⃣ Toca "Añadir a pantalla de inicio"<br><br>
+      <button onclick="this.parentElement.remove()">Cerrar</button>
+    `;
+  } else {
+    aviso.innerHTML = `
+      📲 Para instalar esta app:<br><br>
+      1️⃣ Pulsa el botón 📤 (Compartir)<br>
+      2️⃣ Elige "Añadir a pantalla de inicio"<br><br>
+      <button onclick="this.parentElement.remove()">Cerrar</button>
+    `;
+  }
+
   document.body.appendChild(aviso);
 }
