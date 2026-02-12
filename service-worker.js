@@ -1,10 +1,9 @@
-const CACHE_NAME = "inventario-offline-v3";
+const CACHE_NAME = "inventario-offline-v5";
 
 const urlsToCache = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/icon-192.png",
   "/app.js",
   "/quagga.min.js",
   "/xlsx.full.min.js"
