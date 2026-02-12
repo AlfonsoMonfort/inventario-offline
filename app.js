@@ -42,7 +42,6 @@ async function cargarEquivalencias() {
 
     try {
 
-        // Intentar cargar desde almacenamiento local primero
         let datosGuardados = localStorage.getItem("equivalencias");
 
         if (datosGuardados) {
@@ -54,22 +53,30 @@ async function cargarEquivalencias() {
                 referencia_a_descripcion[item.referencia] = item.descripcion;
             });
 
+            console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
             return;
         }
 
-        // Si no existen, descargarlas
         console.log("Descargando equivalencias por primera vez");
 
         const response = await fetch("equivalencias.json");
+
+        if (!response.ok) {
+            throw new Error("No se pudo cargar equivalencias.json");
+        }
+
         const datos = await response.json();
 
-        // Guardarlas en el móvil
+        console.log("Datos recibidos:", datos);
+
         localStorage.setItem("equivalencias", JSON.stringify(datos));
 
         datos.forEach(item => {
             codigo_a_referencia[item.codigo] = item.referencia;
             referencia_a_descripcion[item.referencia] = item.descripcion;
         });
+
+        console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
 
     } catch (error) {
         console.log("Error cargando equivalencias:", error);
