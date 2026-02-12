@@ -250,3 +250,23 @@ function registrarServiceWorker() {
         });
     }
 }
+
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    const btn = document.getElementById("btnInstalar");
+    btn.style.display = "block";
+});
+
+document.getElementById("btnInstalar").addEventListener("click", async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log("Resultado instalación:", outcome);
+        deferredPrompt = null;
+        document.getElementById("btnInstalar").style.display = "none";
+    }
+});
