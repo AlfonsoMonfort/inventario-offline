@@ -60,7 +60,7 @@ async function cargarEquivalencias() {
         // Si no existen, descargarlas
         console.log("Descargando equivalencias por primera vez");
 
-        const response = await fetch("/equivalencias.json");
+        const response = await fetch("equivalencias.json");
         const datos = await response.json();
 
         // Guardarlas en el móvil
