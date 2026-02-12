@@ -42,7 +42,7 @@ async function cargarEquivalencias() {
 
     try {
 
-        const response = await fetch("equivalencias.xlsx");
+        const response = await fetch("equivalencias.json");
         const data = await response.arrayBuffer();
 
         const workbook = XLSX.read(data);

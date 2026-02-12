@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v3";
+const CACHE_NAME = "inventario-cache-v4";
 
 const urlsToCache = [
   "/",
@@ -9,7 +9,7 @@ const urlsToCache = [
   "/xlsx.full.min.js",
   "/icon-192.png",
   "/icon-512.png",
-  "/equivalencias.xlsx"
+  "/equivalencias.json"
 ];
 
 self.addEventListener("install", event => {
@@ -17,13 +17,7 @@ self.addEventListener("install", event => {
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
   );
-});
-
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
@@ -37,5 +31,13 @@ self.addEventListener("activate", event => {
         })
       );
     })
+  );
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
   );
 });
