@@ -1,93 +1,137 @@
-let inventario = {};
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventario Offline</title>
 
-// Cargar inventario guardado
-function cargarLocal() {
-    let data = localStorage.getItem("inventario");
-    if (data) {
-        inventario = JSON.parse(data);
-        actualizarLista();
-    }
+<link rel="manifest" href="manifest.json">
+
+<script src="quagga.min.js"></script>
+<script src="xlsx.full.min.js"></script>
+<script defer src="app.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#f2f2f2;
 }
 
-// Guardar inventario
-function guardarLocal() {
-    localStorage.setItem("inventario", JSON.stringify(inventario));
+header{
+  background:#111;
+  color:white;
+  padding:15px;
+  text-align:center;
+  font-size:18px;
 }
 
-// Actualizar lista en pantalla
-function actualizarLista() {
-    let ul = document.getElementById("lista");
-    ul.innerHTML = "";
-
-    for (let ref in inventario) {
-        let li = document.createElement("li");
-        li.innerText = ref + " - Cantidad: " + inventario[ref];
-        ul.appendChild(li);
-    }
+.container{
+  padding:20px;
 }
 
-// Iniciar cámara
-Quagga.init({
-    inputStream: {
-        type: "LiveStream",
-        target: document.querySelector('#scanner'),
-        constraints: { facingMode: "environment" }
-    },
-    decoder: {
-        readers: ["ean_reader"]
-    }
-}, function(err) {
-    if (!err) {
-        Quagga.start();
-    }
-});
-
-// Detectar código
-Quagga.onDetected(function(result) {
-
-    let code = result.codeResult.code;
-
-    if (!/^\d{13}$/.test(code)) return;
-
-    let cantidad = parseInt(document.getElementById("cantidad").value);
-
-    if (inventario[code]) {
-        inventario[code] += cantidad;
-    } else {
-        inventario[code] = cantidad;
-    }
-
-    guardarLocal();
-    actualizarLista();
-});
-
-// Generar Excel
-function generarExcel() {
-
-    let ws_data = [["Codigo", "Cantidad"]];
-
-    for (let ref in inventario) {
-        ws_data.push([ref, inventario[ref]]);
-    }
-
-    let wb = XLSX.utils.book_new();
-    let ws = XLSX.utils.aoa_to_sheet(ws_data);
-    XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-
-    XLSX.writeFile(wb, "inventario.xlsx");
+.card{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
-cargarLocal();
-
-// Registrar Service Worker
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(function(registration) {
-                console.log('Service Worker registrado correctamente:', registration.scope);
-            })
-            .catch(function(error) {
-                console.log('Error registrando Service Worker:', error);
-            });
-    });
+input, button{
+  width:100%;
+  padding:14px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
 }
+
+button{
+  background:#111;
+  color:white;
+  border:none;
+}
+
+button.secondary{
+  background:#555;
+}
+
+#scanner{
+  width:100%;
+  height:260px;
+  border-radius:12px;
+  overflow:hidden;
+  margin-top:10px;
+}
+
+.mensaje{
+  display:none;
+  padding:12px;
+  border-radius:8px;
+  text-align:center;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+.ok{
+  background:#d4edda;
+  color:#155724;
+}
+
+.error{
+  background:#f8d7da;
+  color:#721c24;
+}
+
+ul{
+  list-style:none;
+  padding:0;
+}
+
+li{
+  padding:8px 0;
+  border-bottom:1px solid #ddd;
+}
+</style>
+</head>
+
+<body>
+
+<header>Inventario Offline</header>
+
+<div class="container">
+
+<!-- PANTALLA 1 -->
+<div id="pantallaInicio" class="card">
+  <h3>Inicio Inventario</h3>
+  <input type="date" id="fecha">
+  <input type="text" id="almacen" placeholder="Almacén">
+  <input type="text" id="vendedor" placeholder="Número vendedor">
+  <button onclick="empezar()">Empezar</button>
+</div>
+
+<!-- PANTALLA 2 -->
+<div id="pantallaEscaner" style="display:none">
+
+  <div class="mensaje" id="mensajeEstado"></div>
+
+  <div class="card">
+    <label>Cantidad</label>
+    <input type="number" id="cantidad" value="1" min="1">
+
+    <div id="scanner"></div>
+
+    <button class="secondary" onclick="finalizar()">Finalizar Inventario</button>
+  </div>
+
+  <div class="card" style="margin-top:15px;">
+    <h4>Artículos Escaneados</h4>
+    <ul id="listaArticulos"></ul>
+  </div>
+
+</div>
+
+</div>
+
+</body>
+</html>
