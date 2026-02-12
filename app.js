@@ -22,9 +22,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("fecha").value =
         new Date().toISOString().split("T")[0];
 
+
     await cargarEquivalencias();
     iniciarScanner();
     registrarServiceWorker();
+
+    const cantidadInput = document.getElementById("cantidad");
+
+    cantidadInput.addEventListener("focus", function () {
+        this.value = "";
+});
 });
 
 
@@ -103,18 +110,18 @@ function iniciarScanner() {
     document.getElementById("scanner")
         .addEventListener("click", () => permitirEscaneo = true);
 
-    Quagga.onDetected(function (result) {
+    Quagga.onDetected(function(result) {
 
-        if (!permitirEscaneo) return;
+    let code = result.codeResult.code;
 
-        let code = result.codeResult.code;
+    if (!/^\d{13}$/.test(code)) return;
 
-        if (!/^\d{13}$/.test(code)) return;
+    if (!permitirEscaneo) return;
 
-        permitirEscaneo = false;
+    permitirEscaneo = false;
 
-        procesarCodigo(code);
-    });
+    procesarCodigo(code);
+});
 }
 
 
