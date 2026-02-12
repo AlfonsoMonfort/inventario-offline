@@ -1,14 +1,15 @@
-const CACHE_NAME = "inventario-cache-v2";
+const CACHE_NAME = "inventario-cache-v3";
 
 const urlsToCache = [
-  "./",
-  "./index.html",
-  "./app.js",
-  "./manifest.json",
-  "./quagga.min.js",
-  "./xlsx.full.min.js",
-  "./icon-192.png",
-  "./icon-512.png"
+  "/",
+  "/index.html",
+  "/app.js",
+  "/manifest.json",
+  "/quagga.min.js",
+  "/xlsx.full.min.js",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/equivalencias.xlsx"
 ];
 
 self.addEventListener("install", event => {

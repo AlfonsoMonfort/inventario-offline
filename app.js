@@ -40,26 +40,32 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ----------------------------
 async function cargarEquivalencias() {
 
-    const response = await fetch("equivalencias.xlsx");
-    const data = await response.arrayBuffer();
+    try {
 
-    const workbook = XLSX.read(data);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const response = await fetch("equivalencias.xlsx");
+        const data = await response.arrayBuffer();
 
-    for (let i = 1; i < rows.length; i++) {
+        const workbook = XLSX.read(data);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-        let descripcion = rows[i][0];
-        let codigo = rows[i][1];
-        let referencia = rows[i][2];
+        for (let i = 1; i < rows.length; i++) {
 
-        if (codigo && referencia) {
-            codigo_a_referencia[String(codigo)] = String(referencia);
-            referencia_a_descripcion[String(referencia)] = descripcion;
+            let descripcion = rows[i][0];
+            let codigo = rows[i][1];
+            let referencia = rows[i][2];
+
+            if (codigo && referencia) {
+                codigo_a_referencia[String(codigo)] = String(referencia);
+                referencia_a_descripcion[String(referencia)] = descripcion;
+            }
         }
-    }
 
-    console.log("Equivalencias cargadas");
+        console.log("Equivalencias cargadas");
+
+    } catch (error) {
+        console.log("Error cargando equivalencias (modo offline):", error);
+    }
 }
 
 
