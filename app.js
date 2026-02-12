@@ -178,11 +178,22 @@ function mostrarMensaje(texto, tipo) {
     m.innerHTML = texto;
     m.style.display = "block";
 
+    if (tipo === "ok") {
+        let okSound = document.getElementById("okSound");
+        okSound.currentTime = 0;
+        okSound.play();
+    }
+
+    if (tipo === "error") {
+        let errorSound = document.getElementById("errorSound");
+        errorSound.currentTime = 0;
+        errorSound.play();
+    }
+
     setTimeout(() => {
         m.style.display = "none";
     }, 1000);
 }
-
 
 // ----------------------------
 // FINALIZAR Y GENERAR EXCEL
