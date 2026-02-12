@@ -116,18 +116,28 @@ li{
 
   <div class="mensaje" id="mensajeEstado"></div>
 
+  <!-- ESCÁNER ARRIBA -->
   <div class="card">
-    <label>Cantidad</label>
-    <input type="number" id="cantidad" value="1" min="1">
-
     <div id="scanner"></div>
-
-    <button class="secondary" onclick="finalizar()">Finalizar Inventario</button>
   </div>
 
+  <!-- CANTIDAD -->
+  <div class="card" style="margin-top:15px;">
+    <label style="font-weight:bold;">Cantidad</label>
+    <input type="number" id="cantidad" value="1" min="1">
+  </div>
+
+  <!-- LISTA ARTÍCULOS -->
   <div class="card" style="margin-top:15px;">
     <h4>Artículos Escaneados</h4>
     <ul id="listaArticulos"></ul>
+  </div>
+
+  <!-- BOTÓN FINAL -->
+  <div style="margin-top:20px;">
+    <button class="secondary" onclick="finalizar()">
+      Finalizar Inventario
+    </button>
   </div>
 
 </div>
