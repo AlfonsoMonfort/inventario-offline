@@ -20,7 +20,13 @@ let permitirEscaneo = false;
 document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById("fecha").value =
-        new Date().toISOString().split("T")[0];
+    new Date().toISOString().split("T")[0];
+
+    // FORZAR MAYÚSCULAS EN ALMACEN
+    const almacenInput = document.getElementById("almacen");
+    almacenInput.addEventListener("input", function () {
+        this.value = this.value.toUpperCase();
+    });
 
 
     await cargarEquivalencias();
