@@ -116,16 +116,33 @@ function empezar() {
 // ----------------------------
 // INICIAR ESCÁNER
 // ----------------------------
+// ----------------------------
+// INICIAR ESCÁNER
+// ----------------------------
 function iniciarScanner() {
+
+    let ultimoCodigo = null;
+    let contador = 0;
 
     Quagga.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
             target: document.querySelector('#scanner'),
-            constraints: { facingMode: "environment" }
+            constraints: {
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
         },
-        decoder: { readers: ["ean_reader"] },
+        locator: {
+            patchSize: "large",   // MÁS tolerante
+            halfSample: true      // mejor para móviles
+        },
+        numOfWorkers: navigator.hardwareConcurrency || 4,
+        decoder: { 
+            readers: ["ean_reader"]
+        },
         locate: true
     }, function (err) {
         if (!err) {
@@ -138,17 +155,29 @@ function iniciarScanner() {
 
     Quagga.onDetected(function(result) {
 
-    let code = result.codeResult.code;
+        let code = result.codeResult.code;
 
-    if (!/^\d{13}$/.test(code)) return;
+        // Solo aceptar EAN13 reales
+        if (!/^\d{13}$/.test(code)) return;
 
-    if (!permitirEscaneo) return;
+        if (!permitirEscaneo) return;
 
-    permitirEscaneo = false;
+        // Confirmación múltiple (evita errores por brillo)
+        if (code === ultimoCodigo) {
+            contador++;
+        } else {
+            ultimoCodigo = code;
+            contador = 0;
+        }
 
-    procesarCodigo(code);
-});
+        if (contador >= 2) {   // necesita 3 lecturas iguales
+            permitirEscaneo = false;
+            contador = 0;
+            procesarCodigo(code);
+        }
+    });
 }
+
 
 
 // ----------------------------
