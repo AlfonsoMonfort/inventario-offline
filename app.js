@@ -123,32 +123,63 @@ function iniciarScanner() {
             name: "Live",
             type: "LiveStream",
             target: document.querySelector('#scanner'),
-            constraints: { facingMode: "environment" }
+            constraints: {
+                facingMode: "environment"
+            },
+
+            // 🔴 ÁREA DE DETECCIÓN (IGNORA BORDES)
+            area: {
+                top: "30%",     // ignora 30% superior
+                right: "10%",   // ignora 10% derecha
+                left: "10%",    // ignora 10% izquierda
+                bottom: "30%"   // ignora 30% inferior
+            }
         },
-        decoder: { readers: ["ean_reader"] },
+
+        locator: {
+            patchSize: "medium",
+            halfSample: true
+        },
+
+        decoder: {
+            readers: ["ean_reader"]
+        },
+
         locate: true
+
     }, function (err) {
-        if (!err) {
-            Quagga.start();
+        if (err) {
+            console.error("Error iniciando Quagga:", err);
+            return;
         }
+        Quagga.start();
     });
 
+    // 👆 El usuario habilita el escaneo tocando la pantalla
     document.getElementById("scanner")
-        .addEventListener("click", () => permitirEscaneo = true);
+        .addEventListener("click", () => {
+            permitirEscaneo = true;
+        });
 
-    Quagga.onDetected(function(result) {
+    // 📸 CUANDO SE DETECTA UN CÓDIGO
+    Quagga.onDetected(function (result) {
 
-    let code = result.codeResult.code;
+        if (!result || !result.codeResult || !result.codeResult.code) return;
 
-    if (!/^\d{13}$/.test(code)) return;
+        let code = result.codeResult.code;
 
-    if (!permitirEscaneo) return;
+        // Solo EAN-13
+        if (!/^\d{13}$/.test(code)) return;
 
-    permitirEscaneo = false;
+        // Solo si el usuario lo permite
+        if (!permitirEscaneo) return;
 
-    procesarCodigo(code);
-});
+        permitirEscaneo = false;
+
+        procesarCodigo(code);
+    });
 }
+
 
 
 // ----------------------------
