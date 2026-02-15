@@ -228,6 +228,11 @@ function mostrarMensaje(texto, tipo) {
     }, 1000);
 }
 
+function formatearFecha(fechaISO) {
+    const [anio, mes, dia] = fechaISO.split("-");
+    return `${dia}/${mes}/${anio}`;
+}
+
 // ----------------------------
 // FINALIZAR Y GENERAR EXCEL
 // ----------------------------
@@ -238,7 +243,7 @@ function finalizar() {
     for (let ref in inventario.articulos) {
 
         datos.push({
-            fecha: inventario.fecha,
+            fecha: formatearFecha(inventario.fecha),
             almacen: inventario.almacen,
             referencia: ref,
             cantidad: inventario.articulos[ref],
@@ -251,12 +256,13 @@ function finalizar() {
     let ws = XLSX.utils.json_to_sheet(datos);
     XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
-    let nombre = `inventario.${inventario.almacen}.${inventario.fecha}.xlsx`;
+    let nombre = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
 
     XLSX.writeFile(wb, nombre);
 
     location.reload();
 }
+
 
 
 // ----------------------------
