@@ -257,6 +257,13 @@ function formatearFecha(fechaISO) {
     return `${dia}/${mes}/${anio}`;
 }
 
+function formatearHoraMinuto() {
+    const ahora = new Date();
+    const h = String(ahora.getHours()).padStart(2, "0");
+    const m = String(ahora.getMinutes()).padStart(2, "0");
+    return `${h}${m}`;
+}
+
 // ----------------------------
 // FINALIZAR Y GENERAR EXCEL
 // ----------------------------
@@ -279,7 +286,7 @@ function finalizar() {
     let ws = XLSX.utils.json_to_sheet(datos);
     XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
-    let nombre = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
+    let nombre = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.${formatearHoraMinuto()}.xlsx`;
 
     XLSX.writeFile(wb, nombre);
 
