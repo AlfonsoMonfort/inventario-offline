@@ -247,8 +247,7 @@ function finalizar() {
             almacen: inventario.almacen,
             referencia: ref,
             cantidad: inventario.articulos[ref],
-            numero_vendedor: inventario.vendedor,
-            descripcion: referencia_a_descripcion[ref] || ""
+            numero_vendedor: inventario.vendedor
         });
     }
 
