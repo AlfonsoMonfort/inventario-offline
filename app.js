@@ -127,59 +127,52 @@ function iniciarScanner() {
                 facingMode: "environment"
             },
 
-            // 🔴 ÁREA DE DETECCIÓN (IGNORA BORDES)
+            // 🟡 ÁREA CENTRAL MÁS AMPLIA (NO BLOQUEA)
             area: {
-                top: "30%",     // ignora 30% superior
-                right: "10%",   // ignora 10% derecha
-                left: "10%",    // ignora 10% izquierda
-                bottom: "30%"   // ignora 30% inferior
+                top: "20%",
+                right: "5%",
+                left: "5%",
+                bottom: "20%"
             }
         },
 
         locator: {
             patchSize: "medium",
-            halfSample: true
+            halfSample: false
         },
 
         decoder: {
             readers: ["ean_reader"]
         },
 
-        locate: true
+        locate: false   // 🔥 CLAVE: más estable con ROI
 
     }, function (err) {
         if (err) {
-            console.error("Error iniciando Quagga:", err);
+            console.error("Quagga init error:", err);
             return;
         }
-        Quagga.start();
+        Quagga.start();   // ✅ AQUÍ SE ARRANCA
     });
 
-    // 👆 El usuario habilita el escaneo tocando la pantalla
     document.getElementById("scanner")
         .addEventListener("click", () => {
             permitirEscaneo = true;
         });
 
-    // 📸 CUANDO SE DETECTA UN CÓDIGO
     Quagga.onDetected(function (result) {
 
-        if (!result || !result.codeResult || !result.codeResult.code) return;
+        if (!result?.codeResult?.code) return;
 
-        let code = result.codeResult.code;
+        const code = result.codeResult.code;
 
-        // Solo EAN-13
         if (!/^\d{13}$/.test(code)) return;
-
-        // Solo si el usuario lo permite
         if (!permitirEscaneo) return;
 
         permitirEscaneo = false;
-
         procesarCodigo(code);
     });
 }
-
 
 
 // ----------------------------
