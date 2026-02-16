@@ -15,6 +15,7 @@ let inventario = {
 let permitirEscaneo = false;
 let ultimoCodigo = "";
 let ultimoTiempo = 0;
+let scannerIniciado = false;
 
 
 // ============================
@@ -31,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await cargarEquivalencias();
     await cargarArticulosSinCodigo();
-    iniciarScanner();
+
     registrarServiceWorker();
 
     document.getElementById("cantidad").addEventListener("focus", function () {
@@ -45,7 +46,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ============================
 async function cargarEquivalencias() {
     let guardado = localStorage.getItem("equivalencias");
-    let datos = guardado ? JSON.parse(guardado) : await (await fetch("equivalencias.json")).json();
+    let datos = guardado
+        ? JSON.parse(guardado)
+        : await (await fetch("equivalencias.json")).json();
+
     localStorage.setItem("equivalencias", JSON.stringify(datos));
 
     datos.forEach(i => {
@@ -60,11 +64,17 @@ async function cargarEquivalencias() {
 // ============================
 async function cargarArticulosSinCodigo() {
     let guardado = localStorage.getItem("articulos_sin_codigo");
-    articulosSinCodigo = guardado
-        ? JSON.parse(guardado)
-        : await (await fetch("articulos_sin_codigo.json")).json();
 
-    localStorage.setItem("articulos_sin_codigo", JSON.stringify(articulosSinCodigo));
+    if (guardado) {
+        articulosSinCodigo = JSON.parse(guardado);
+    } else {
+        const resp = await fetch("articulos_sin_codigo.json");
+        articulosSinCodigo = await resp.json();
+        localStorage.setItem(
+            "articulos_sin_codigo",
+            JSON.stringify(articulosSinCodigo)
+        );
+    }
 }
 
 function cargarSelectorSinCodigo() {
@@ -76,6 +86,7 @@ function cargarSelectorSinCodigo() {
         opt.value = a.referencia;
         opt.textContent = a.descripcion;
         sel.appendChild(opt);
+
         referencia_a_descripcion[a.referencia] = a.descripcion;
     });
 }
@@ -106,8 +117,15 @@ function empezar() {
     document.getElementById("pantallaEscaner").style.display = "block";
 
     cargarSelectorSinCodigo();
-}
 
+    // 🔑 iniciar escáner CUANDO la pantalla ya es visible
+    if (!scannerIniciado) {
+        setTimeout(() => {
+            iniciarScanner();
+            scannerIniciado = true;
+        }, 300);
+    }
+}
 
 
 // ============================
@@ -122,7 +140,7 @@ function iniciarScanner() {
             constraints: { facingMode: "environment" }
         },
         decoder: {
-            readers: ["ean_reader","ean_8_reader","upc_reader"]
+            readers: ["ean_reader", "ean_8_reader", "upc_reader"]
         }
     }, () => Quagga.start());
 
@@ -136,8 +154,10 @@ function iniciarScanner() {
 function onDetectado(result) {
 
     if (!permitirEscaneo) return;
-    let code = result.codeResult.code.replace(/\D/g,"");
-    if (![8,12,13].includes(code.length)) return;
+    if (!result || !result.codeResult || !result.codeResult.code) return;
+
+    let code = result.codeResult.code.replace(/\D/g, "");
+    if (![8, 12, 13].includes(code.length)) return;
 
     let ahora = Date.now();
     if (code === ultimoCodigo && ahora - ultimoTiempo < 1500) return;
@@ -151,7 +171,7 @@ function onDetectado(result) {
 
 function procesarCodigo(codigo) {
 
-    let cantidad = parseInt(cantidad.value) || 1;
+    let cant = parseInt(document.getElementById("cantidad").value) || 1;
     let ref = codigo_a_referencia[codigo] ||
               codigo_a_referencia[codigo.slice(1)];
 
@@ -161,9 +181,10 @@ function procesarCodigo(codigo) {
     }
 
     inventario.articulos[ref] =
-        (inventario.articulos[ref] || 0) + cantidad;
+        (inventario.articulos[ref] || 0) + cant;
 
-    cantidad.value = 1;
+    document.getElementById("cantidad").value = 1;
+
     mostrarMensaje("✅ Artículo añadido", "ok");
     actualizarLista();
 }
@@ -174,16 +195,17 @@ function procesarCodigo(codigo) {
 // ============================
 function añadirSinCodigo() {
 
-    const ref = articuloSinCodigo.value;
+    const ref = document.getElementById("articuloSinCodigo").value;
     if (!ref) return;
 
-    let cant = parseInt(cantidad.value) || 1;
+    let cant = parseInt(document.getElementById("cantidad").value) || 1;
 
     inventario.articulos[ref] =
         (inventario.articulos[ref] || 0) + cant;
 
-    cantidad.value = 1;
-    articuloSinCodigo.value = "";
+    document.getElementById("cantidad").value = 1;
+    document.getElementById("articuloSinCodigo").value = "";
+
     mostrarMensaje("✅ Artículo añadido", "ok");
     actualizarLista();
 }
@@ -194,15 +216,16 @@ function añadirSinCodigo() {
 // ============================
 function actualizarLista() {
 
-    listaArticulos.innerHTML = "";
+    const lista = document.getElementById("listaArticulos");
+    lista.innerHTML = "";
 
     for (let ref in inventario.articulos) {
         let li = document.createElement("li");
         li.innerHTML = `
-          <b>${referencia_a_descripcion[ref]}</b><br>
-          Ref: ${ref} — Cantidad: ${inventario.articulos[ref]}
+            <b>${referencia_a_descripcion[ref] || ref}</b><br>
+            Ref: ${ref} — Cantidad: ${inventario.articulos[ref]}
         `;
-        listaArticulos.appendChild(li);
+        lista.appendChild(li);
     }
 }
 
@@ -211,11 +234,17 @@ function actualizarLista() {
 // MENSAJES
 // ============================
 function mostrarMensaje(texto, tipo) {
-    mensajeEstado.className = "mensaje " + tipo;
-    mensajeEstado.textContent = texto;
-    mensajeEstado.style.display = "block";
-    document.getElementById(tipo === "ok" ? "okSound" : "errorSound").play();
-    setTimeout(() => mensajeEstado.style.display = "none", 1000);
+    const msg = document.getElementById("mensajeEstado");
+
+    msg.className = "mensaje " + tipo;
+    msg.textContent = texto;
+    msg.style.display = "block";
+
+    document.getElementById(
+        tipo === "ok" ? "okSound" : "errorSound"
+    ).play();
+
+    setTimeout(() => msg.style.display = "none", 1000);
 }
 
 
@@ -232,7 +261,10 @@ function finalizar() {
         numero_vendedor: inventario.vendedor
     }));
 
-    if (!datos.length) return alert("No hay artículos");
+    if (!datos.length) {
+        alert("No hay artículos");
+        return;
+    }
 
     let wb = XLSX.utils.book_new();
     let ws = XLSX.utils.json_to_sheet(datos);
@@ -244,10 +276,15 @@ function finalizar() {
 
 
 // ============================
-// AYUDA + SW
+// AYUDA + SERVICE WORKER
 // ============================
-function abrirAyuda(){ modalAyuda.style.display="flex"; }
-function cerrarAyuda(){ modalAyuda.style.display="none"; }
+function abrirAyuda() {
+    document.getElementById("modalAyuda").style.display = "flex";
+}
+
+function cerrarAyuda() {
+    document.getElementById("modalAyuda").style.display = "none";
+}
 
 function registrarServiceWorker() {
     if ("serviceWorker" in navigator) {
