@@ -127,9 +127,11 @@ function iniciarScanner() {
             readers: [
                 "ean_reader",
                 "ean_8_reader",
-                "upc_reader"
+                "upc_reader",
+                "code_128_reader" // 👈 ESTA ES LA CLAVE
             ]
         },
+        
         locate: false
     }, err => {
         if (err) {
