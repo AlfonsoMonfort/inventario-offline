@@ -150,13 +150,16 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.24</header>
+<header>Inventario Offline V.25</header>
 
 <div class="container">
 
 <!-- PANTALLA 1 -->
 <div id="pantallaInicio" class="card">
   <h3>Inicio Inventario</h3>
+  <button id="btnInstalar" onclick="instalarApp()" style="display:none">
+    📲 Descargar app
+</button>
   <input type="date" id="fecha">
   <input type="text" id="almacen" placeholder="Almacén">
   <input type="text" id="vendedor" placeholder="Número vendedor">

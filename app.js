@@ -1,3 +1,5 @@
+let deferredPrompt = null;
+
 // ============================
 // VARIABLES GLOBALES
 // ============================
@@ -40,6 +42,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 });
 
+function instalarApp() {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+
+    deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+        document.getElementById("btnInstalar").style.display = "none";
+    });
+};
 
 // ============================
 // CARGAR EQUIVALENCIAS
