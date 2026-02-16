@@ -142,7 +142,11 @@ function iniciarScanner() {
         },
 
         decoder: {
-            readers: ["ean_reader"]
+            readers: [
+                "ean_reader",      // EAN-13
+                "ean_8_reader",    // EAN-8
+                "upc_reader"       // UPC-A (12)
+            ]
         },
 
         locate: false   // 🔥 CLAVE: más estable con ROI
@@ -166,7 +170,8 @@ function iniciarScanner() {
 
         const code = result.codeResult.code;
 
-        if (!/^\d{13}$/.test(code)) return;
+        if (!/^\d{8}$|^\d{12}$|^\d{13}$/.test(code)) return;
+
         if (!permitirEscaneo) return;
 
         permitirEscaneo = false;
