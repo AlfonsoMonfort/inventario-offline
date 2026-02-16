@@ -17,7 +17,6 @@ body{
   font-family:Arial, sans-serif;
   background:#f2f2f2;
 }
-
 header{
   background:#111;
   color:white;
@@ -25,18 +24,13 @@ header{
   text-align:center;
   font-size:18px;
 }
-
-.container{
-  padding:20px;
-}
-
+.container{ padding:20px; }
 .card{
   background:white;
   padding:20px;
   border-radius:12px;
   box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
-
 input, button, select{
   width:100%;
   padding:14px;
@@ -45,102 +39,34 @@ input, button, select{
   border:1px solid #ccc;
   font-size:16px;
 }
-
-button{
-  background:#111;
-  color:white;
-  border:none;
+button{ background:#111; color:white; border:none; }
+button.secondary{ background:#555; }
+#scanner{ height:260px; border-radius:12px; overflow:hidden; }
+#scanner-frame{
+  position:absolute;
+  top:50%; left:50%;
+  width:80%; height:40%;
+  transform:translate(-50%,-50%);
+  border:3px solid red;
 }
-
-button.secondary{
-  background:#555;
+.mensaje{ display:none; padding:12px; border-radius:8px; text-align:center; }
+.ok{ background:#d4edda; }
+.error{ background:#f8d7da; }
+ul{ list-style:none; padding:0; }
+li{ border-bottom:1px solid #ddd; padding:8px 0; }
+.btn-ayuda{
+  position:absolute; top:10px; right:10px;
+  width:40px; height:40px; border-radius:50%;
 }
-
-#scanner {
-  position: relative;
-  width: 100%;
-  height: 260px;
-  border-radius: 12px;
-  overflow: hidden;
+.modal-ayuda{
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.6);
+  justify-content:center; align-items:center;
 }
-
-#scanner-frame {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 80%;
-  height: 40%;
-  transform: translate(-50%, -50%);
-  border: 3px solid red;
-  border-radius: 12px;
-  pointer-events: none;
-}
-
-.mensaje{
-  display:none;
-  padding:12px;
-  border-radius:8px;
-  text-align:center;
-  font-weight:bold;
-  margin-bottom:10px;
-}
-
-.ok{
-  background:#d4edda;
-  color:#155724;
-}
-
-.error{
-  background:#f8d7da;
-  color:#721c24;
-}
-
-ul{
-  list-style:none;
-  padding:0;
-}
-
-li{
-  padding:8px 0;
-  border-bottom:1px solid #ddd;
-}
-
-#pantallaInicio {
-  position: relative;
-}
-
-.btn-ayuda {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  background: #111;
-  color: #fff;
-  font-size: 18px;
-}
-
-.modal-ayuda {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  justify-content: center;
-  align-items: center;
-  z-index: 3000;
-}
-
-.modal-contenido {
-  background: white;
-  padding: 20px;
-  width: 90%;
-  max-width: 400px;
-  border-radius: 12px;
+.modal-contenido{
+  background:white; padding:20px;
+  width:90%; max-width:400px;
+  border-radius:12px;
 }
 </style>
 </head>
@@ -150,71 +76,57 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.25</header>
+<header>Inventario Offline V.26</header>
 
 <div class="container">
 
-<!-- PANTALLA 1 -->
 <div id="pantallaInicio" class="card">
   <h3>Inicio Inventario</h3>
   <button id="btnInstalar" onclick="instalarApp()" style="display:none">
     📲 Descargar app
-</button>
+  </button>
   <input type="date" id="fecha">
   <input type="text" id="almacen" placeholder="Almacén">
   <input type="text" id="vendedor" placeholder="Número vendedor">
   <button onclick="empezar()">Empezar</button>
-  <button id="btnAyuda" class="btn-ayuda" onclick="abrirAyuda()">❓</button>
+  <button class="btn-ayuda" onclick="abrirAyuda()">❓</button>
 </div>
 
-<!-- PANTALLA 2 -->
 <div id="pantallaEscaner" style="display:none">
-
   <div class="card">
-    <div id="scanner">
-      <div id="scanner-frame"></div>
-    </div>
+    <div id="scanner"><div id="scanner-frame"></div></div>
   </div>
 
   <div class="mensaje" id="mensajeEstado"></div>
 
-  <div class="card" style="margin-top:15px;">
-    <label><b>Cantidad</b></label>
+  <div class="card">
     <input type="number" id="cantidad" value="1" min="1">
   </div>
 
-  <!-- ARTÍCULOS SIN CÓDIGO -->
-  <div class="card" style="margin-top:15px;">
-    <label><b>Artículo sin código</b></label>
-    <select id="articuloSinCodigo">
-      <option value="">— Selecciona —</option>
-    </select>
+  <div class="card">
+    <select id="articuloSinCodigo"></select>
     <button onclick="añadirSinCodigo()">➕ Añadir artículo</button>
   </div>
 
-  <div class="card" style="margin-top:15px;">
-    <h4>Artículos Escaneados</h4>
+  <div class="card">
     <ul id="listaArticulos"></ul>
   </div>
 
-  <div style="margin-top:20px;">
-    <button class="secondary" onclick="finalizar()">Finalizar Inventario</button>
-  </div>
-
+  <button class="secondary" onclick="finalizar()">Finalizar Inventario</button>
 </div>
 
 <div id="modalAyuda" class="modal-ayuda">
   <div class="modal-contenido">
     <h2>Instrucciones</h2>
     <ol>
-      <li>Rellena los datos iniciales</li>
-      <li>Selecciona cantidad</li>
+      <li>Rellena los datos</li>
       <li>Escanea o añade manual</li>
-      <li>Finaliza para generar Excel</li>
+      <li>Finaliza para Excel</li>
     </ol>
     <button onclick="cerrarAyuda()">Cerrar</button>
   </div>
 </div>
 
+</div>
 </body>
 </html>

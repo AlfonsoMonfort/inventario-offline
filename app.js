@@ -37,28 +37,40 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     registrarServiceWorker();
 
+    // 🔥 EVENTO INSTALACIÓN PWA (IMPRESCINDIBLE)
+    window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById("btnInstalar").style.display = "block";
+    });
+
     document.getElementById("cantidad").addEventListener("focus", function () {
         this.value = "";
     });
 });
 
+
+// ============================
+// INSTALAR APP
+// ============================
 function instalarApp() {
     if (!deferredPrompt) return;
 
     deferredPrompt.prompt();
 
-    deferredPrompt.userChoice.then(() => {
+    deferredPrompt.userChoice.finally(() => {
         deferredPrompt = null;
         document.getElementById("btnInstalar").style.display = "none";
     });
-};
+}
+
 
 // ============================
 // CARGAR EQUIVALENCIAS
 // ============================
 async function cargarEquivalencias() {
-    let guardado = localStorage.getItem("equivalencias");
-    let datos = guardado
+    const guardado = localStorage.getItem("equivalencias");
+    const datos = guardado
         ? JSON.parse(guardado)
         : await (await fetch("equivalencias.json")).json();
 
@@ -75,7 +87,7 @@ async function cargarEquivalencias() {
 // ARTÍCULOS SIN CÓDIGO
 // ============================
 async function cargarArticulosSinCodigo() {
-    let guardado = localStorage.getItem("articulos_sin_codigo");
+    const guardado = localStorage.getItem("articulos_sin_codigo");
 
     if (guardado) {
         articulosSinCodigo = JSON.parse(guardado);
@@ -94,7 +106,7 @@ function cargarSelectorSinCodigo() {
     sel.innerHTML = `<option value="">— Selecciona —</option>`;
 
     articulosSinCodigo.forEach(a => {
-        let opt = document.createElement("option");
+        const opt = document.createElement("option");
         opt.value = a.referencia;
         opt.textContent = a.descripcion;
         sel.appendChild(opt);
@@ -109,19 +121,19 @@ function cargarSelectorSinCodigo() {
 // ============================
 function empezar() {
 
-    const fechaValor = document.getElementById("fecha").value;
-    const almacenValor = document.getElementById("almacen").value;
-    const vendedorValor = document.getElementById("vendedor").value;
+    const fecha = document.getElementById("fecha").value;
+    const almacen = document.getElementById("almacen").value;
+    const vendedor = document.getElementById("vendedor").value;
 
-    if (!fechaValor || !almacenValor || !vendedorValor) {
+    if (!fecha || !almacen || !vendedor) {
         alert("Completa todos los campos");
         return;
     }
 
     inventario = {
-        fecha: fechaValor,
-        almacen: almacenValor,
-        vendedor: vendedorValor,
+        fecha,
+        almacen,
+        vendedor,
         articulos: {}
     };
 
@@ -130,7 +142,6 @@ function empezar() {
 
     cargarSelectorSinCodigo();
 
-    // 🔑 iniciar escáner CUANDO la pantalla ya es visible
     if (!scannerIniciado) {
         setTimeout(() => {
             iniciarScanner();
@@ -166,12 +177,12 @@ function iniciarScanner() {
 function onDetectado(result) {
 
     if (!permitirEscaneo) return;
-    if (!result || !result.codeResult || !result.codeResult.code) return;
+    if (!result?.codeResult?.code) return;
 
-    let code = result.codeResult.code.replace(/\D/g, "");
+    const code = result.codeResult.code.replace(/\D/g, "");
     if (![8, 12, 13].includes(code.length)) return;
 
-    let ahora = Date.now();
+    const ahora = Date.now();
     if (code === ultimoCodigo && ahora - ultimoTiempo < 1500) return;
 
     ultimoCodigo = code;
@@ -183,9 +194,10 @@ function onDetectado(result) {
 
 function procesarCodigo(codigo) {
 
-    let cant = parseInt(document.getElementById("cantidad").value) || 1;
-    let ref = codigo_a_referencia[codigo] ||
-              codigo_a_referencia[codigo.slice(1)];
+    const cant = parseInt(document.getElementById("cantidad").value) || 1;
+    const ref =
+        codigo_a_referencia[codigo] ||
+        codigo_a_referencia[codigo.slice(1)];
 
     if (!ref) {
         mostrarMensaje("❌ Código no encontrado", "error");
@@ -210,7 +222,7 @@ function añadirSinCodigo() {
     const ref = document.getElementById("articuloSinCodigo").value;
     if (!ref) return;
 
-    let cant = parseInt(document.getElementById("cantidad").value) || 1;
+    const cant = parseInt(document.getElementById("cantidad").value) || 1;
 
     inventario.articulos[ref] =
         (inventario.articulos[ref] || 0) + cant;
@@ -231,8 +243,8 @@ function actualizarLista() {
     const lista = document.getElementById("listaArticulos");
     lista.innerHTML = "";
 
-    for (let ref in inventario.articulos) {
-        let li = document.createElement("li");
+    for (const ref in inventario.articulos) {
+        const li = document.createElement("li");
         li.innerHTML = `
             <b>${referencia_a_descripcion[ref] || ref}</b><br>
             Ref: ${ref} — Cantidad: ${inventario.articulos[ref]}
@@ -265,7 +277,7 @@ function mostrarMensaje(texto, tipo) {
 // ============================
 function finalizar() {
 
-    let datos = Object.entries(inventario.articulos).map(([ref, cant]) => ({
+    const datos = Object.entries(inventario.articulos).map(([ref, cant]) => ({
         fecha: inventario.fecha,
         almacen: inventario.almacen,
         referencia: ref,
@@ -278,8 +290,8 @@ function finalizar() {
         return;
     }
 
-    let wb = XLSX.utils.book_new();
-    let ws = XLSX.utils.json_to_sheet(datos);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(datos);
     XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
     XLSX.writeFile(wb, "inventario.xlsx");
@@ -303,3 +315,4 @@ function registrarServiceWorker() {
         navigator.serviceWorker.register("service-worker.js");
     }
 }
+
