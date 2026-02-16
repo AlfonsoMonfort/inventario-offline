@@ -160,7 +160,9 @@ function onDetectado(result) {
     let rawCode = result.codeResult.code;
 
     // 2️⃣ LIMPIEZA TOTAL (elimina > y cualquier cosa rara)
-    let code = rawCode.replace(/[^0-9]/g, "");
+    let code = rawCode
+    .replace(/[\u001d\[\]\\C]*/g, "")
+    .replace(/[^0-9]/g, "");
 
     // 3️⃣ Normalizar UPC-A (11 → 12)
     if (code.length === 11) {
