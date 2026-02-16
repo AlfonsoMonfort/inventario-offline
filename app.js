@@ -86,21 +86,28 @@ function cargarSelectorSinCodigo() {
 // ============================
 function empezar() {
 
-    const fecha = fecha.value;
-    const almacen = almacen.value;
-    const vendedor = vendedor.value;
+    const fechaValor = document.getElementById("fecha").value;
+    const almacenValor = document.getElementById("almacen").value;
+    const vendedorValor = document.getElementById("vendedor").value;
 
-    if (!fecha || !almacen || !vendedor) {
+    if (!fechaValor || !almacenValor || !vendedorValor) {
         alert("Completa todos los campos");
         return;
     }
 
-    inventario = { fecha, almacen, vendedor, articulos: {} };
+    inventario = {
+        fecha: fechaValor,
+        almacen: almacenValor,
+        vendedor: vendedorValor,
+        articulos: {}
+    };
 
-    pantallaInicio.style.display = "none";
-    pantallaEscaner.style.display = "block";
+    document.getElementById("pantallaInicio").style.display = "none";
+    document.getElementById("pantallaEscaner").style.display = "block";
+
     cargarSelectorSinCodigo();
 }
+
 
 
 // ============================
