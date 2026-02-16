@@ -127,11 +127,9 @@ function iniciarScanner() {
             readers: [
                 "ean_reader",
                 "ean_8_reader",
-                "upc_reader",
-                "code_128_reader" // 👈 ESTA ES LA CLAVE
+                "upc_reader"
             ]
         },
-        
         locate: false
     }, err => {
         if (err) {
@@ -154,39 +152,30 @@ function iniciarScanner() {
 // ============================
 function onDetectado(result) {
 
-    if (!result || !result.codeResult || !result.codeResult.code) return;
+    if (!permitirEscaneo) return;
+    if (!result?.codeResult?.code) return;
 
-    // 1️⃣ Lectura cruda
-    let rawCode = result.codeResult.code;
+    let ahora = Date.now();
+    let code = result.codeResult.code;
 
-    // 2️⃣ LIMPIEZA TOTAL (elimina > y cualquier cosa rara)
-    let code = rawCode
-    .replace(/[\u001d\[\]\\C]*/g, "")
-    .replace(/[^0-9]/g, "");
+    // Limpia basura: >, espacios, etc.
+    code = code.replace(/\D/g, "");
 
-    // 3️⃣ Normalizar UPC-A (11 → 12)
-    if (code.length === 11) {
-        code = "0" + code;
-    }
+    // Normaliza UPC-A incompleto
+    if (code.length === 11) code = "0" + code;
 
-    // 4️⃣ Validar longitudes reales
+    // Longitudes válidas
     if (![8, 12, 13].includes(code.length)) return;
 
-    // 5️⃣ Anti-lectura doble
-    const ahora = Date.now();
-    if (code === ultimoCodigo && ahora - ultimoTiempo < 1200) return;
+    // Evitar doble lectura del mismo código
+    if (code === ultimoCodigo && ahora - ultimoTiempo < 1500) return;
 
     ultimoCodigo = code;
     ultimoTiempo = ahora;
-
-    if (!permitirEscaneo) return;
     permitirEscaneo = false;
-
-    console.log("Código válido:", code);
 
     procesarCodigo(code);
 }
-
 
 
 // ============================
