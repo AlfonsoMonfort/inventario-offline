@@ -152,30 +152,37 @@ function iniciarScanner() {
 // ============================
 function onDetectado(result) {
 
-    if (!permitirEscaneo) return;
-    if (!result?.codeResult?.code) return;
+    if (!result || !result.codeResult || !result.codeResult.code) return;
 
-    let ahora = Date.now();
-    let code = result.codeResult.code;
+    // 1️⃣ Lectura cruda
+    let rawCode = result.codeResult.code;
 
-    // Limpia basura: >, espacios, etc.
-    code = code.replace(/\D/g, "");
+    // 2️⃣ LIMPIEZA TOTAL (elimina > y cualquier cosa rara)
+    let code = rawCode.replace(/[^0-9]/g, "");
 
-    // Normaliza UPC-A incompleto
-    if (code.length === 11) code = "0" + code;
+    // 3️⃣ Normalizar UPC-A (11 → 12)
+    if (code.length === 11) {
+        code = "0" + code;
+    }
 
-    // Longitudes válidas
+    // 4️⃣ Validar longitudes reales
     if (![8, 12, 13].includes(code.length)) return;
 
-    // Evitar doble lectura del mismo código
-    if (code === ultimoCodigo && ahora - ultimoTiempo < 1500) return;
+    // 5️⃣ Anti-lectura doble
+    const ahora = Date.now();
+    if (code === ultimoCodigo && ahora - ultimoTiempo < 1200) return;
 
     ultimoCodigo = code;
     ultimoTiempo = ahora;
+
+    if (!permitirEscaneo) return;
     permitirEscaneo = false;
+
+    console.log("Código válido:", code);
 
     procesarCodigo(code);
 }
+
 
 
 // ============================
