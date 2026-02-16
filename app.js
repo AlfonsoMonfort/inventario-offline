@@ -142,13 +142,15 @@ function iniciarScanner() {
     document.getElementById("scanner")
         .addEventListener("click", () => permitirEscaneo = true);
 
-    Quagga.onDetected(function(result) {
-
-    let code = result.codeResult.code;
-
-    if (!/^\d{13}$/.test(code)) return;
+    Quagga.onDetected(function (result) {
 
     if (!permitirEscaneo) return;
+    if (!result || !result.codeResult || !result.codeResult.code) return;
+
+    let code = result.codeResult.code.replace(/\D/g, "");
+
+    // aceptar EAN-8, UPC-A y EAN-13
+    if (![8, 12, 13].includes(code.length)) return;
 
     permitirEscaneo = false;
 
