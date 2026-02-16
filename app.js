@@ -166,7 +166,10 @@ function procesarCodigo(codigo) {
 
     let cantidad = parseInt(document.getElementById("cantidad").value);
 
-    let referencia = codigo_a_referencia[codigo];
+    let referencia =
+    codigo_a_referencia[codigo] ||
+    codigo_a_referencia[codigo.padStart(13, "0")] ||
+    codigo_a_referencia[codigo.replace(/^0/, "")];
 
     if (!referencia) {
         mostrarMensaje("❌ Código no encontrado", "error");
