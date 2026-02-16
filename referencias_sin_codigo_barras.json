@@ -1,0 +1,462 @@
+[
+  {
+    "descripcion": "AGUA CARTON BUQUES RUTA IBIZA FORMENTERA",
+    "referencia": "52065"
+  },
+  {
+    "descripcion": "BRANDY 103",
+    "referencia": "802047"
+  },
+  {
+    "descripcion": "CAMPARI",
+    "referencia": "802048"
+  },
+  {
+    "descripcion": "CAVA AGUSTI TORELLO MATA BRUT RESERVA",
+    "referencia": "50721"
+  },
+  {
+    "descripcion": "CAVA FERRET BRUT RESERVA 75 CL",
+    "referencia": "802003"
+  },
+  {
+    "descripcion": "CAVA GRAMONA IMPERIAL G RESERVA 75 CL",
+    "referencia": "35580"
+  },
+  {
+    "descripcion": "CAVA JUVE CAMPS",
+    "referencia": "802103"
+  },
+  {
+    "descripcion": "CAVA PARES BALTA BRUT 75 CL",
+    "referencia": "34261"
+  },
+  {
+    "descripcion": "CAVA PARES BALTA BRUT NATURE 75 CL",
+    "referencia": "34262"
+  },
+  {
+    "descripcion": "CAVA PARES BALTA ROSE 75 CL",
+    "referencia": "34263"
+  },
+  {
+    "descripcion": "CH. ANDRE CLOUET GRAN RESERVA",
+    "referencia": "33050"
+  },
+  {
+    "descripcion": "CHIPS DE PLATANO CON SAL",
+    "referencia": "52040"
+  },
+  {
+    "descripcion": "CHIPS DE YUCA AL NATURAL",
+    "referencia": "52038"
+  },
+  {
+    "descripcion": "CHOCOLATINA FONDANT",
+    "referencia": "52031"
+  },
+  {
+    "descripcion": "CHOCOLATINA LECHE",
+    "referencia": "52032"
+  },
+  {
+    "descripcion": "CHOCOLATINA LECHE CON NUECES",
+    "referencia": "52033"
+  },
+  {
+    "descripcion": "CHOCOLATINA PRALINE",
+    "referencia": "54647"
+  },
+  {
+    "descripcion": "ESTRELLA GALICIA BARRIL 30 L",
+    "referencia": "39162"
+  },
+  {
+    "descripcion": "FOCACCIA VEGANA ",
+    "referencia": "52012"
+  },
+  {
+    "descripcion": "GIN BOMBAY SAPPHIRE",
+    "referencia": "20299"
+  },
+  {
+    "descripcion": "GIN LARIOS",
+    "referencia": "15397"
+  },
+  {
+    "descripcion": "GRANADINA RIVES",
+    "referencia": "22048"
+  },
+  {
+    "descripcion": "HELADO CALIPPO LIMA-LIMON",
+    "referencia": "15583"
+  },
+  {
+    "descripcion": "HELADO CORNETTO GO",
+    "referencia": "33604"
+  },
+  {
+    "descripcion": "HELADO CORNETTO MANGO",
+    "referencia": "33603"
+  },
+  {
+    "descripcion": "HELADO MAGNUM ALMENDRAS",
+    "referencia": "15577"
+  },
+  {
+    "descripcion": "HELADO MAGNUM CHOCOLATE BLANCO",
+    "referencia": "15581"
+  },
+  {
+    "descripcion": "INFUSION FUNCIONAL LINEA BIO",
+    "referencia": "45826"
+  },
+  {
+    "descripcion": "INFUSION MANZANILLA BIO",
+    "referencia": "45824"
+  },
+  {
+    "descripcion": "INFUSION POLEO MENTA BIO",
+    "referencia": "45825"
+  },
+  {
+    "descripcion": "INFUSION ROOIBOS BIO",
+    "referencia": "47426"
+  },
+  {
+    "descripcion": "INFUSION TE NEGRO CEYLAN BIO",
+    "referencia": "45828"
+  },
+  {
+    "descripcion": "INFUSION TE VERDE BIO",
+    "referencia": "45830"
+  },
+  {
+    "descripcion": "INFUSION TE VERDE CON MENTA BIO",
+    "referencia": "45827"
+  },
+  {
+    "descripcion": "JUMPERS MANTEQUILLA 42 GR.",
+    "referencia": "52006"
+  },
+  {
+    "descripcion": "LICOR DE APEROL",
+    "referencia": "56177"
+  },
+  {
+    "descripcion": "MARINAS OLIVA 50 GRAMOS",
+    "referencia": "33818"
+  },
+  {
+    "descripcion": "MARTINI BIANCO 100 CL",
+    "referencia": "15399"
+  },
+  {
+    "descripcion": "MARTINI BIANCO MINIATURA 5CL",
+    "referencia": "41044"
+  },
+  {
+    "descripcion": "MARTINI ROSSO 100 CL",
+    "referencia": "15400"
+  },
+  {
+    "descripcion": "MARTINI ROSSO MINIATURA 5 CL",
+    "referencia": "41045"
+  },
+  {
+    "descripcion": "NESPRESSO DECAFFEINATO",
+    "referencia": "16988"
+  },
+  {
+    "descripcion": "NESPRESSO ESPRESSO FORTE",
+    "referencia": "16989"
+  },
+  {
+    "descripcion": "NESPRESSO FINEZZO",
+    "referencia": "16987"
+  },
+  {
+    "descripcion": "NESPRESSO RISTRETTO",
+    "referencia": "16991"
+  },
+  {
+    "descripcion": "PAN PULGA 6 CEREALES  EN  CAJA 100*35 GR",
+    "referencia": "45822"
+  },
+  {
+    "descripcion": "PATATAS ONDULADAS 30 GR",
+    "referencia": "33820"
+  },
+  {
+    "descripcion": "PIZZA MEDIANA 4 QUESOS",
+    "referencia": "16920"
+  },
+  {
+    "descripcion": "PIZZA MEDIANA ATUN",
+    "referencia": "16922"
+  },
+  {
+    "descripcion": "PIZZA MEDIANA BARBACOA",
+    "referencia": "16924"
+  },
+  {
+    "descripcion": "PIZZA MEDIANA CARBONARA/JAMON Y QUESO",
+    "referencia": "16925"
+  },
+  {
+    "descripcion": "PIZZA MEDIANA JAMON",
+    "referencia": "16923"
+  },
+  {
+    "descripcion": "PIZZA MEDIANA MARGARITA",
+    "referencia": "38485"
+  },
+  {
+    "descripcion": "PIZZA PEQUEÑA 4 QUESOS",
+    "referencia": "16926"
+  },
+  {
+    "descripcion": "PIZZA PEQUEÑA ATUN",
+    "referencia": "16930"
+  },
+  {
+    "descripcion": "PIZZA PEQUEÑA BARBACOA",
+    "referencia": "16927"
+  },
+  {
+    "descripcion": "PIZZA PEQUEÑA CARBONARA/JAMON Y QUESO",
+    "referencia": "16928"
+  },
+  {
+    "descripcion": "PIZZA PEQUEÑA JAMON",
+    "referencia": "16929"
+  },
+  {
+    "descripcion": "PIZZA PEQUEÑA MARGARITA",
+    "referencia": "38486"
+  },
+  {
+    "descripcion": "Polaroid Hombre 20738308657Z7",
+    "referencia": "57809"
+  },
+  {
+    "descripcion": "Polaroid Hombre PLD 4129/S/X-086-UC",
+    "referencia": "57808"
+  },
+  {
+    "descripcion": "Polaroid Unisex 207364KJ156M9",
+    "referencia": "57810"
+  },
+  {
+    "descripcion": "Polaroid Unisex 207372O6W57M9",
+    "referencia": "57811"
+  },
+  {
+    "descripcion": "RON AREHUCAS CARTA DE ORO",
+    "referencia": "51798"
+  },
+  {
+    "descripcion": "RON BACARDI",
+    "referencia": "47668"
+  },
+  {
+    "descripcion": "RON BACARDI 8Y MINIATURA 5CL",
+    "referencia": "41041"
+  },
+  {
+    "descripcion": "ROYAL BLISS TONICA",
+    "referencia": "48191"
+  },
+  {
+    "descripcion": "Salvatore anillo 184S0014/12",
+    "referencia": "800028"
+  },
+  {
+    "descripcion": "Salvatore pulsera 204P0014",
+    "referencia": "800360"
+  },
+  {
+    "descripcion": "Salvatore pulsera 68p0198",
+    "referencia": "800371"
+  },
+  {
+    "descripcion": "SOBAO PEQUEÑO UNIDAD",
+    "referencia": "54447"
+  },
+  {
+    "descripcion": "TARTA DE QUESO Y FRESAS",
+    "referencia": "49932"
+  },
+  {
+    "descripcion": "Thomas sabo pulsera mujer sca150009",
+    "referencia": "44179"
+  },
+  {
+    "descripcion": "TINTO DE VERANO",
+    "referencia": "18829"
+  },
+  {
+    "descripcion": "TONICA SCHWEPPES HERITAGE CRISTAL 200 CL",
+    "referencia": "21919"
+  },
+  {
+    "descripcion": "TONICA SCHWEPPES PIMIENTA CRISTAL 200 CL",
+    "referencia": "21918"
+  },
+  {
+    "descripcion": "Versace Bright Crystal PF Edt 90ml",
+    "referencia": "56784"
+  },
+  {
+    "descripcion": "VINO BLANCO BASA RUEDA 75 CL",
+    "referencia": "33056"
+  },
+  {
+    "descripcion": "VINO BLANCO CALCARI PENEDES 75 CL",
+    "referencia": "34266"
+  },
+  {
+    "descripcion": "VINO BLANCO CASTILLO SAN DIEGO 18.75 CL",
+    "referencia": "49962"
+  },
+  {
+    "descripcion": "VINO BLANCO EL NOVIO PERFECTO VALENCIA 7",
+    "referencia": "33055"
+  },
+  {
+    "descripcion": "VINO BLANCO GABA DO XIL GODELLO 75CL",
+    "referencia": "33057"
+  },
+  {
+    "descripcion": "VINO BLANCO HONEY MOON PENEDES 75 CL",
+    "referencia": "34265"
+  },
+  {
+    "descripcion": "VINO BLANCO JOSÉ PARIENTE",
+    "referencia": "50722"
+  },
+  {
+    "descripcion": "VINO BLANCO LEIRANA RIAS BAIXAS 75 CL",
+    "referencia": "802027"
+  },
+  {
+    "descripcion": "VINO BLANCO MAR DE FRADES",
+    "referencia": "48132"
+  },
+  {
+    "descripcion": "VINO BLANCO VIÑA ESMERALDA TORRES",
+    "referencia": "50723"
+  },
+  {
+    "descripcion": "VINO BLANCO VIÑA SOL TORRES",
+    "referencia": "50725"
+  },
+  {
+    "descripcion": "VINO ROSADO DE CASTA TORRES",
+    "referencia": "50726"
+  },
+  {
+    "descripcion": "VINO ROSADO PETIT CAUS GARRAF 75 CL",
+    "referencia": "36048"
+  },
+  {
+    "descripcion": "VINO ROSADO ROS DE PACS  PENEDES 75 CL",
+    "referencia": "34267"
+  },
+  {
+    "descripcion": "VINO TINTO 12 VOLTS MALLORCA 75 CL",
+    "referencia": "802032"
+  },
+  {
+    "descripcion": "VINO TINTO 2TTR PRIORATO 75 CL",
+    "referencia": "34270"
+  },
+  {
+    "descripcion": "VINO TINTO ALGUEIRA MENCIA RIB.SACRA 75 ",
+    "referencia": "50733"
+  },
+  {
+    "descripcion": "VINO TINTO ARNAIZ CRIANZA 20 CL",
+    "referencia": "49967"
+  },
+  {
+    "descripcion": "VINO TINTO CAMINO ROMANO RIB. DUERO 75 C",
+    "referencia": "802033"
+  },
+  {
+    "descripcion": "VINO TINTO CONDADO DE HAZA CRIAN 2011",
+    "referencia": "49667"
+  },
+  {
+    "descripcion": "VINO TINTO GUIMARO RIBEIRA SACRA 75 CL",
+    "referencia": "32941"
+  },
+  {
+    "descripcion": "VINO TINTO LA MALKERIDA UTIEL REQ 75 CL",
+    "referencia": "32930"
+  },
+  {
+    "descripcion": "VINO TINTO MADURESA 2021",
+    "referencia": "804020"
+  },
+  {
+    "descripcion": "VINO TINTO MAS ELENA PENEDES 75 CL",
+    "referencia": "34269"
+  },
+  {
+    "descripcion": "VINO TINTO MAURO CASTILLA LEON 75 CL",
+    "referencia": "32966"
+  },
+  {
+    "descripcion": "VINO TINTO MAYORAZGO ROB RIBE D 75 CL",
+    "referencia": "33138"
+  },
+  {
+    "descripcion": "VINO TINTO MUGA CRIANZA",
+    "referencia": "32971"
+  },
+  {
+    "descripcion": "VINO TINTO MUGA CRIANZA ESPECIAL",
+    "referencia": "49666"
+  },
+  {
+    "descripcion": "VINO TINTO PATA NEGRA CRIANZA 20 CL",
+    "referencia": "49966"
+  },
+  {
+    "descripcion": "VINO TINTO PESQUERA CRIANZA",
+    "referencia": "32955"
+  },
+  {
+    "descripcion": "VINO TINTO RIOJA 18,5 CL",
+    "referencia": "41037"
+  },
+  {
+    "descripcion": "VINO TINTO SANGRE DE TORO TORRES",
+    "referencia": "50727"
+  },
+  {
+    "descripcion": "VINO TINTO SIERRA CANTABRIA RIOJA 75 CL",
+    "referencia": "802044"
+  },
+  {
+    "descripcion": "VINO TINTO TELMO RODRIGUEZ CORR RIOJA 75",
+    "referencia": "36047"
+  },
+  {
+    "descripcion": "VINO TINTO VIÑA REAL CRIANZA RIOJA 75 CL",
+    "referencia": "802046"
+  },
+  {
+    "descripcion": "VINO TINTO VIÑA TONDONIA RESERVA RIOJA 7",
+    "referencia": "45854"
+  },
+  {
+    "descripcion": "VODKA ABSOLUT",
+    "referencia": "30394"
+  },
+  {
+    "descripcion": "WRAP DE POLLO CON GUACAMOLE",
+    "referencia": "52016"
+  }
+]
