@@ -117,6 +117,10 @@ async function cargarEquivalencias() {
     }
 }
 
+function esSamsung() {
+  return /samsung/i.test(navigator.userAgent);
+}
+
 // ----------------------------
 // EMPEZAR INVENTARIO
 // ----------------------------
@@ -163,13 +167,22 @@ function calcularAreaDesdeMarco() {
   const right = (rightPx / videoRect.width) * 100;
 
   const clamp = v => Math.max(0, Math.min(100, v));
-
+  if (esSamsung()) {
     return {
+      top: "15%",
+      bottom: "15%",
+      left: "5%",
+      right: "5%"
+    };
+  }
+
+  // resto de móviles → cálculo exacto
+  return {
     top: `${clamp(top)}%`,
     bottom: `${clamp(bottom)}%`,
     left: `${clamp(left)}%`,
     right: `${clamp(right)}%`
-    };
+  };
 }
 
 // ----------------------------
