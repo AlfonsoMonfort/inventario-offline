@@ -172,7 +172,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.3</header>
+<header>Inventario Offline V.4</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -200,6 +200,14 @@ li{
 </div>
 
   <div class="mensaje" id="mensajeEstado"></div>
+  <div id="aprendizajeBox" class="card" style="display:none; margin-top:10px;">
+  <label style="font-weight:bold;">Referencia</label>
+  <input type="text" id="inputReferenciaAprendida" placeholder="Escribe la referencia">
+  <button type="button" onclick="guardarCodigoAprendido()">
+    Aceptar
+  </button>
+</div>
+
 
   <!-- CANTIDAD -->
   <div class="card" style="margin-top:15px;">
