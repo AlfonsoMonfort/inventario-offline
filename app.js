@@ -151,7 +151,6 @@ function calcularAreaDesdeMarco() {
 
   if (!video.videoWidth || !video.videoHeight) return null;
 
-  const scannerRect = scanner.getBoundingClientRect();
   const frameRect = frame.getBoundingClientRect();
   const videoRect = video.getBoundingClientRect();
 
@@ -195,14 +194,15 @@ function iniciarScanner() {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#scanner'),
-      constraints: {
-        facingMode: "environment"
-      }
+     constraints: {
+      facingMode: "environment",
+      focusMode: "continuous"
+    }
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
     },
-    locate: true
+    locate: !esSamsung()
   }, function (err) {
     if (err) {
       console.error(err);
@@ -211,12 +211,11 @@ function iniciarScanner() {
 
     Quagga.start();
 
-    const scanner = document.getElementById("scanner");
-    const video = scanner.querySelector("video");
-
+    const video = document.querySelector("#scanner video");
     if (!video) return;
 
     video.addEventListener("loadedmetadata", () => {
+
       const area = calcularAreaDesdeMarco();
       if (!area) return;
 
@@ -235,8 +234,9 @@ function iniciarScanner() {
         decoder: {
           readers: ["ean_reader", "ean_8_reader", "upc_reader"]
         },
-        locate: true
+        locate: !esSamsung()
       }, () => Quagga.start());
+
     }, { once: true });
   });
 
@@ -254,6 +254,8 @@ function iniciarScanner() {
     procesarCodigo(code);
   });
 }
+
+
 
 
 
@@ -380,7 +382,7 @@ function finalizar() {
     for (let ref in inventario.articulos) {
 
         datos.push({
-            fecha: formatearFecha(inventario.fecha),
+            fecha: `'${formatearFecha(inventario.fecha)}`,
             almacen: inventario.almacen,
             referencia: ref,
             cantidad: inventario.articulos[ref],
@@ -394,7 +396,32 @@ function finalizar() {
 
     let nombre = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
 
-    XLSX.writeFile(wb, nombre);
+    const wbout = XLSX.write(wb, {
+  bookType: "xlsx",
+  type: "array"
+});
+
+const blob = new Blob([wbout], {
+  type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+});
+
+const url = URL.createObjectURL(blob);
+
+// iOS → abrir para compartir
+if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+  window.open(url);
+} else {
+  // resto → descarga normal
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+setTimeout(() => URL.revokeObjectURL(url), 1000);
+
 
     location.reload();
 }
