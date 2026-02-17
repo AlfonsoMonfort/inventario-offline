@@ -140,59 +140,109 @@ function empezar() {
     document.getElementById("pantallaEscaner").style.display = "block";
 }
 
+function calcularAreaDesdeMarco() {
+  const scanner = document.getElementById("scanner");
+  const frame = document.querySelector(".scanner-frame");
+  const video = scanner.querySelector("video");
+
+  if (!video.videoWidth || !video.videoHeight) return null;
+
+  const scannerRect = scanner.getBoundingClientRect();
+  const frameRect = frame.getBoundingClientRect();
+  const videoRect = video.getBoundingClientRect();
+
+  // Posición del marco respecto al vídeo real
+  const topPx = frameRect.top - videoRect.top;
+  const leftPx = frameRect.left - videoRect.left;
+  const bottomPx = videoRect.bottom - frameRect.bottom;
+  const rightPx = videoRect.right - frameRect.right;
+
+  const top = (topPx / videoRect.height) * 100;
+  const bottom = (bottomPx / videoRect.height) * 100;
+  const left = (leftPx / videoRect.width) * 100;
+  const right = (rightPx / videoRect.width) * 100;
+
+  const clamp = v => Math.max(0, Math.min(100, v));
+
+    return {
+    top: `${clamp(top)}%`,
+    bottom: `${clamp(bottom)}%`,
+    left: `${clamp(left)}%`,
+    right: `${clamp(right)}%`
+    };
+}
 
 // ----------------------------
 // INICIAR ESCÁNER
 // ----------------------------
 function iniciarScanner() {
 
-    Quagga.init({
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector('#scanner'),
+      constraints: {
+        facingMode: "environment"
+      }
+    },
+    decoder: {
+      readers: ["ean_reader", "ean_8_reader", "upc_reader"]
+    },
+    locate: true
+  }, function (err) {
+    if (err) {
+      console.error(err);
+      return;
+    }
+
+    Quagga.start();
+
+    const scanner = document.getElementById("scanner");
+    const video = scanner.querySelector("video");
+
+    if (!video) return;
+
+    video.addEventListener("loadedmetadata", () => {
+      const area = calcularAreaDesdeMarco();
+      if (!area) return;
+
+      Quagga.stop();
+
+      Quagga.init({
         inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: document.querySelector('#scanner'),
-        constraints: {
+          name: "Live",
+          type: "LiveStream",
+          target: document.querySelector('#scanner'),
+          constraints: {
             facingMode: "environment"
-        },
-        area: {
-            top: "27.5%",
-            right: "7.5%",
-            left: "7.5%",
-            bottom: "27.5%"
-        }
+          },
+          area
         },
         decoder: {
-            readers: [
-                "ean_reader",
-                "ean_8_reader",
-                "upc_reader"
-            ]
+          readers: ["ean_reader", "ean_8_reader", "upc_reader"]
         },
         locate: true
-    }, function (err) {
-        if (!err) {
-            Quagga.start();
-        }
-    });
+      }, () => Quagga.start());
+    }, { once: true });
+  });
 
-    document.getElementById("scanner")
-        .addEventListener("click", () => permitirEscaneo = true);
+  document.getElementById("scanner")
+    .addEventListener("click", () => permitirEscaneo = true);
 
-    Quagga.onDetected(function (result) {
-
+  Quagga.onDetected(function (result) {
     if (!permitirEscaneo) return;
-    if (!result || !result.codeResult || !result.codeResult.code) return;
+    if (!result?.codeResult?.code) return;
 
-    let code = result.codeResult.code.replace(/\D/g, "");
-
-    // aceptar EAN-8, UPC-A y EAN-13
+    const code = result.codeResult.code.replace(/\D/g, "");
     if (![8, 12, 13].includes(code.length)) return;
 
     permitirEscaneo = false;
-
     procesarCodigo(code);
-});
+  });
 }
+
+
 
 function añadirManual() {
 
