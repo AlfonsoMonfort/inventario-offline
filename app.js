@@ -582,9 +582,12 @@ if (esIOS() && !estaEnModoStandalone()) {
 // BOTÓN AYUDA
 // ===============================
 
-document.getElementById("btnAyuda").addEventListener("click", () => {
-  document.getElementById("modalAyuda").style.display = "flex";
-});
+const btnAyuda = document.getElementById("btnAyuda");
+if (btnAyuda) {
+  btnAyuda.addEventListener("click", () => {
+    document.getElementById("modalAyuda").style.display = "flex";
+  });
+}
 
 function cerrarAyuda() {
   document.getElementById("modalAyuda").style.display = "none";
