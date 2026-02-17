@@ -155,7 +155,7 @@ function iniciarScanner() {
             facingMode: "environment"
         },
         area: {
-            top: "27.5%",
+            top: "26.5%",
             right: "7.5%",
             left: "7.5%",
             bottom: "26.5%"
