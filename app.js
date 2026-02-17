@@ -31,7 +31,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await cargarEquivalencias();
     await cargarReferenciasSinCodigo();
-    iniciarScanner();
     registrarServiceWorker();
 
     const cantidadInput = document.getElementById("cantidad");
@@ -142,6 +141,7 @@ function empezar() {
 
     document.getElementById("pantallaInicio").style.display = "none";
     document.getElementById("pantallaEscaner").style.display = "block";
+    iniciarScanner();
 }
 
 function calcularAreaDesdeMarco() {
