@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     await cargarEquivalencias();
+    cargarEquivalenciasAprendidas();
     await cargarReferenciasSinCodigo();
     registrarServiceWorker();
 
@@ -260,17 +261,69 @@ function iniciarScanner() {
     .addEventListener("click", () => permitirEscaneo = true);
 
   Quagga.onDetected(function (result) {
-    if (!permitirEscaneo) return;
-    if (!result?.codeResult?.code) return;
+  if (!permitirEscaneo) return;
+  if (!result?.codeResult?.code) return;
 
-    const code = result.codeResult.code.replace(/\D/g, "");
-    if (![8, 12, 13].includes(code.length)) return;
+  const code = result.codeResult.code.replace(/\D/g, "");
+  if (![8, 12, 13].includes(code.length)) return;
 
-    permitirEscaneo = false;
-    procesarCodigo(code);
-  });
+  permitirEscaneo = false;
+
+  // 🧠 MODO APRENDIZAJE
+  if (modoAprendizaje) {
+    codigoPendienteAprender = code;
+    mostrarMensaje("✅ Código leído", "ok");
+    mostrarFormularioAprendizaje();
+    return;
+  }
+
+  // flujo normal
+  procesarCodigo(code);
+});
+
 }
 
+function mostrarFormularioAprendizaje() {
+  document.getElementById("aprendizajeBox").style.display = "block";
+}
+
+function guardarCodigoAprendido() {
+
+  const ref = document
+    .getElementById("inputReferenciaAprendida")
+    .value
+    .trim();
+
+  if (!ref) {
+    mostrarMensaje("❌ Escribe una referencia", "error");
+    return;
+  }
+
+  // Guardar en localStorage
+  equivalenciasAprendidas =
+    JSON.parse(localStorage.getItem("equivalencias_aprendidas") || "{}");
+
+  equivalenciasAprendidas[codigoPendienteAprender] = ref;
+
+  localStorage.setItem(
+    "equivalencias_aprendidas",
+    JSON.stringify(equivalenciasAprendidas)
+  );
+
+  // Activar inmediatamente
+  codigo_a_referencia[codigoPendienteAprender] = ref;
+
+  // 🔥 La descripción YA existe si la referencia está en tu JSON
+  // referencia_a_descripcion[ref] ya está cargada
+
+  // Reset estado
+  modoAprendizaje = false;
+  codigoPendienteAprender = null;
+  document.getElementById("inputReferenciaAprendida").value = "";
+  document.getElementById("aprendizajeBox").style.display = "none";
+
+  mostrarMensaje("🧠 Código aprendido correctamente", "ok");
+}
 
 
 
@@ -306,10 +359,10 @@ function añadirManual() {
 // 🔧 MODO APRENDIZAJE
 // ----------------------------
 function activarModoAprendizaje() {
-    modoAprendizaje = true;
-    mostrarMensaje("📸 Escanea el código a grabar", "ok");
+  modoAprendizaje = true;
+  codigoPendienteAprender = null;
+  mostrarMensaje("📸 Toca pantalla y escanea el código", "ok");
 }
-
 // ----------------------------
 // PROCESAR CÓDIGO
 // ----------------------------
