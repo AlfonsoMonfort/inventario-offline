@@ -132,39 +132,33 @@ function esSamsung() {
 // EMPEZAR INVENTARIO
 // ----------------------------
 function empezar() {
-
   const fechaInput = document.getElementById("fecha");
   const almacenInput = document.getElementById("almacen");
   const vendedorInput = document.getElementById("vendedor");
 
-  // Validación básica
   if (!fechaInput.value || !almacenInput.value || !vendedorInput.value) {
     alert("Completa todos los campos");
     return;
   }
 
-  // Guardar datos del inventario
   inventario.fecha = fechaInput.value;
   inventario.almacen = almacenInput.value;
   inventario.vendedor = vendedorInput.value;
   inventario.articulos = {};
 
-  // Cambiar de pantalla
   document.getElementById("pantallaInicio").style.display = "none";
   document.getElementById("pantallaEscaner").style.display = "block";
 
-  // Preparar input de cantidad (ahora SÍ existe en el DOM)
-  const cantidadInput = document.getElementById("cantidad");
-  if (cantidadInput) {
-    cantidadInput.value = "";
-    cantidadInput.addEventListener("focus", () => {
-      cantidadInput.value = "";
-    });
+  // 🔥 PRUEBA
+  try {
+    iniciarScanner();
+  } catch (e) {
+    console.error("ERROR EN iniciarScanner:", e);
+    alert("Error al iniciar cámara");
   }
-
-  // Arrancar escáner
-  iniciarScanner();
 }
+
+
 
 
 function calcularAreaDesdeMarco() {
@@ -298,10 +292,12 @@ function iniciarScanner() {
 function añadirManual() {
 
   const select = document.getElementById("selectManual");
-  if (!select) return;
+  const cantidadInput = document.getElementById("cantidad");
+
+  if (!select || !cantidadInput) return;
 
   const referencia = select.value;
-  const cantidad = parseInt(document.getElementById("cantidad").value);
+  const cantidad = parseInt(cantidadInput.value, 10) || 1;
 
   if (!referencia) {
     mostrarMensaje("❌ Selecciona un artículo", "error");
@@ -309,7 +305,7 @@ function añadirManual() {
   }
 
   // ===============================
-  // GUARDAR CÓDIGO APRENDIDO
+  // MODO APRENDIZAJE
   // ===============================
   if (modoAprendizaje && codigoPendienteAprendizaje) {
 
@@ -323,19 +319,24 @@ function añadirManual() {
       JSON.stringify(aprendidas)
     );
 
+    // Guardar en memoria activa
     codigo_a_referencia[codigoPendienteAprendizaje] = referencia;
 
+    // 🔥 SALIDA LIMPIA DEL MODO APRENDIZAJE
     modoAprendizaje = false;
     codigoPendienteAprendizaje = null;
+    permitirEscaneo = true;
 
     select.value = "";
-    document.getElementById("cantidad").value = 1;
+    cantidadInput.value = 1;
 
     mostrarMensaje("✅ Código aprendido correctamente", "ok");
     return;
   }
 
-  // === flujo manual normal ===
+  // ===============================
+  // FLUJO MANUAL NORMAL
+  // ===============================
   if (inventario.articulos[referencia]) {
     inventario.articulos[referencia] += cantidad;
   } else {
@@ -343,11 +344,14 @@ function añadirManual() {
   }
 
   select.value = "";
-  document.getElementById("cantidad").value = 1;
+  cantidadInput.value = 1;
+
+  permitirEscaneo = true;
 
   mostrarMensaje("✅ Artículo añadido manualmente", "ok");
   actualizarLista();
 }
+
 
 
 
