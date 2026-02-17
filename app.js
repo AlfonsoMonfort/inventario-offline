@@ -3,6 +3,7 @@
 // ----------------------------
 let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
+let referenciasSinCodigo = [];
 
 let inventario = {
     fecha: "",
@@ -28,8 +29,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         this.value = this.value.toUpperCase();
     });
 
-
     await cargarEquivalencias();
+    await cargarReferenciasSinCodigo();
     iniciarScanner();
     registrarServiceWorker();
 
@@ -39,6 +40,33 @@ document.addEventListener("DOMContentLoaded", async () => {
         this.value = "";
 });
 });
+
+async function cargarReferenciasSinCodigo() {
+  try {
+    const response = await fetch("referencias_sin_codigo_barras.json");
+    if (!response.ok) throw new Error("No se pudo cargar referencias");
+
+    referenciasSinCodigo = await response.json();
+
+    const select = document.getElementById("selectManual");
+    if (!select) return;
+
+
+    referenciasSinCodigo.forEach(item => {
+      const option = document.createElement("option");
+      option.value = item.referencia;
+      option.textContent = `${item.descripcion} (${item.referencia})`;
+      select.appendChild(option);
+
+      // Guardamos también la descripción para la lista final
+      referencia_a_descripcion[item.referencia] = item.descripcion;
+    });
+
+  } catch (error) {
+    console.error("Error cargando referencias sin código:", error);
+  }
+};
+
 
 
 // ----------------------------
@@ -156,6 +184,33 @@ function iniciarScanner() {
 
     procesarCodigo(code);
 });
+}
+
+function añadirManual() {
+
+  const select = document.getElementById("selectManual");
+    if (!select) return;
+
+
+  const referencia = select.value;
+  const cantidad = parseInt(document.getElementById("cantidad").value);
+
+  if (!referencia) {
+    mostrarMensaje("❌ Selecciona un artículo", "error");
+    return;
+  }
+
+  if (inventario.articulos[referencia]) {
+    inventario.articulos[referencia] += cantidad;
+  } else {
+    inventario.articulos[referencia] = cantidad;
+  }
+
+  select.value = "";
+  document.getElementById("cantidad").value = 1;
+
+  mostrarMensaje("✅ Artículo añadido manualmente", "ok");
+  actualizarLista();
 }
 
 

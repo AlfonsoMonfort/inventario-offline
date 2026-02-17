@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v133";
+const CACHE_NAME = "inventario-cache-v134";
 
 const urlsToCache = [
   "./",
@@ -9,7 +9,9 @@ const urlsToCache = [
   "./xlsx.full.min.js",
   "./icon-192.png",
   "./icon-512.png",
-  "./equivalencias.json"
+  "./equivalencias.json",
+  "./referencias_sin_codigo_barras.json"
+  
 ];
 
 
