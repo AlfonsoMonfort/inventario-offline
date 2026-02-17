@@ -36,11 +36,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     registrarServiceWorker();
 
     const cantidadInput = document.getElementById("cantidad");
-
-    cantidadInput.addEventListener("focus", function () {
+    if (cantidadInput) {
+      cantidadInput.addEventListener("focus", function () {
         this.value = "";
+      });
+    }
+
 });
-});
+
 
 async function cargarReferenciasSinCodigo() {
   try {
@@ -130,24 +133,39 @@ function esSamsung() {
 // ----------------------------
 function empezar() {
 
-    const fechaInput = document.getElementById("fecha");
-    const almacenInput = document.getElementById("almacen");
-    const vendedorInput = document.getElementById("vendedor");
+  const fechaInput = document.getElementById("fecha");
+  const almacenInput = document.getElementById("almacen");
+  const vendedorInput = document.getElementById("vendedor");
 
-    if (!fechaInput.value || !almacenInput.value || !vendedorInput.value) {
-        alert("Completa todos los campos");
-        return;
-    }
+  // Validación básica
+  if (!fechaInput.value || !almacenInput.value || !vendedorInput.value) {
+    alert("Completa todos los campos");
+    return;
+  }
 
-    inventario.fecha = fechaInput.value;
-    inventario.almacen = almacenInput.value;
-    inventario.vendedor = vendedorInput.value;
-    inventario.articulos = {};
+  // Guardar datos del inventario
+  inventario.fecha = fechaInput.value;
+  inventario.almacen = almacenInput.value;
+  inventario.vendedor = vendedorInput.value;
+  inventario.articulos = {};
 
-    document.getElementById("pantallaInicio").style.display = "none";
-    document.getElementById("pantallaEscaner").style.display = "block";
-    iniciarScanner();
+  // Cambiar de pantalla
+  document.getElementById("pantallaInicio").style.display = "none";
+  document.getElementById("pantallaEscaner").style.display = "block";
+
+  // Preparar input de cantidad (ahora SÍ existe en el DOM)
+  const cantidadInput = document.getElementById("cantidad");
+  if (cantidadInput) {
+    cantidadInput.value = "";
+    cantidadInput.addEventListener("focus", () => {
+      cantidadInput.value = "";
+    });
+  }
+
+  // Arrancar escáner
+  iniciarScanner();
 }
+
 
 function calcularAreaDesdeMarco() {
   const scanner = document.getElementById("scanner");
