@@ -4,8 +4,6 @@
 let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
 let referenciasSinCodigo = [];
-let modoAprendizaje = false;
-let codigoPendienteAprendizaje = null;
 
 let inventario = {
     fecha: "",
@@ -36,14 +34,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     registrarServiceWorker();
 
     const cantidadInput = document.getElementById("cantidad");
-    if (cantidadInput) {
-      cantidadInput.addEventListener("focus", function () {
+
+    cantidadInput.addEventListener("focus", function () {
         this.value = "";
-      });
-    }
-
 });
-
+});
 
 async function cargarReferenciasSinCodigo() {
   try {
@@ -78,50 +73,47 @@ async function cargarReferenciasSinCodigo() {
 // ----------------------------
 async function cargarEquivalencias() {
 
-  try {
+    try {
 
-    let datosGuardados = localStorage.getItem("equivalencias");
+        let datosGuardados = localStorage.getItem("equivalencias");
 
-    if (datosGuardados) {
-      let datos = JSON.parse(datosGuardados);
-      datos.forEach(item => {
-        codigo_a_referencia[item.codigo] = item.referencia;
-        referencia_a_descripcion[item.referencia] = item.descripcion;
-      });
-    } else {
+        if (datosGuardados) {
+            console.log("Cargando equivalencias desde almacenamiento local");
+            let datos = JSON.parse(datosGuardados);
 
-      const response = await fetch("equivalencias.json");
-      if (!response.ok) throw new Error("No se pudo cargar equivalencias.json");
+            datos.forEach(item => {
+                codigo_a_referencia[item.codigo] = item.referencia;
+                referencia_a_descripcion[item.referencia] = item.descripcion;
+            });
 
-      const datos = await response.json();
-      localStorage.setItem("equivalencias", JSON.stringify(datos));
+            console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
+            return;
+        }
 
-      datos.forEach(item => {
-        codigo_a_referencia[item.codigo] = item.referencia;
-        referencia_a_descripcion[item.referencia] = item.descripcion;
-      });
+        console.log("Descargando equivalencias por primera vez");
+
+        const response = await fetch("equivalencias.json");
+
+        if (!response.ok) {
+            throw new Error("No se pudo cargar equivalencias.json");
+        }
+
+        const datos = await response.json();
+
+        console.log("Datos recibidos:", datos);
+
+        localStorage.setItem("equivalencias", JSON.stringify(datos));
+
+        datos.forEach(item => {
+            codigo_a_referencia[item.codigo] = item.referencia;
+            referencia_a_descripcion[item.referencia] = item.descripcion;
+        });
+
+        console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
+
+    } catch (error) {
+        console.log("Error cargando equivalencias:", error);
     }
-
-    // === Cargar equivalencias aprendidas ===
-    const aprendidas = JSON.parse(
-      localStorage.getItem("equivalencias_aprendidas") || "{}"
-    );
-
-    Object.keys(aprendidas).forEach(codigo => {
-      codigo_a_referencia[codigo] = aprendidas[codigo];
-    });
-
-  } catch (error) {
-    console.log("Error cargando equivalencias:", error);
-  }
-}
-
-
-function activarAprendizaje() {
-  modoAprendizaje = true;
-  codigoPendienteAprendizaje = null;
-  permitirEscaneo = true;
-  mostrarMensaje("📸 Escanea el código a aprender", "ok");
 }
 
 function esSamsung() {
@@ -132,34 +124,25 @@ function esSamsung() {
 // EMPEZAR INVENTARIO
 // ----------------------------
 function empezar() {
-  const fechaInput = document.getElementById("fecha");
-  const almacenInput = document.getElementById("almacen");
-  const vendedorInput = document.getElementById("vendedor");
 
-  if (!fechaInput.value || !almacenInput.value || !vendedorInput.value) {
-    alert("Completa todos los campos");
-    return;
-  }
+    const fechaInput = document.getElementById("fecha");
+    const almacenInput = document.getElementById("almacen");
+    const vendedorInput = document.getElementById("vendedor");
 
-  inventario.fecha = fechaInput.value;
-  inventario.almacen = almacenInput.value;
-  inventario.vendedor = vendedorInput.value;
-  inventario.articulos = {};
+    if (!fechaInput.value || !almacenInput.value || !vendedorInput.value) {
+        alert("Completa todos los campos");
+        return;
+    }
 
-  document.getElementById("pantallaInicio").style.display = "none";
-  document.getElementById("pantallaEscaner").style.display = "block";
+    inventario.fecha = fechaInput.value;
+    inventario.almacen = almacenInput.value;
+    inventario.vendedor = vendedorInput.value;
+    inventario.articulos = {};
 
-  // 🔥 PRUEBA
-  try {
+    document.getElementById("pantallaInicio").style.display = "none";
+    document.getElementById("pantallaEscaner").style.display = "block";
     iniciarScanner();
-  } catch (e) {
-    console.error("ERROR EN iniciarScanner:", e);
-    alert("Error al iniciar cámara");
-  }
 }
-
-
-
 
 function calcularAreaDesdeMarco() {
   const scanner = document.getElementById("scanner");
@@ -261,82 +244,35 @@ function iniciarScanner() {
     .addEventListener("click", () => permitirEscaneo = true);
 
   Quagga.onDetected(function (result) {
-  if (!permitirEscaneo) return;
-  if (!result?.codeResult?.code) return;
+    if (!permitirEscaneo) return;
+    if (!result?.codeResult?.code) return;
 
-  const code = result.codeResult.code.replace(/\D/g, "");
-  if (![8, 12, 13].includes(code.length)) return;
+    const code = result.codeResult.code.replace(/\D/g, "");
+    if (![8, 12, 13].includes(code.length)) return;
 
-  permitirEscaneo = false;
+    permitirEscaneo = false;
+    procesarCodigo(code);
+  });
+}
 
-  // ===============================
-  // MODO APRENDIZAJE
-  // ===============================
-  if (modoAprendizaje) {
 
-    codigoPendienteAprendizaje = code;
-
-    mostrarMensaje(
-      "📌 Código detectado. Selecciona referencia y pulsa Añadir",
-      "ok"
-    );
-
-    return; // ⛔ NO sigue al inventario
-  }
-
-  procesarCodigo(code);
-});
 
 
 
 function añadirManual() {
 
   const select = document.getElementById("selectManual");
-  const cantidadInput = document.getElementById("cantidad");
+    if (!select) return;
 
-  if (!select || !cantidadInput) return;
 
   const referencia = select.value;
-  const cantidad = parseInt(cantidadInput.value, 10) || 1;
+  const cantidad = parseInt(document.getElementById("cantidad").value);
 
   if (!referencia) {
     mostrarMensaje("❌ Selecciona un artículo", "error");
     return;
   }
 
-  // ===============================
-  // MODO APRENDIZAJE
-  // ===============================
-  if (modoAprendizaje && codigoPendienteAprendizaje) {
-
-    const aprendidas = JSON.parse(
-      localStorage.getItem("equivalencias_aprendidas") || "{}"
-    );
-
-    aprendidas[codigoPendienteAprendizaje] = referencia;
-    localStorage.setItem(
-      "equivalencias_aprendidas",
-      JSON.stringify(aprendidas)
-    );
-
-    // Guardar en memoria activa
-    codigo_a_referencia[codigoPendienteAprendizaje] = referencia;
-
-    // 🔥 SALIDA LIMPIA DEL MODO APRENDIZAJE
-    modoAprendizaje = false;
-    codigoPendienteAprendizaje = null;
-    permitirEscaneo = true;
-
-    select.value = "";
-    cantidadInput.value = 1;
-
-    mostrarMensaje("✅ Código aprendido correctamente", "ok");
-    return;
-  }
-
-  // ===============================
-  // FLUJO MANUAL NORMAL
-  // ===============================
   if (inventario.articulos[referencia]) {
     inventario.articulos[referencia] += cantidad;
   } else {
@@ -344,15 +280,11 @@ function añadirManual() {
   }
 
   select.value = "";
-  cantidadInput.value = 1;
-
-  permitirEscaneo = true;
+  document.getElementById("cantidad").value = 1;
 
   mostrarMensaje("✅ Artículo añadido manualmente", "ok");
   actualizarLista();
 }
-
-
 
 
 // ----------------------------
@@ -586,12 +518,9 @@ if (esIOS() && !estaEnModoStandalone()) {
 // BOTÓN AYUDA
 // ===============================
 
-const btnAyuda = document.getElementById("btnAyuda");
-if (btnAyuda) {
-  btnAyuda.addEventListener("click", () => {
-    document.getElementById("modalAyuda").style.display = "flex";
-  });
-}
+document.getElementById("btnAyuda").addEventListener("click", () => {
+  document.getElementById("modalAyuda").style.display = "flex";
+});
 
 function cerrarAyuda() {
   document.getElementById("modalAyuda").style.display = "none";
