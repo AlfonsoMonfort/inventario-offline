@@ -155,10 +155,10 @@ function iniciarScanner() {
             facingMode: "environment"
         },
         area: {
-        top: "30%",
+        top: "15%",
         right: "10%",
         left: "10%",
-        bottom: "30%"
+        bottom: "35%"
         }
         },
         decoder: {
