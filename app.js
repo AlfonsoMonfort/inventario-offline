@@ -299,6 +299,11 @@ function guardarCodigoAprendido() {
     return;
   }
 
+  if (!referencia_a_descripcion[ref]) {
+    mostrarMensaje("❌ Referencia no válida", "error");
+    return;
+  }
+
   // Guardar en localStorage
   equivalenciasAprendidas =
     JSON.parse(localStorage.getItem("equivalencias_aprendidas") || "{}");
@@ -323,6 +328,7 @@ function guardarCodigoAprendido() {
   document.getElementById("aprendizajeBox").style.display = "none";
 
   mostrarMensaje("🧠 Código aprendido correctamente", "ok");
+  permitirEscaneo = true;
 }
 
 
