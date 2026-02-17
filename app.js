@@ -14,6 +14,10 @@ let inventario = {
 
 let permitirEscaneo = false;
 
+// 🔧 NUEVO — aprendizaje
+let modoAprendizaje = false;
+let codigoPendienteAprender = null;
+let equivalenciasAprendidas = {};
 
 // ----------------------------
 // INICIO
@@ -118,6 +122,18 @@ async function cargarEquivalencias() {
 
 function esSamsung() {
   return /samsung/i.test(navigator.userAgent);
+}
+
+// 🔧 NUEVO
+function cargarEquivalenciasAprendidas() {
+    const guardadas = localStorage.getItem("equivalencias_aprendidas");
+    if (!guardadas) return;
+
+    equivalenciasAprendidas = JSON.parse(guardadas);
+
+    for (let codigo in equivalenciasAprendidas) {
+        codigo_a_referencia[codigo] = equivalenciasAprendidas[codigo];
+    }
 }
 
 // ----------------------------
@@ -286,6 +302,13 @@ function añadirManual() {
   actualizarLista();
 }
 
+// ----------------------------
+// 🔧 MODO APRENDIZAJE
+// ----------------------------
+function activarModoAprendizaje() {
+    modoAprendizaje = true;
+    mostrarMensaje("📸 Escanea el código a grabar", "ok");
+}
 
 // ----------------------------
 // PROCESAR CÓDIGO
