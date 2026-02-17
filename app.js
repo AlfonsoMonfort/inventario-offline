@@ -158,7 +158,7 @@ function iniciarScanner() {
             top: "27.5%",
             right: "7.5%",
             left: "7.5%",
-            bottom: "28.5%"
+            bottom: "26.5%"
         }
         },
         decoder: {
