@@ -4,6 +4,8 @@
 let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
 let referenciasSinCodigo = [];
+let modoAprendizaje = false;
+let codigoPendienteAprendizaje = null;
 
 let inventario = {
     fecha: "",
@@ -73,47 +75,50 @@ async function cargarReferenciasSinCodigo() {
 // ----------------------------
 async function cargarEquivalencias() {
 
-    try {
+  try {
 
-        let datosGuardados = localStorage.getItem("equivalencias");
+    let datosGuardados = localStorage.getItem("equivalencias");
 
-        if (datosGuardados) {
-            console.log("Cargando equivalencias desde almacenamiento local");
-            let datos = JSON.parse(datosGuardados);
+    if (datosGuardados) {
+      let datos = JSON.parse(datosGuardados);
+      datos.forEach(item => {
+        codigo_a_referencia[item.codigo] = item.referencia;
+        referencia_a_descripcion[item.referencia] = item.descripcion;
+      });
+    } else {
 
-            datos.forEach(item => {
-                codigo_a_referencia[item.codigo] = item.referencia;
-                referencia_a_descripcion[item.referencia] = item.descripcion;
-            });
+      const response = await fetch("equivalencias.json");
+      if (!response.ok) throw new Error("No se pudo cargar equivalencias.json");
 
-            console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
-            return;
-        }
+      const datos = await response.json();
+      localStorage.setItem("equivalencias", JSON.stringify(datos));
 
-        console.log("Descargando equivalencias por primera vez");
-
-        const response = await fetch("equivalencias.json");
-
-        if (!response.ok) {
-            throw new Error("No se pudo cargar equivalencias.json");
-        }
-
-        const datos = await response.json();
-
-        console.log("Datos recibidos:", datos);
-
-        localStorage.setItem("equivalencias", JSON.stringify(datos));
-
-        datos.forEach(item => {
-            codigo_a_referencia[item.codigo] = item.referencia;
-            referencia_a_descripcion[item.referencia] = item.descripcion;
-        });
-
-        console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
-
-    } catch (error) {
-        console.log("Error cargando equivalencias:", error);
+      datos.forEach(item => {
+        codigo_a_referencia[item.codigo] = item.referencia;
+        referencia_a_descripcion[item.referencia] = item.descripcion;
+      });
     }
+
+    // === Cargar equivalencias aprendidas ===
+    const aprendidas = JSON.parse(
+      localStorage.getItem("equivalencias_aprendidas") || "{}"
+    );
+
+    Object.keys(aprendidas).forEach(codigo => {
+      codigo_a_referencia[codigo] = aprendidas[codigo];
+    });
+
+  } catch (error) {
+    console.log("Error cargando equivalencias:", error);
+  }
+}
+
+
+function activarAprendizaje() {
+  modoAprendizaje = true;
+  codigoPendienteAprendizaje = null;
+  permitirEscaneo = true;
+  mostrarMensaje("📸 Escanea el código a aprender", "ok");
 }
 
 function esSamsung() {
@@ -244,26 +249,38 @@ function iniciarScanner() {
     .addEventListener("click", () => permitirEscaneo = true);
 
   Quagga.onDetected(function (result) {
-    if (!permitirEscaneo) return;
-    if (!result?.codeResult?.code) return;
+  if (!permitirEscaneo) return;
+  if (!result?.codeResult?.code) return;
 
-    const code = result.codeResult.code.replace(/\D/g, "");
-    if (![8, 12, 13].includes(code.length)) return;
+  const code = result.codeResult.code.replace(/\D/g, "");
+  if (![8, 12, 13].includes(code.length)) return;
 
-    permitirEscaneo = false;
-    procesarCodigo(code);
-  });
-}
+  permitirEscaneo = false;
 
+  // ===============================
+  // MODO APRENDIZAJE
+  // ===============================
+  if (modoAprendizaje) {
 
+    codigoPendienteAprendizaje = code;
+
+    mostrarMensaje(
+      "📌 Código detectado. Selecciona referencia y pulsa Añadir",
+      "ok"
+    );
+
+    return; // ⛔ NO sigue al inventario
+  }
+
+  procesarCodigo(code);
+});
 
 
 
 function añadirManual() {
 
   const select = document.getElementById("selectManual");
-    if (!select) return;
-
+  if (!select) return;
 
   const referencia = select.value;
   const cantidad = parseInt(document.getElementById("cantidad").value);
@@ -273,6 +290,34 @@ function añadirManual() {
     return;
   }
 
+  // ===============================
+  // GUARDAR CÓDIGO APRENDIDO
+  // ===============================
+  if (modoAprendizaje && codigoPendienteAprendizaje) {
+
+    const aprendidas = JSON.parse(
+      localStorage.getItem("equivalencias_aprendidas") || "{}"
+    );
+
+    aprendidas[codigoPendienteAprendizaje] = referencia;
+    localStorage.setItem(
+      "equivalencias_aprendidas",
+      JSON.stringify(aprendidas)
+    );
+
+    codigo_a_referencia[codigoPendienteAprendizaje] = referencia;
+
+    modoAprendizaje = false;
+    codigoPendienteAprendizaje = null;
+
+    select.value = "";
+    document.getElementById("cantidad").value = 1;
+
+    mostrarMensaje("✅ Código aprendido correctamente", "ok");
+    return;
+  }
+
+  // === flujo manual normal ===
   if (inventario.articulos[referencia]) {
     inventario.articulos[referencia] += cantidad;
   } else {
@@ -285,6 +330,7 @@ function añadirManual() {
   mostrarMensaje("✅ Artículo añadido manualmente", "ok");
   actualizarLista();
 }
+
 
 
 // ----------------------------
@@ -382,7 +428,7 @@ function finalizar() {
     for (let ref in inventario.articulos) {
 
         datos.push({
-            fecha: `'${formatearFecha(inventario.fecha)}`,
+            fecha: formatearFecha(inventario.fecha),
             almacen: inventario.almacen,
             referencia: ref,
             cantidad: inventario.articulos[ref],
