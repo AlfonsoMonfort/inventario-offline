@@ -135,6 +135,26 @@ li{
   text-align: left;
 }
 
+/* =========================
+   MARCO ESCÁNER CENTRADO
+   ========================= */
+#scanner {
+  position: relative;
+}
+
+.scanner-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70%;
+  height: 35%;
+  transform: translate(-50%, -50%);
+  border: 3px solid red;
+  border-radius: 12px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+</style>
 
 </style>
 </head>
@@ -144,7 +164,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.7</header>
+<header>Inventario Offline V.8</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -167,8 +187,9 @@ li{
 
   <!-- ESCÁNER ARRIBA -->
   <div class="card">
-    <div id="scanner"></div>
-  </div>
+    <div id="scanner">
+  <div class="scanner-frame"></div>
+</div>
 
   <div class="mensaje" id="mensajeEstado"></div>
 

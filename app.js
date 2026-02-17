@@ -148,10 +148,18 @@ function iniciarScanner() {
 
     Quagga.init({
         inputStream: {
-            name: "Live",
-            type: "LiveStream",
-            target: document.querySelector('#scanner'),
-            constraints: { facingMode: "environment" }
+        name: "Live",
+        type: "LiveStream",
+        target: document.querySelector('#scanner'),
+        constraints: {
+            facingMode: "environment"
+        },
+        area: {
+            top: "35%",
+            right: "15%",
+            left: "15%",
+            bottom: "35%"
+        }
         },
         decoder: {
             readers: [
