@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   almacenInput.addEventListener("input", function () {
     this.value = this.value.toUpperCase().slice(0, 3);
   });
-  
+
   window.hayInventarioGuardado =
   !!localStorage.getItem("inventario_guardado");
 
@@ -652,6 +652,22 @@ function mostrarMensaje(texto, tipo) {
 function formatearFecha(fechaISO) {
     const [anio, mes, dia] = fechaISO.split("-");
     return `${dia}/${mes}/${anio}`;
+}
+
+function guardarInventario() {
+
+  const datos = {
+    inventario: inventario
+  };
+
+  localStorage.setItem(
+    "inventario_guardado",
+    JSON.stringify(datos)
+  );
+
+  window.hayInventarioGuardado = true;
+
+  mostrarMensaje("💾 Inventario guardado", "ok");
 }
 
 // ----------------------------
