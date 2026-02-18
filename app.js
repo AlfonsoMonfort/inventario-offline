@@ -271,11 +271,16 @@ function iniciarScanner() {
 
   // 🧠 MODO APRENDIZAJE
   if (modoAprendizaje) {
-    codigoPendienteAprender = code;
-    mostrarMensaje("✅ Código leído", "ok");
-    mostrarFormularioAprendizaje();
-    return;
-  }
+  codigoPendienteAprender = code;
+
+  const divCodigo = document.getElementById("codigoAprendidoMostrado");
+  divCodigo.textContent = "Código leído: " + code;
+  divCodigo.style.display = "block";
+
+  mostrarMensaje("✅ Código leído", "ok");
+  mostrarFormularioAprendizaje();
+  return;
+}
 
   // flujo normal
   procesarCodigo(code);
