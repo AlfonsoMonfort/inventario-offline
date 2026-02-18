@@ -569,7 +569,7 @@ function leerOCRContinuo() {
   let sh = frameRect.height * scaleY;
 
   // 🔍 REDUCIR zona SOLO para OCR (ajustable)
-  const recorte = 0.20; // prueba 0.4 si los números son muy pequeños
+  const recorte = 0.25; // prueba 0.4 si los números son muy pequeños
   const dx = sw * (1 - recorte) / 2;
   const dy = sh * (1 - recorte) / 2;
 
@@ -597,7 +597,7 @@ function leerOCRContinuo() {
 
   for (let i = 0; i < data.length; i += 4) {
     const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-    const v = avg > 140 ? 255 : 0; // umbral
+    const v = avg > 120 ? 255 : avg * 0.6;
     data[i] = data[i+1] = data[i+2] = v;
   }
 
@@ -634,6 +634,9 @@ if (DEBUG_OCR) {
     "digits",
     {
       tessedit_char_whitelist: "0123456789",
+      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
+      user_defined_dpi: 300,
+      preserve_interword_spaces: "1",
       classify_bln_numeric_mode: 1
     }
   ).then(result => {
