@@ -11,6 +11,7 @@ let ocrTimeout = null;
 let ocrUltimo = null;
 let ocrRepeticiones = 0;
 
+
 let inventario = {
     fecha: "",
     almacen: "",
@@ -543,9 +544,6 @@ function exportarCodigosAprendidos() {
 }
 
 
-// 🔢 control de estabilidad OCR
-let ocrUltimo = null;
-let ocrRepeticiones = 0;
 
 function leerOCRContinuo() {
 
