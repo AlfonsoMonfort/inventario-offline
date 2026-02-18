@@ -10,6 +10,7 @@ let ocrInterval = null;
 let ocrTimeout = null;
 let ocrUltimo = null;
 let ocrRepeticiones = 0;
+let ocrProcesado = false;
 
 const DEBUG_OCR = true;
 
@@ -342,23 +343,21 @@ function iniciarScanner() {
 
 
 function activarModoOCR() {
-  // 🔒 limpiar restos anteriores
   if (ocrInterval) clearInterval(ocrInterval);
   if (ocrTimeout) clearTimeout(ocrTimeout);
 
-  modoOCR = true;
+  ocrProcesado = false; // 🔒 reset candado
+
   modoOCRActivo = true;
   permitirEscaneo = false;
 
   mostrarMensaje("🔍 Buscando referencia…", "ok");
 
-  // 🔁 OCR continuo
   ocrInterval = setInterval(() => {
     if (!modoOCRActivo) return;
     leerOCRContinuo();
   }, 700);
 
-  // ⏱️ Timeout de seguridad (10 s)
   ocrTimeout = setTimeout(() => {
     if (modoOCRActivo) {
       cancelarOCR();
@@ -366,6 +365,7 @@ function activarModoOCR() {
     }
   }, 10000);
 }
+
 
 
 
@@ -548,18 +548,22 @@ function exportarCodigosAprendidos() {
 
 function leerOCRContinuo() {
 
-  if (!modoOCRActivo) return;
+  // ⛔ seguridad básica
+  if (!modoOCRActivo || ocrProcesado) return;
 
   const video = document.querySelector("#scanner video");
   const frame = document.querySelector(".scanner-frame");
   const debugText = document.getElementById("ocrTextDebug");
 
+  if (!video || !frame || !video.videoWidth) return;
+
   if (debugText) {
     debugText.innerText = "OCR activo…";
   }
 
-  if (!video || !frame || !video.videoWidth) return;
-
+  // ----------------------------
+  // 📐 CÁLCULO DE ZONA OCR
+  // ----------------------------
   const videoRect = video.getBoundingClientRect();
   const frameRect = frame.getBoundingClientRect();
 
@@ -571,6 +575,7 @@ function leerOCRContinuo() {
   let sw = frameRect.width * scaleX;
   let sh = frameRect.height * scaleY;
 
+  // 🔍 recorte central (solo números)
   const recorte = 0.45;
   const dx = sw * (1 - recorte) / 2;
   const dy = sh * (1 - recorte) / 2;
@@ -580,6 +585,9 @@ function leerOCRContinuo() {
   sw *= recorte;
   sh *= recorte;
 
+  // ----------------------------
+  // 🎨 CANVAS OCR
+  // ----------------------------
   const canvas = document.createElement("canvas");
   canvas.width = sw * 2;
   canvas.height = sh * 2;
@@ -589,17 +597,21 @@ function leerOCRContinuo() {
 
   ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
 
+  // 🔲 binarización fuerte
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imgData.data;
 
   for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
     const v = avg > 145 ? 255 : 0;
-    data[i] = data[i+1] = data[i+2] = v;
+    data[i] = data[i + 1] = data[i + 2] = v;
   }
 
   ctx.putImageData(imgData, 0, 0);
 
+  // ----------------------------
+  // 🔠 TESSERACT
+  // ----------------------------
   Tesseract.recognize(
     canvas,
     "eng",
@@ -609,71 +621,71 @@ function leerOCRContinuo() {
     }
   ).then(result => {
 
+    if (ocrProcesado) return;
+
     const texto = (result.data.text || "")
-  .replace(/\s+/g, "")
-  .replace(/[^0-9]/g, "");
+      .replace(/\s+/g, "")
+      .replace(/[^0-9]/g, "");
 
-if (debugText) {
-  debugText.innerText = `OCR lee: "${texto || "∅"}"`;
-}
+    if (debugText) {
+      debugText.innerText = `OCR lee: "${texto || "∅"}"`;
+    }
 
-const match = texto.match(/\d{5,7}/);
+    // ❌ no parece una referencia válida
+    if (!/^\d{5,7}$/.test(texto)) {
+      ocrUltimo = null;
+      ocrRepeticiones = 0;
+      return;
+    }
 
-if (!match) {
-  ocrUltimo = null;
-  ocrRepeticiones = 0;
-  return;
-}
+    // ----------------------------
+    // 🔁 CONFIRMACIÓN POR REPETICIÓN
+    // ----------------------------
+    if (texto === ocrUltimo) {
+      ocrRepeticiones++;
+    } else {
+      ocrUltimo = texto;
+      ocrRepeticiones = 1;
+    }
 
-if (match[0] === ocrUltimo) {
-  ocrRepeticiones++;
-} else {
-  ocrUltimo = match[0];
-  ocrRepeticiones = 1;
-}
+    if (ocrRepeticiones < 2) return;
 
-if (ocrRepeticiones < 2) return; // 👈 2 lecturas iguales
+    // ----------------------------
+    // ✅ OCR CONFIRMADO (UNA SOLA VEZ)
+    // ----------------------------
+    ocrProcesado = true;
+    modoOCRActivo = false;
 
-// ✅ OCR CONFIRMADO
-const referencia = match[0];
+    ocrUltimo = null;
+    ocrRepeticiones = 0;
 
-// 🔒 parar OCR
-ocrUltimo = null;
-ocrRepeticiones = 0;
-modoOCRActivo = false;
-cancelarOCR();
+    cancelarOCR();
 
-// ❌ si no existe la referencia, no añadir
-if (!referencia_a_descripcion[referencia]) {
-  mostrarMensaje("❌ Referencia no existe", "error");
-  permitirEscaneo = true;
-  return;
-}
+    // 🔍 comprobar referencia existente
+    if (!referencia_a_descripcion[texto]) {
+      mostrarMensaje("❌ Referencia no existe", "error");
+      permitirEscaneo = true;
+      return;
+    }
 
-// 📦 AÑADIR AUTOMÁTICO
-const cantidad =
-  parseInt(document.getElementById("cantidad").value) || 1;
+    const cantidad =
+      parseInt(document.getElementById("cantidad").value) || 1;
 
-inventario.articulos[referencia] =
-  (inventario.articulos[referencia] || 0) + cantidad;
+    inventario.articulos[texto] =
+      (inventario.articulos[texto] || 0) + cantidad;
 
-actualizarLista();
+    actualizarLista();
+    document.getElementById("cantidad").value = 1;
 
-document.getElementById("cantidad").value = 1;
-
-mostrarMensaje("✅ Artículo añadido (OCR)", "ok");
-
-permitirEscaneo = true;
-
-
+    mostrarMensaje("✅ Artículo añadido (OCR)", "ok");
+    permitirEscaneo = true;
 
   }).catch(err => {
-    if (debugText) {
-      debugText.innerText = "OCR error";
-    }
+    // silencioso: OCR continuo ya reintenta
     console.error(err);
   });
 }
+
 
 function aceptarOCR() {
   modoOCR = false;

@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v191";
+const CACHE_NAME = "inventario-cache-v192";
 
 const urlsToCache = [
   "./",
