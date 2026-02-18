@@ -602,21 +602,23 @@ function leerOCRContinuo() {
   }
 
 ctx.putImageData(imgData, 0, 0); 
-  // 🧪 DEBUG: mostrar lo que OCR está leyendo
+// 🧪 DEBUG: mostrar lo que OCR está leyendo bajo el escáner
 if (DEBUG_OCR) {
   let debugCanvas = document.getElementById("ocr-debug-canvas");
 
   if (!debugCanvas) {
     debugCanvas = document.createElement("canvas");
     debugCanvas.id = "ocr-debug-canvas";
-    debugCanvas.style.position = "fixed";
-    debugCanvas.style.bottom = "10px";
-    debugCanvas.style.right = "10px";
-    debugCanvas.style.width = "140px";
+
+    debugCanvas.style.display = "block";
+    debugCanvas.style.width = "100%";
+    debugCanvas.style.maxWidth = "280px";
+    debugCanvas.style.margin = "10px auto 0";
     debugCanvas.style.border = "2px solid lime";
     debugCanvas.style.background = "#000";
-    debugCanvas.style.zIndex = "9999";
-    document.body.appendChild(debugCanvas);
+
+    document.getElementById("scanner")
+      .appendChild(debugCanvas);
   }
 
   debugCanvas.width = canvas.width;
@@ -625,6 +627,7 @@ if (DEBUG_OCR) {
   const dctx = debugCanvas.getContext("2d");
   dctx.drawImage(canvas, 0, 0);
 }
+
 
   Tesseract.recognize(
     canvas,
