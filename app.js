@@ -591,10 +591,19 @@ function leerOCRContinuo() {
     sx, sy, sw, sh,
     0, 0, canvas.width, canvas.height
   );
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
 
+  for (let i = 0; i < data.length; i += 4) {
+    const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+    const v = avg > 140 ? 255 : 0; // umbral
+    data[i] = data[i+1] = data[i+2] = v;
+  }
+
+ctx.putImageData(imgData, 0, 0); 
   Tesseract.recognize(
     canvas,
-    "eng",
+    "digits",
     {
       tessedit_char_whitelist: "0123456789",
       classify_bln_numeric_mode: 1
@@ -602,7 +611,7 @@ function leerOCRContinuo() {
   ).then(result => {
 
     const texto = (result.data.text || "").replace(/\s/g, "");
-    const match = texto.match(/\b\d{5,7}\b/);
+    const match = texto.match(/(\d{5,7})/);
 
     // ❌ no hay número válido
     if (!match) {
