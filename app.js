@@ -618,7 +618,7 @@ if (DEBUG_OCR) {
     debugCanvas.style.background = "#000";
 
     document.getElementById("scanner")
-      .appendChild(debugCanvas);
+  .after(debugCanvas);
   }
 
   debugCanvas.width = canvas.width;
