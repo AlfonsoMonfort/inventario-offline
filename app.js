@@ -548,110 +548,80 @@ function exportarCodigosAprendidos() {
 
 function leerOCRContinuo() {
 
-  if (!modoOCRActivo) return;
-
   const video = document.querySelector("#scanner video");
+  if (!video || video.videoWidth === 0) return;
+
   const frame = document.querySelector(".scanner-frame");
+  if (!frame) return;
 
-  if (!video || !frame || !video.videoWidth) return;
-
+  // 🔹 Rectángulos visibles
   const videoRect = video.getBoundingClientRect();
   const frameRect = frame.getBoundingClientRect();
 
-  // 🔢 escala real vídeo → pantalla
+  // 🔹 Escala real video → pantalla
   const scaleX = video.videoWidth / videoRect.width;
   const scaleY = video.videoHeight / videoRect.height;
 
-  // 📐 zona del cuadro rojo en coordenadas reales
+  // 🔹 Coordenadas del cuadro rojo
   let sx = (frameRect.left - videoRect.left) * scaleX;
   let sy = (frameRect.top - videoRect.top) * scaleY;
   let sw = frameRect.width * scaleX;
   let sh = frameRect.height * scaleY;
 
-  // 🔍 REDUCIR zona SOLO para OCR (ajustable)
-  const recorte = 0.25; // prueba 0.4 si los números son muy pequeños
-  const dx = sw * (1 - recorte) / 2;
-  const dy = sh * (1 - recorte) / 2;
+  // 🔥 RECORTE INTERNO (MUY IMPORTANTE)
+  // Ajusta estos valores si hace falta
+  const recorteX = 0.3; // ancho
+  const recorteY = 0.2; // alto
+
+  const dx = sw * (1 - recorteX) / 2;
+  const dy = sh * (1 - recorteY) / 2;
 
   sx += dx;
   sy += dy;
-  sw *= recorte;
-  sh *= recorte;
+  sw *= recorteX;
+  sh *= recorteY;
 
-  // 🎨 canvas OCR
-  const escalaOCR = 1.5; // subir a 2 si aún cuesta
+  // 🔍 Escalado OCR (engañar a Tesseract)
+  const escalaOCR = 3;
+
   const canvas = document.createElement("canvas");
   canvas.width = sw * escalaOCR;
   canvas.height = sh * escalaOCR;
 
   const ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
 
-  ctx.drawImage(
-    video,
-    sx, sy, sw, sh,
-    0, 0, canvas.width, canvas.height
-  );
-  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imgData.data;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-    const v = avg > 120 ? 255 : avg * 0.6;
-    data[i] = data[i+1] = data[i+2] = v;
+  // 🪟 DEBUG VISUAL
+  const debug = document.getElementById("ocrDebug");
+  if (debug) {
+    debug.innerHTML = "";
+    debug.appendChild(canvas);
   }
 
-ctx.putImageData(imgData, 0, 0); 
-// 🧪 DEBUG: mostrar lo que OCR está leyendo bajo el escáner
-if (DEBUG_OCR) {
-  let debugCanvas = document.getElementById("ocr-debug-canvas");
-
-  if (!debugCanvas) {
-    debugCanvas = document.createElement("canvas");
-    debugCanvas.id = "ocr-debug-canvas";
-
-    debugCanvas.style.display = "block";
-    debugCanvas.style.width = "100%";
-    debugCanvas.style.maxWidth = "280px";
-    debugCanvas.style.margin = "10px auto 0";
-    debugCanvas.style.border = "2px solid lime";
-    debugCanvas.style.background = "#000";
-
-    document.getElementById("scanner")
-  .after(debugCanvas);
-  }
-
-  debugCanvas.width = canvas.width;
-  debugCanvas.height = canvas.height;
-
-  const dctx = debugCanvas.getContext("2d");
-  dctx.drawImage(canvas, 0, 0);
-}
-
-
+  // 🔍 OCR
   Tesseract.recognize(
     canvas,
-    "digits",
+    "eng",
     {
       tessedit_char_whitelist: "0123456789",
       tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
       user_defined_dpi: 300,
-      preserve_interword_spaces: "1",
       classify_bln_numeric_mode: 1
     }
   ).then(result => {
 
-    const texto = (result.data.text || "").replace(/\s/g, "");
-    const match = texto.match(/(\d{5,7})/);
+    const texto = (result.data.text || "").trim();
+    console.log("OCR:", texto);
 
-    // ❌ no hay número válido
+    const match = texto.match(/\b\d{5,7}\b/);
+
     if (!match) {
       ocrUltimo = null;
       ocrRepeticiones = 0;
       return;
     }
 
-    // 🔁 confirmación por repetición
+    // 🔁 Confirmación por repetición
     if (match[0] === ocrUltimo) {
       ocrRepeticiones++;
     } else {
@@ -659,12 +629,10 @@ if (DEBUG_OCR) {
       ocrRepeticiones = 1;
     }
 
-    // aún no es estable
     if (ocrRepeticiones < 2) return;
 
-    // ✅ OCR CONFIRMADO
+    // ✅ ÉXITO
     numeroOCRDetectado = match[0];
-
     ocrUltimo = null;
     ocrRepeticiones = 0;
 
@@ -675,10 +643,9 @@ if (DEBUG_OCR) {
       "Referencia detectada: " + numeroOCRDetectado;
 
     document.getElementById("ocrBox").style.display = "block";
-    mostrarMensaje("✅ Referencia detectada", "ok");
 
-  }).catch(() => {
-    // silencioso: el OCR continuo ya reintenta
+  }).catch(err => {
+    console.error("OCR error:", err);
   });
 }
 
