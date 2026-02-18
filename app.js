@@ -11,6 +11,7 @@ let ocrTimeout = null;
 let ocrUltimo = null;
 let ocrRepeticiones = 0;
 
+const DEBUG_OCR = true;
 
 let inventario = {
     fecha: "",
@@ -601,6 +602,30 @@ function leerOCRContinuo() {
   }
 
 ctx.putImageData(imgData, 0, 0); 
+  // 🧪 DEBUG: mostrar lo que OCR está leyendo
+if (DEBUG_OCR) {
+  let debugCanvas = document.getElementById("ocr-debug-canvas");
+
+  if (!debugCanvas) {
+    debugCanvas = document.createElement("canvas");
+    debugCanvas.id = "ocr-debug-canvas";
+    debugCanvas.style.position = "fixed";
+    debugCanvas.style.bottom = "10px";
+    debugCanvas.style.right = "10px";
+    debugCanvas.style.width = "140px";
+    debugCanvas.style.border = "2px solid lime";
+    debugCanvas.style.background = "#000";
+    debugCanvas.style.zIndex = "9999";
+    document.body.appendChild(debugCanvas);
+  }
+
+  debugCanvas.width = canvas.width;
+  debugCanvas.height = canvas.height;
+
+  const dctx = debugCanvas.getContext("2d");
+  dctx.drawImage(canvas, 0, 0);
+}
+
   Tesseract.recognize(
     canvas,
     "digits",
@@ -698,6 +723,8 @@ function cancelarOCR() {
 
   document.getElementById("ocrBox").style.display = "none";
   permitirEscaneo = true;
+  const debugCanvas = document.getElementById("ocr-debug-canvas");
+  if (debugCanvas) debugCanvas.remove();    
 }
 
 
