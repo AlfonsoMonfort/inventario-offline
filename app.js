@@ -28,9 +28,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     new Date().toISOString().split("T")[0];
 
     // FORZAR MAYÚSCULAS EN ALMACEN
-    const almacenInput = document.getElementById("almacen");
     almacenInput.addEventListener("input", function () {
-        this.value = this.value.toUpperCase();
+      this.value = this.value.toUpperCase().slice(0, 3);
     });
 
     await cargarEquivalencias();
@@ -329,6 +328,7 @@ function guardarCodigoAprendido() {
 
   mostrarMensaje("🧠 Código aprendido correctamente", "ok");
   permitirEscaneo = true;
+  document.getElementById("btnCancelarAprendizaje").style.display = "none";
 }
 
 
@@ -367,8 +367,24 @@ function añadirManual() {
 function activarModoAprendizaje() {
   modoAprendizaje = true;
   codigoPendienteAprender = null;
+  permitirEscaneo = true;
+
+  document.getElementById("btnCancelarAprendizaje").style.display = "block";
+
   mostrarMensaje("📸 Toca pantalla y escanea el código", "ok");
 }
+
+function cancelarAprendizaje() {
+  modoAprendizaje = false;
+  codigoPendienteAprender = null;
+  permitirEscaneo = false;
+
+  document.getElementById("btnCancelarAprendizaje").style.display = "none";
+  document.getElementById("aprendizajeBox").style.display = "none";
+
+  mostrarMensaje("❌ Grabación cancelada", "error");
+}
+
 // ----------------------------
 // PROCESAR CÓDIGO
 // ----------------------------
