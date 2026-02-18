@@ -5,6 +5,11 @@ let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
 let referenciasSinCodigo = [];
 let numeroOCRDetectado = null;
+let modoOCRActivo = false;
+let ocrInterval = null;
+let ocrTimeout = null;
+let ocrUltimo = null;
+let ocrRepeticiones = 0;
 
 let inventario = {
     fecha: "",
@@ -49,11 +54,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
-
-    if (modoOCR) {
-      leerOCR();          // 📸 OCR
-      return;
-    }
 
     permitirEscaneo = true; // 📦 escáner normal
   });
@@ -338,14 +338,35 @@ function iniciarScanner() {
 
 }
 
-let modoOCR = false;
 
 function activarModoOCR() {
+  // 🔒 limpiar restos anteriores
+  if (ocrInterval) clearInterval(ocrInterval);
+  if (ocrTimeout) clearTimeout(ocrTimeout);
+
   modoOCR = true;
+  modoOCRActivo = true;
   permitirEscaneo = false;
 
-  mostrarMensaje("📸 Toca la pantalla cuando el número esté enfocado", "ok");
+  mostrarMensaje("🔍 Buscando referencia…", "ok");
+
+  // 🔁 OCR continuo
+  ocrInterval = setInterval(() => {
+    if (!modoOCRActivo) return;
+    leerOCRContinuo();
+  }, 700);
+
+  // ⏱️ Timeout de seguridad (10 s)
+  ocrTimeout = setTimeout(() => {
+    if (modoOCRActivo) {
+      cancelarOCR();
+      mostrarMensaje("❌ No se detectó referencia", "error");
+    }
+  }, 10000);
 }
+
+
+
 
 function mostrarFormularioAprendizaje() {
   document.getElementById("aprendizajeBox").style.display = "block";
@@ -522,47 +543,57 @@ function exportarCodigosAprendidos() {
 }
 
 
-function leerOCR() {
+// 🔢 control de estabilidad OCR
+let ocrUltimo = null;
+let ocrRepeticiones = 0;
+
+function leerOCRContinuo() {
+
+  if (!modoOCRActivo) return;
 
   const video = document.querySelector("#scanner video");
   const frame = document.querySelector(".scanner-frame");
 
-  if (!video || !frame) {
-    mostrarMensaje("❌ Cámara no disponible", "error");
-    permitirEscaneo = true;
-    modoOCR = false;
-    return;
-  }
-
-  // Asegurarse de que el vídeo ya tiene tamaño
-  if (!video.videoWidth || !video.videoHeight) {
-    mostrarMensaje("❌ Cámara no lista", "error");
-    permitirEscaneo = true;
-    modoOCR = false;
-    return;
-  }
-
-  // 📸 Capturar SOLO el área del marco rojo
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  if (!video || !frame || !video.videoWidth) return;
 
   const videoRect = video.getBoundingClientRect();
   const frameRect = frame.getBoundingClientRect();
 
+  // 🔢 escala real vídeo → pantalla
   const scaleX = video.videoWidth / videoRect.width;
   const scaleY = video.videoHeight / videoRect.height;
 
-  const sx = (frameRect.left - videoRect.left) * scaleX;
-  const sy = (frameRect.top - videoRect.top) * scaleY;
-  const sw = frameRect.width * scaleX;
-  const sh = frameRect.height * scaleY;
+  // 📐 zona del cuadro rojo en coordenadas reales
+  let sx = (frameRect.left - videoRect.left) * scaleX;
+  let sy = (frameRect.top - videoRect.top) * scaleY;
+  let sw = frameRect.width * scaleX;
+  let sh = frameRect.height * scaleY;
 
-  canvas.width = sw;
-  canvas.height = sh;
+  // 🔍 REDUCIR zona SOLO para OCR (ajustable)
+  const recorte = 0.5; // prueba 0.4 si los números son muy pequeños
+  const dx = sw * (1 - recorte) / 2;
+  const dy = sh * (1 - recorte) / 2;
 
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+  sx += dx;
+  sy += dy;
+  sw *= recorte;
+  sh *= recorte;
 
-  // 🔢 OCR
+  // 🎨 canvas OCR
+  const escalaOCR = 1.5; // subir a 2 si aún cuesta
+  const canvas = document.createElement("canvas");
+  canvas.width = sw * escalaOCR;
+  canvas.height = sh * escalaOCR;
+
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+
+  ctx.drawImage(
+    video,
+    sx, sy, sw, sh,
+    0, 0, canvas.width, canvas.height
+  );
+
   Tesseract.recognize(
     canvas,
     "eng",
@@ -572,30 +603,49 @@ function leerOCR() {
     }
   ).then(result => {
 
-    const texto = result.data.text || "";
+    const texto = (result.data.text || "").replace(/\s/g, "");
     const match = texto.match(/\b\d{5,7}\b/);
 
+    // ❌ no hay número válido
     if (!match) {
-      mostrarMensaje("❌ No se detectó referencia válida", "error");
-      permitirEscaneo = true;
-      modoOCR = false;
+      ocrUltimo = null;
+      ocrRepeticiones = 0;
       return;
     }
 
+    // 🔁 confirmación por repetición
+    if (match[0] === ocrUltimo) {
+      ocrRepeticiones++;
+    } else {
+      ocrUltimo = match[0];
+      ocrRepeticiones = 1;
+    }
+
+    // aún no es estable
+    if (ocrRepeticiones < 2) return;
+
+    // ✅ OCR CONFIRMADO
     numeroOCRDetectado = match[0];
+
+    ocrUltimo = null;
+    ocrRepeticiones = 0;
+
+    modoOCRActivo = false;
+    cancelarOCR();
 
     document.getElementById("ocrNumeroDetectado").innerText =
       "Referencia detectada: " + numeroOCRDetectado;
 
     document.getElementById("ocrBox").style.display = "block";
+    mostrarMensaje("✅ Referencia detectada", "ok");
 
-  }).catch(err => {
-    console.error("OCR error:", err);
-    mostrarMensaje("❌ Error OCR", "error");
-    permitirEscaneo = true;
-    modoOCR = false;
+  }).catch(() => {
+    // silencioso: el OCR continuo ya reintenta
   });
 }
+
+
+
 
 
 function aceptarOCR() {
@@ -626,10 +676,21 @@ function aceptarOCR() {
 
 function cancelarOCR() {
   modoOCR = false;
+  modoOCRActivo = false;
   numeroOCRDetectado = null;
+
+  if (ocrInterval) {
+    clearInterval(ocrInterval);
+    ocrInterval = null;
+  }
+
+  if (ocrTimeout) {
+    clearTimeout(ocrTimeout);
+    ocrTimeout = null;
+  }
+
   document.getElementById("ocrBox").style.display = "none";
   permitirEscaneo = true;
-  mostrarMensaje("❌ OCR cancelado", "error");
 }
 
 
