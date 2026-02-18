@@ -46,6 +46,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   cantidadInput.addEventListener("focus", function () {
     this.value = "";
   });
+  const scanner = document.getElementById("scanner");
+
+  scanner.addEventListener("click", () => {
+
+    if (modoOCR) {
+      leerOCR();          // 📸 OCR
+      return;
+    }
+
+    permitirEscaneo = true; // 📦 escáner normal
+  });
 });
 
 
@@ -299,9 +310,6 @@ function iniciarScanner() {
     }, { once: true });
   });
 
-  document.getElementById("scanner")
-    .addEventListener("click", () => permitirEscaneo = true);
-
   Quagga.onDetected(function (result) {
   if (!permitirEscaneo) return;
   if (!result?.codeResult?.code) return;
@@ -336,13 +344,8 @@ function activarModoOCR() {
   modoOCR = true;
   permitirEscaneo = false;
 
-  mostrarMensaje("📸 Apunta al número y espera…", "ok");
-
-  // pequeña pausa para que el usuario apunte bien
-  setTimeout(() => {
-    leerOCR();
-  }, 500);
-} 
+  mostrarMensaje("📸 Toca la pantalla cuando el número esté enfocado", "ok");
+}
 
 function mostrarFormularioAprendizaje() {
   document.getElementById("aprendizajeBox").style.display = "block";
@@ -522,21 +525,44 @@ function exportarCodigosAprendidos() {
 function leerOCR() {
 
   const video = document.querySelector("#scanner video");
-  if (!video) {
+  const frame = document.querySelector(".scanner-frame");
+
+  if (!video || !frame) {
     mostrarMensaje("❌ Cámara no disponible", "error");
     permitirEscaneo = true;
     modoOCR = false;
     return;
   }
 
-  // Capturar frame del vídeo
+  // Asegurarse de que el vídeo ya tiene tamaño
+  if (!video.videoWidth || !video.videoHeight) {
+    mostrarMensaje("❌ Cámara no lista", "error");
+    permitirEscaneo = true;
+    modoOCR = false;
+    return;
+  }
+
+  // 📸 Capturar SOLO el área del marco rojo
   const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+  const videoRect = video.getBoundingClientRect();
+  const frameRect = frame.getBoundingClientRect();
+
+  const scaleX = video.videoWidth / videoRect.width;
+  const scaleY = video.videoHeight / videoRect.height;
+
+  const sx = (frameRect.left - videoRect.left) * scaleX;
+  const sy = (frameRect.top - videoRect.top) * scaleY;
+  const sw = frameRect.width * scaleX;
+  const sh = frameRect.height * scaleY;
+
+  canvas.width = sw;
+  canvas.height = sh;
+
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+
+  // 🔢 OCR
   Tesseract.recognize(
     canvas,
     "eng",
@@ -547,7 +573,6 @@ function leerOCR() {
   ).then(result => {
 
     const texto = result.data.text || "";
-
     const match = texto.match(/\b\d{5,7}\b/);
 
     if (!match) {
@@ -572,8 +597,9 @@ function leerOCR() {
   });
 }
 
-function aceptarOCR() {
 
+function aceptarOCR() {
+  modoOCR = false;
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
@@ -599,6 +625,7 @@ function aceptarOCR() {
 }
 
 function cancelarOCR() {
+  modoOCR = false;
   numeroOCRDetectado = null;
   document.getElementById("ocrBox").style.display = "none";
   permitirEscaneo = true;
