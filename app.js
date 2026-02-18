@@ -15,10 +15,11 @@ let ocrProcesado = false;
 const DEBUG_OCR = true;
 
 let inventario = {
-    fecha: "",
-    almacen: "",
-    vendedor: "",
-    articulos: {}
+  fecha: "",
+  almacen: "",
+  vendedor: "",
+  articulos: {},       // cantidades por referencia
+  orden: []             // 👈 orden de entrada
 };
 
 let permitirEscaneo = false;
@@ -688,6 +689,7 @@ function leerOCRContinuo() {
 
 
 function aceptarOCR() {
+
   modoOCR = false;
   document.getElementById("ocrBox").style.display = "none";
 
@@ -702,16 +704,33 @@ function aceptarOCR() {
   const cantidad =
     parseInt(document.getElementById("cantidad").value) || 1;
 
-  inventario.articulos[numeroOCRDetectado] =
-    (inventario.articulos[numeroOCRDetectado] || 0) + cantidad;
+  // ➕ añadir o sumar cantidad
+  if (inventario.articulos[numeroOCRDetectado]) {
+    inventario.articulos[numeroOCRDetectado] += cantidad;
+
+    // 🔼 mover arriba (último usado)
+    inventario.orden = inventario.orden.filter(
+      r => r !== numeroOCRDetectado
+    );
+    inventario.orden.unshift(numeroOCRDetectado);
+
+  } else {
+    inventario.articulos[numeroOCRDetectado] = cantidad;
+
+    // 🆕 nuevo → arriba del todo
+    inventario.orden.unshift(numeroOCRDetectado);
+  }
 
   actualizarLista();
 
+  // 🔄 reset
   numeroOCRDetectado = null;
   permitirEscaneo = true;
+  document.getElementById("cantidad").value = 1;
 
   mostrarMensaje("✅ Referencia añadida", "ok");
 }
+
 
 function cancelarOCR() {
   modoOCR = false;
@@ -753,29 +772,40 @@ function cerrarAyuda() {
 function añadirManual() {
 
   const select = document.getElementById("selectManual");
-    if (!select) return;
-
+  if (!select) return;
 
   const referencia = select.value;
-  const cantidad = parseInt(document.getElementById("cantidad").value);
+  const cantidad =
+    parseInt(document.getElementById("cantidad").value) || 1;
 
   if (!referencia) {
     mostrarMensaje("❌ Selecciona un artículo", "error");
     return;
   }
 
+  // ➕ añadir o sumar cantidad
   if (inventario.articulos[referencia]) {
     inventario.articulos[referencia] += cantidad;
+
+    // 🔼 mover arriba (último usado)
+    inventario.orden = inventario.orden.filter(r => r !== referencia);
+    inventario.orden.unshift(referencia);
+
   } else {
     inventario.articulos[referencia] = cantidad;
+
+    // 🆕 nuevo → arriba del todo
+    inventario.orden.unshift(referencia);
   }
 
+  // 🔄 reset
   select.value = "";
   document.getElementById("cantidad").value = 1;
 
   mostrarMensaje("✅ Artículo añadido manualmente", "ok");
   actualizarLista();
 }
+
 
 // ----------------------------
 // 🔧 MODO APRENDIZAJE
@@ -806,29 +836,40 @@ function cancelarAprendizaje() {
 // ----------------------------
 function procesarCodigo(codigo) {
 
-    let cantidad = parseInt(document.getElementById("cantidad").value);
+  let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
 
-    let referencia =
+  let referencia =
     codigo_a_referencia[codigo] ||
     codigo_a_referencia[codigo.padStart(13, "0")] ||
     codigo_a_referencia[codigo.replace(/^0/, "")];
 
-    if (!referencia) {
-        mostrarMensaje("❌ Código no encontrado", "error");
-        return;
-    }
+  if (!referencia) {
+    mostrarMensaje("❌ Código no encontrado", "error");
+    return;
+  }
 
-    if (inventario.articulos[referencia]) {
-        inventario.articulos[referencia] += cantidad;
-    } else {
-        inventario.articulos[referencia] = cantidad;
-    }
+  // ➕ Añadir o sumar cantidad
+  if (inventario.articulos[referencia]) {
+    inventario.articulos[referencia] += cantidad;
 
-    document.getElementById("cantidad").value = 1;
+    // 🔼 mover referencia arriba (último usado)
+    inventario.orden = inventario.orden.filter(r => r !== referencia);
+    inventario.orden.unshift(referencia);
 
-    mostrarMensaje("✅ Artículo añadido", "ok");
-    actualizarLista();
+  } else {
+    inventario.articulos[referencia] = cantidad;
+
+    // 🆕 nuevo artículo → arriba del todo
+    inventario.orden.unshift(referencia);
+  }
+
+  // 🔄 reset cantidad
+  document.getElementById("cantidad").value = 1;
+
+  mostrarMensaje("✅ Artículo añadido", "ok");
+  actualizarLista();
 }
+
 
 
 // ----------------------------
@@ -836,20 +877,20 @@ function procesarCodigo(codigo) {
 // ----------------------------
 function actualizarLista() {
 
-    let ul = document.getElementById("listaArticulos");
-    ul.innerHTML = "";
+  const ul = document.getElementById("listaArticulos");
+  ul.innerHTML = "";
 
-    for (let ref in inventario.articulos) {
+  inventario.orden.forEach(ref => {
 
-        let li = document.createElement("li");
+    const li = document.createElement("li");
 
-        li.innerHTML = `
-            <b>${referencia_a_descripcion[ref] || "Artículo no encontrado"}</b><br>
-            Ref: ${ref} — Cantidad: ${inventario.articulos[ref]}
-        `;
+    li.innerHTML = `
+      <b>${referencia_a_descripcion[ref] || "Artículo no encontrado"}</b><br>
+      Ref: ${ref} — Cantidad: ${inventario.articulos[ref]}
+    `;
 
-        ul.appendChild(li);
-    }
+    ul.appendChild(li);
+  });
 }
 
 
