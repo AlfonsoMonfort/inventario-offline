@@ -609,7 +609,9 @@ function leerOCRContinuo() {
     }
   ).then(result => {
 
-    const texto = (result.data.text || "").replace(/\s+/g, "");
+    const texto = (result.data.text || "")
+  .replace(/\s+/g, "")
+  .replace(/[^0-9]/g, "");
 
     if (debugText) {
       debugText.innerText = `OCR lee: "${texto || "∅"}"`;
