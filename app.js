@@ -332,12 +332,7 @@ function guardarCodigoAprendido() {
   document.getElementById("btnCancelarAprendizaje").style.display = "none";
 }
 
-                .catch(function (error) {
-                    console.log('Error registrando Service Worker:', error);
-                });
-        });
-    }
-}
+                
 
 let deferredPrompt;
 
@@ -617,10 +612,16 @@ setTimeout(() => URL.revokeObjectURL(url), 1000);
 // SERVICE WORKER
 // ----------------------------
 function registrarServiceWorker() {
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function () {
-            navigator.serviceWorker.register('service-worker.js')
-                .then(function (registration) {
-                    console.log('Service Worker registrado:', registration.scope);
-                })
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker
+        .register('service-worker.js')
+        .then(function (registration) {
+          console.log('Service Worker registrado:', registration.scope);
+        })
+        .catch(function (error) {
+          console.log('Error registrando Service Worker:', error);
+        });
+    });
+  }
+}
