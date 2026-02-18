@@ -330,6 +330,20 @@ function iniciarScanner() {
 
 }
 
+let modoOCR = false;
+
+function activarModoOCR() {
+  modoOCR = true;
+  permitirEscaneo = false;
+
+  mostrarMensaje("📸 Apunta al número y espera…", "ok");
+
+  // pequeña pausa para que el usuario apunte bien
+  setTimeout(() => {
+    leerOCR();
+  }, 500);
+} 
+
 function mostrarFormularioAprendizaje() {
   document.getElementById("aprendizajeBox").style.display = "block";
 }
