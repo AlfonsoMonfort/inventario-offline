@@ -613,9 +613,42 @@ function leerOCRContinuo() {
   .replace(/\s+/g, "")
   .replace(/[^0-9]/g, "");
 
-    if (debugText) {
-      debugText.innerText = `OCR lee: "${texto || "∅"}"`;
-    }
+if (debugText) {
+  debugText.innerText = `OCR lee: "${texto || "∅"}"`;
+}
+
+const match = texto.match(/\d{5,7}/);
+
+if (!match) {
+  ocrUltimo = null;
+  ocrRepeticiones = 0;
+  return;
+}
+
+if (match[0] === ocrUltimo) {
+  ocrRepeticiones++;
+} else {
+  ocrUltimo = match[0];
+  ocrRepeticiones = 1;
+}
+
+if (ocrRepeticiones < 2) return; // 👈 2 lecturas iguales
+
+// ✅ OCR CONFIRMADO
+numeroOCRDetectado = match[0];
+
+// 🔒 parar OCR
+ocrUltimo = null;
+ocrRepeticiones = 0;
+modoOCRActivo = false;
+cancelarOCR();
+
+// 👉 mostrar confirmación
+document.getElementById("ocrNumeroDetectado").innerText =
+  "Referencia detectada: " + numeroOCRDetectado;
+
+document.getElementById("ocrBox").style.display = "block";
+
 
   }).catch(err => {
     if (debugText) {
