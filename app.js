@@ -24,25 +24,26 @@ let equivalenciasAprendidas = {};
 // ----------------------------
 document.addEventListener("DOMContentLoaded", async () => {
 
-    document.getElementById("fecha").value =
+  document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
 
-    // FORZAR MAYÚSCULAS EN ALMACEN
-    almacenInput.addEventListener("input", function () {
-      this.value = this.value.toUpperCase().slice(0, 3);
-    });
+  const almacenInput = document.getElementById("almacen");
 
-    await cargarEquivalencias();
-    cargarEquivalenciasAprendidas();
-    await cargarReferenciasSinCodigo();
-    registrarServiceWorker();
+  almacenInput.addEventListener("input", function () {
+    this.value = this.value.toUpperCase().slice(0, 3);
+  });
 
-    const cantidadInput = document.getElementById("cantidad");
+  await cargarEquivalencias();
+  cargarEquivalenciasAprendidas();
+  await cargarReferenciasSinCodigo();
+  registrarServiceWorker();
 
-    cantidadInput.addEventListener("focus", function () {
-        this.value = "";
+  const cantidadInput = document.getElementById("cantidad");
+  cantidadInput.addEventListener("focus", function () {
+    this.value = "";
+  });
 });
-});
+
 
 async function cargarReferenciasSinCodigo() {
   try {
@@ -331,6 +332,92 @@ function guardarCodigoAprendido() {
   document.getElementById("btnCancelarAprendizaje").style.display = "none";
 }
 
+                .catch(function (error) {
+                    console.log('Error registrando Service Worker:', error);
+                });
+        });
+    }
+}
+
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    const btn = document.getElementById("btnInstalar");
+    btn.style.display = "block";
+});
+
+document.getElementById("btnInstalar").addEventListener("click", async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log("Resultado instalación:", outcome);
+        deferredPrompt = null;
+        document.getElementById("btnInstalar").style.display = "none";
+    }
+});
+
+function esIOS() {
+  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
+function esSafari() {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+}
+
+function estaEnModoStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+}
+
+if (esIOS() && !estaEnModoStandalone()) {
+
+  const aviso = document.createElement("div");
+
+  aviso.style.position = "fixed";
+  aviso.style.bottom = "0";
+  aviso.style.left = "0";
+  aviso.style.right = "0";
+  aviso.style.background = "#111";
+  aviso.style.color = "#fff";
+  aviso.style.padding = "15px";
+  aviso.style.textAlign = "center";
+  aviso.style.zIndex = "9999";
+  aviso.style.fontSize = "14px";
+
+  if (!esSafari()) {
+    aviso.innerHTML = `
+      ⚠️ Para instalar esta app en iPhone:<br><br>
+      1️⃣ Abre esta página en <b>Safari</b><br>
+      2️⃣ Pulsa el botón 📤<br>
+      3️⃣ Toca "Añadir a pantalla de inicio"<br><br>
+      <button onclick="this.parentElement.remove()">Cerrar</button>
+    `;
+  } else {
+    aviso.innerHTML = `
+      📲 Para instalar esta app:<br><br>
+      1️⃣ Pulsa el botón 📤 (Compartir)<br>
+      2️⃣ Elige "Añadir a pantalla de inicio"<br><br>
+      <button onclick="this.parentElement.remove()">Cerrar</button>
+    `;
+  }
+
+  document.body.appendChild(aviso);
+}
+
+
+// ===============================
+// BOTÓN AYUDA
+// ===============================
+
+document.getElementById("btnAyuda").addEventListener("click", () => {
+  document.getElementById("modalAyuda").style.display = "flex";
+});
+
+function cerrarAyuda() {
+  document.getElementById("modalAyuda").style.display = "none";
+}
 
 
 
@@ -537,89 +624,3 @@ function registrarServiceWorker() {
                 .then(function (registration) {
                     console.log('Service Worker registrado:', registration.scope);
                 })
-                .catch(function (error) {
-                    console.log('Error registrando Service Worker:', error);
-                });
-        });
-    }
-}
-
-let deferredPrompt;
-
-window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-
-    const btn = document.getElementById("btnInstalar");
-    btn.style.display = "block";
-});
-
-document.getElementById("btnInstalar").addEventListener("click", async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log("Resultado instalación:", outcome);
-        deferredPrompt = null;
-        document.getElementById("btnInstalar").style.display = "none";
-    }
-});
-
-function esIOS() {
-  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
-}
-
-function esSafari() {
-  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-}
-
-function estaEnModoStandalone() {
-  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-}
-
-if (esIOS() && !estaEnModoStandalone()) {
-
-  const aviso = document.createElement("div");
-
-  aviso.style.position = "fixed";
-  aviso.style.bottom = "0";
-  aviso.style.left = "0";
-  aviso.style.right = "0";
-  aviso.style.background = "#111";
-  aviso.style.color = "#fff";
-  aviso.style.padding = "15px";
-  aviso.style.textAlign = "center";
-  aviso.style.zIndex = "9999";
-  aviso.style.fontSize = "14px";
-
-  if (!esSafari()) {
-    aviso.innerHTML = `
-      ⚠️ Para instalar esta app en iPhone:<br><br>
-      1️⃣ Abre esta página en <b>Safari</b><br>
-      2️⃣ Pulsa el botón 📤<br>
-      3️⃣ Toca "Añadir a pantalla de inicio"<br><br>
-      <button onclick="this.parentElement.remove()">Cerrar</button>
-    `;
-  } else {
-    aviso.innerHTML = `
-      📲 Para instalar esta app:<br><br>
-      1️⃣ Pulsa el botón 📤 (Compartir)<br>
-      2️⃣ Elige "Añadir a pantalla de inicio"<br><br>
-      <button onclick="this.parentElement.remove()">Cerrar</button>
-    `;
-  }
-
-  document.body.appendChild(aviso);
-}
-
-
-// ===============================
-// BOTÓN AYUDA
-// ===============================
-
-document.getElementById("btnAyuda").addEventListener("click", () => {
-  document.getElementById("modalAyuda").style.display = "flex";
-});
-
-function cerrarAyuda() {
-  document.getElementById("modalAyuda").style.display = "none";
-}
