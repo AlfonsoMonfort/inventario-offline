@@ -401,6 +401,62 @@ if (esIOS() && !estaEnModoStandalone()) {
   document.body.appendChild(aviso);
 }
 
+function exportarCodigosAprendidos() {
+
+  const aprendidos = JSON.parse(
+    localStorage.getItem("equivalencias_aprendidas") || "{}"
+  );
+
+  const resultado = [];
+
+  for (let codigo in aprendidos) {
+    const referencia = aprendidos[codigo];
+    const descripcion = referencia_a_descripcion[referencia];
+
+    if (!descripcion) continue;
+
+    resultado.push({
+      descripcion: descripcion,
+      codigo: codigo,
+      referencia: referencia
+    });
+  }
+
+  if (resultado.length === 0) {
+    mostrarMensaje("❌ No hay códigos aprendidos", "error");
+    return;
+  }
+
+  const json = JSON.stringify(resultado, null, 2);
+
+  const blob = new Blob(
+    [json],
+    { type: "application/json;charset=utf-8;" }
+  );
+
+  const fecha = new Date().toISOString().split("T")[0];
+  const nombre = `equivalencias_aprendidas_${fecha}.json`;
+
+  const url = URL.createObjectURL(blob);
+
+  // iOS → compartir
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    window.open(url);
+  } else {
+    // Android / PC → descarga
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  mostrarMensaje("✅ JSON exportado", "ok");
+}
+
 
 // ===============================
 // BOTÓN AYUDA
