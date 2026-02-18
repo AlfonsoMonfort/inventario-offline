@@ -31,10 +31,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   almacenInput.addEventListener("input", function () {
     this.value = this.value.toUpperCase().slice(0, 3);
-
+  });
+  
   window.hayInventarioGuardado =
   !!localStorage.getItem("inventario_guardado");
-  });
 
   await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
