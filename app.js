@@ -569,7 +569,7 @@ function leerOCRContinuo() {
   let sh = frameRect.height * scaleY;
 
   // 🔍 REDUCIR zona SOLO para OCR (ajustable)
-  const recorte = 0.5; // prueba 0.4 si los números son muy pequeños
+  const recorte = 0.25; // prueba 0.4 si los números son muy pequeños
   const dx = sw * (1 - recorte) / 2;
   const dy = sh * (1 - recorte) / 2;
 
