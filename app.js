@@ -635,7 +635,7 @@ if (match[0] === ocrUltimo) {
 if (ocrRepeticiones < 2) return; // 👈 2 lecturas iguales
 
 // ✅ OCR CONFIRMADO
-numeroOCRDetectado = match[0];
+const referencia = match[0];
 
 // 🔒 parar OCR
 ocrUltimo = null;
@@ -643,11 +643,28 @@ ocrRepeticiones = 0;
 modoOCRActivo = false;
 cancelarOCR();
 
-// 👉 mostrar confirmación
-document.getElementById("ocrNumeroDetectado").innerText =
-  "Referencia detectada: " + numeroOCRDetectado;
+// ❌ si no existe la referencia, no añadir
+if (!referencia_a_descripcion[referencia]) {
+  mostrarMensaje("❌ Referencia no existe", "error");
+  permitirEscaneo = true;
+  return;
+}
 
-document.getElementById("ocrBox").style.display = "block";
+// 📦 AÑADIR AUTOMÁTICO
+const cantidad =
+  parseInt(document.getElementById("cantidad").value) || 1;
+
+inventario.articulos[referencia] =
+  (inventario.articulos[referencia] || 0) + cantidad;
+
+actualizarLista();
+
+document.getElementById("cantidad").value = 1;
+
+mostrarMensaje("✅ Artículo añadido (OCR)", "ok");
+
+permitirEscaneo = true;
+
 
 
   }).catch(err => {
