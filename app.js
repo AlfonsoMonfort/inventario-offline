@@ -31,6 +31,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   almacenInput.addEventListener("input", function () {
     this.value = this.value.toUpperCase().slice(0, 3);
+
+  window.hayInventarioGuardado =
+  !!localStorage.getItem("inventario_guardado");
   });
 
   await cargarEquivalencias();
@@ -142,24 +145,62 @@ function cargarEquivalenciasAprendidas() {
 // ----------------------------
 function empezar() {
 
-    const fechaInput = document.getElementById("fecha");
-    const almacenInput = document.getElementById("almacen");
-    const vendedorInput = document.getElementById("vendedor");
+  if (window.hayInventarioGuardado) {
 
-    if (!fechaInput.value || !almacenInput.value || !vendedorInput.value) {
-        alert("Completa todos los campos");
-        return;
+    const continuar = confirm(
+      "Hay un inventario guardado.\n\n" +
+      "Aceptar → Continuar inventario\n" +
+      "Cancelar → Empezar uno nuevo"
+    );
+
+    if (continuar) {
+      cargarInventarioGuardado();
+      return;
+    } else {
+      localStorage.removeItem("inventario_guardado");
+      window.hayInventarioGuardado = false;
+      // sigue creando uno nuevo
     }
+  }
 
-    inventario.fecha = fechaInput.value;
-    inventario.almacen = almacenInput.value;
-    inventario.vendedor = vendedorInput.value;
-    inventario.articulos = {};
+  const fechaInput = document.getElementById("fecha");
+  const almacenInput = document.getElementById("almacen");
+  const vendedorInput = document.getElementById("vendedor");
 
-    document.getElementById("pantallaInicio").style.display = "none";
-    document.getElementById("pantallaEscaner").style.display = "block";
-    iniciarScanner();
+  if (!fechaInput.value || !almacenInput.value || !vendedorInput.value) {
+    alert("Completa todos los campos");
+    return;
+  }
+
+  inventario.fecha = fechaInput.value;
+  inventario.almacen = almacenInput.value;
+  inventario.vendedor = vendedorInput.value;
+  inventario.articulos = {};
+
+  document.getElementById("pantallaInicio").style.display = "none";
+  document.getElementById("pantallaEscaner").style.display = "block";
+
+  iniciarScanner();
 }
+
+function cargarInventarioGuardado() {
+
+  const datos = JSON.parse(
+    localStorage.getItem("inventario_guardado")
+  );
+
+  inventario = datos.inventario;
+
+  document.getElementById("pantallaInicio").style.display = "none";
+  document.getElementById("pantallaEscaner").style.display = "block";
+
+  actualizarLista();
+  iniciarScanner();
+
+  mostrarMensaje("↩️ Inventario recuperado", "ok");
+}
+
+
 
 function calcularAreaDesdeMarco() {
   const scanner = document.getElementById("scanner");
