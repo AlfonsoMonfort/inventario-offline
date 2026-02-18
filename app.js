@@ -4,6 +4,7 @@
 let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
 let referenciasSinCodigo = [];
+let numeroOCRDetectado = null;
 
 let inventario = {
     fecha: "",
@@ -502,6 +503,94 @@ function exportarCodigosAprendidos() {
 
   mostrarMensaje("✅ JSON exportado", "ok");
 }
+
+
+function leerOCR() {
+
+  const video = document.querySelector("#scanner video");
+  if (!video) {
+    mostrarMensaje("❌ Cámara no disponible", "error");
+    permitirEscaneo = true;
+    modoOCR = false;
+    return;
+  }
+
+  // Capturar frame del vídeo
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  Tesseract.recognize(
+    canvas,
+    "eng",
+    {
+      tessedit_char_whitelist: "0123456789",
+      classify_bln_numeric_mode: 1
+    }
+  ).then(result => {
+
+    const texto = result.data.text || "";
+
+    const match = texto.match(/\b\d{5,7}\b/);
+
+    if (!match) {
+      mostrarMensaje("❌ No se detectó referencia válida", "error");
+      permitirEscaneo = true;
+      modoOCR = false;
+      return;
+    }
+
+    numeroOCRDetectado = match[0];
+
+    document.getElementById("ocrNumeroDetectado").innerText =
+      "Referencia detectada: " + numeroOCRDetectado;
+
+    document.getElementById("ocrBox").style.display = "block";
+
+  }).catch(err => {
+    console.error("OCR error:", err);
+    mostrarMensaje("❌ Error OCR", "error");
+    permitirEscaneo = true;
+    modoOCR = false;
+  });
+}
+
+function aceptarOCR() {
+
+  document.getElementById("ocrBox").style.display = "none";
+
+  if (!numeroOCRDetectado) return;
+
+  if (!referencia_a_descripcion[numeroOCRDetectado]) {
+    mostrarMensaje("❌ Referencia no existe", "error");
+    permitirEscaneo = true;
+    return;
+  }
+
+  const cantidad =
+    parseInt(document.getElementById("cantidad").value) || 1;
+
+  inventario.articulos[numeroOCRDetectado] =
+    (inventario.articulos[numeroOCRDetectado] || 0) + cantidad;
+
+  actualizarLista();
+
+  numeroOCRDetectado = null;
+  permitirEscaneo = true;
+
+  mostrarMensaje("✅ Referencia añadida", "ok");
+}
+
+function cancelarOCR() {
+  numeroOCRDetectado = null;
+  document.getElementById("ocrBox").style.display = "none";
+  permitirEscaneo = true;
+  mostrarMensaje("❌ OCR cancelado", "error");
+}
+
 
 
 // ===============================
