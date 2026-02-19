@@ -213,7 +213,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.3</header>
+<header>Inventario Offline V.4</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -255,33 +255,24 @@ li{
     <div id="ocrNumeroDetectado"
         style="font-weight:bold; margin-bottom:8px;">
     </div>
-
-    <button type="button" onclick="aceptarOCR()">
-      ✅ Usar este número
-    </button>
-
-    <button type="button"
-            class="secondary"
-            style="margin-top:8px;"
-            onclick="cancelarOCR()">
-      ❌ Cancelar
-    </button>
   </div>
-
-
   <div id="codigoAprendidoMostrado"
        style="display:none;
               font-weight:bold;
               margin-bottom:8px;
               color:#111;">
   </div>
-
   <label style="font-weight:bold;">Referencia</label>
   <input type="text" id="inputReferenciaAprendida" placeholder="Escribe la referencia">
 
   <button type="button" onclick="guardarCodigoAprendido()">
     Aceptar
   </button>
+  <button id="btnCancelarAprendizaje"
+            style="display:none; margin-top:8px;"
+            onclick="cancelarAprendizaje()">
+      ❌ Cancelar
+    </button>
 </div>
 
 
@@ -289,6 +280,27 @@ li{
 <div class="card fila-horizontal" style="margin-top:4px;">
   <label for="cantidad">Cantidad</label>
   <input type="number" id="cantidad" value="1" min="1">
+</div>
+
+<!-- CONFIRMACIÓN OCR -->
+<div id="ocrConfirmBox"
+     class="card"
+     style="display:none; margin-top:10px;">
+
+  <div id="ocrReferenciaDetectada"
+       style="font-weight:bold; margin-bottom:8px;">
+  </div>
+
+  <button type="button" onclick="aceptarOCR()">
+    ✅ Aceptar referencia
+  </button>
+
+  <button type="button"
+          class="secondary"
+          style="margin-top:8px;"
+          onclick="cancelarOCR()">
+    ❌ Cancelar
+  </button>
 </div>
 
   <!-- AÑADIR MANUAL -->
@@ -306,6 +318,7 @@ li{
 </div>
 
 
+
 <button
   type="button"
   class="secondary"
@@ -313,11 +326,7 @@ li{
 >
   🧠 Grabar código
 </button>
-<button id="btnCancelarAprendizaje"
-        style="display:none; margin-top:8px;"
-        onclick="cancelarAprendizaje()">
-  ❌ Cancelar
-</button>
+
 
 <button class="secondary" onclick="activarModoOCR()">
   🔢 Leer referencia impresa
