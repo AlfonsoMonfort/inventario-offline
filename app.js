@@ -831,6 +831,25 @@ function cancelarAprendizaje() {
   mostrarMensaje("❌ Grabación cancelada", "error");
 }
 
+function variantesCodigo(codigo) {
+  const variantes = new Set();
+
+  variantes.add(codigo);
+
+  // EAN-13 → UPC-A
+  if (codigo.length === 13 && codigo.startsWith("0")) {
+    variantes.add(codigo.slice(1));
+  }
+
+  // UPC-A → EAN-13
+  if (codigo.length === 12) {
+    variantes.add("0" + codigo);
+  }
+
+  return [...variantes];
+}
+
+
 // ----------------------------
 // PROCESAR CÓDIGO
 // ----------------------------
@@ -838,32 +857,35 @@ function procesarCodigo(codigo) {
 
   let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
 
-  let referencia =
-    codigo_a_referencia[codigo] ||
-    codigo_a_referencia[codigo.padStart(13, "0")] ||
-    codigo_a_referencia[codigo.replace(/^0/, "")];
+  let referencia = null;
+
+  for (const v of variantesCodigo(codigo)) {
+    if (codigo_a_referencia[v]) {
+      referencia = codigo_a_referencia[v];
+      break;
+    }
+  }
 
   if (!referencia) {
     mostrarMensaje("❌ Código no encontrado", "error");
     return;
   }
 
-  // ➕ Añadir o sumar cantidad
+  // ➕ añadir o sumar cantidad
   if (inventario.articulos[referencia]) {
     inventario.articulos[referencia] += cantidad;
 
-    // 🔼 mover referencia arriba (último usado)
+    // 🔼 mover arriba (último usado)
     inventario.orden = inventario.orden.filter(r => r !== referencia);
     inventario.orden.unshift(referencia);
 
   } else {
     inventario.articulos[referencia] = cantidad;
 
-    // 🆕 nuevo artículo → arriba del todo
+    // 🆕 nuevo → arriba del todo
     inventario.orden.unshift(referencia);
   }
 
-  // 🔄 reset cantidad
   document.getElementById("cantidad").value = 1;
 
   mostrarMensaje("✅ Artículo añadido", "ok");
