@@ -663,34 +663,26 @@ function leerOCRContinuo() {
     cancelarOCR();
 
     // 🔍 comprobar referencia existente
-    if (!referencia_a_descripcion[texto]) {
-      mostrarMensaje("❌ Referencia no existe", "error");
-      permitirEscaneo = true;
-      return;
-    }
+  if (!referencia_a_descripcion[texto]) {
+    mostrarMensaje("❌ Referencia no existe", "error");
+    permitirEscaneo = true;
+    return;
+  }
 
-    const cantidad =
-      parseInt(document.getElementById("cantidad").value) || 1;
+  // 🆕 guardar número detectado
+  numeroOCRDetectado = texto;
 
-    if (inventario.articulos[texto]) {
-  inventario.articulos[texto] += cantidad;
+  // 🖥 mostrar en pantalla para confirmar
+  const box = document.getElementById("ocrBox");
+  box.style.display = "block";
 
-  // 🔼 mover arriba (último usado)
-  inventario.orden = inventario.orden.filter(r => r !== texto);
-  inventario.orden.unshift(texto);
+  const refMostrada = document.getElementById("ocrReferenciaDetectada");
+  if (refMostrada) {
+    refMostrada.textContent = texto;
+  }
 
-} else {
-  inventario.articulos[texto] = cantidad;
+  mostrarMensaje("📋 Confirmar referencia", "ok");
 
-  // 🆕 nuevo → arriba del todo
-  inventario.orden.unshift(texto);
-}
-
-actualizarLista();
-document.getElementById("cantidad").value = 1;
-
-mostrarMensaje("✅ Artículo añadido (OCR)", "ok");
-permitirEscaneo = true;
 
   });
 }
