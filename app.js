@@ -196,6 +196,7 @@ function empezar() {
   document.getElementById("pantallaInicio").style.display = "none";
   document.getElementById("pantallaEscaner").style.display = "block";
 
+  permitirEscaneo = true;
   iniciarScanner();
 }
 
@@ -211,6 +212,7 @@ function cargarInventarioGuardado() {
   document.getElementById("pantallaEscaner").style.display = "block";
 
   actualizarLista();
+  permitirEscaneo = true;
   iniciarScanner();
 
   mostrarMensaje("↩️ Inventario recuperado", "ok");
@@ -737,7 +739,6 @@ function aceptarOCR() {
   numeroOCRDetectado = null;
   ocrProcesado = false;
   modoOCRActivo = false;
-  permitirEscaneo = true;
   document.getElementById("cantidad").value = 1;
 
   mostrarMensaje("✅ Referencia añadida", "ok");
