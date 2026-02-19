@@ -58,8 +58,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
-
-    permitirEscaneo = true; // 📦 escáner normal
+    if (modoOCRActivo || modoAprendizaje) return;
+    permitirEscaneo = true;
   });
 });
 
@@ -263,15 +263,20 @@ function calcularAreaDesdeMarco() {
 // ----------------------------
 function iniciarScanner() {
 
+  // 🔁 Evitar listeners duplicados
+  if (Quagga.offDetected) {
+    Quagga.offDetected();
+  }
+
   Quagga.init({
     inputStream: {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#scanner'),
-     constraints: {
-      facingMode: "environment",
-      focusMode: "continuous"
-    }
+      constraints: {
+        facingMode: "environment",
+        focusMode: "continuous"
+      }
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
@@ -293,6 +298,7 @@ function iniciarScanner() {
       const area = calcularAreaDesdeMarco();
       if (!area) return;
 
+      // 🔄 Reinicio con área ajustada
       Quagga.stop();
 
       Quagga.init({
@@ -314,33 +320,43 @@ function iniciarScanner() {
     }, { once: true });
   });
 
+  // ===============================
+  // 📸 DETECCIÓN DE CÓDIGOS
+  // ===============================
   Quagga.onDetected(function (result) {
-  if (!permitirEscaneo) return;
-  if (!result?.codeResult?.code) return;
 
-  const code = result.codeResult.code.replace(/\D/g, "");
-  if (![8, 12, 13].includes(code.length)) return;
+    // ⛔ protecciones de estado
+    if (!permitirEscaneo) return;
+    if (modoOCRActivo) return;
+    if (!result?.codeResult?.code) return;
 
-  permitirEscaneo = false;
+    const code = result.codeResult.code.replace(/\D/g, "");
+    if (![8, 12, 13].includes(code.length)) return;
 
-  // 🧠 MODO APRENDIZAJE
-  if (modoAprendizaje) {
-  codigoPendienteAprender = code;
+    // 🔒 bloqueo inmediato
+    permitirEscaneo = false;
 
-  const divCodigo = document.getElementById("codigoAprendidoMostrado");
-  divCodigo.textContent = "Código leído: " + code;
-  divCodigo.style.display = "block";
+    // 🧠 MODO APRENDIZAJE
+    if (modoAprendizaje) {
 
-  mostrarMensaje("✅ Código leído", "ok");
-  mostrarFormularioAprendizaje();
-  return;
+      codigoPendienteAprender = code;
+
+      const divCodigo = document.getElementById("codigoAprendidoMostrado");
+      if (divCodigo) {
+        divCodigo.textContent = "Código leído: " + code;
+        divCodigo.style.display = "block";
+      }
+
+      mostrarMensaje("✅ Código leído", "ok");
+      mostrarFormularioAprendizaje();
+      return;
+    }
+
+    // 📦 FLUJO NORMAL
+    procesarCodigo(code);
+  });
 }
 
-  // flujo normal
-  procesarCodigo(code);
-});
-
-}
 
 
 function activarModoOCR() {
@@ -667,8 +683,7 @@ function leerOCRContinuo() {
     // ❌ referencia no existe
     if (!referencia_a_descripcion[texto]) {
       mostrarMensaje("❌ Referencia no existe", "error");
-      permitirEscaneo = true;
-      ocrProcesado = false;
+      cancelarOCR();
       return;
     }
 
@@ -721,6 +736,7 @@ function aceptarOCR() {
   // 🔄 reset limpio
   numeroOCRDetectado = null;
   ocrProcesado = false;
+  modoOCRActivo = false;
   permitirEscaneo = true;
   document.getElementById("cantidad").value = 1;
 
@@ -748,6 +764,8 @@ function cancelarOCR() {
   if (box) box.style.display = "none";
 
   permitirEscaneo = true;
+  ocrUltimo = null;
+  ocrRepeticiones = 0;
 }
 
 
@@ -822,7 +840,7 @@ function activarModoAprendizaje() {
 function cancelarAprendizaje() {
   modoAprendizaje = false;
   codigoPendienteAprender = null;
-  permitirEscaneo = false;
+  permitirEscaneo = true;
 
   document.getElementById("btnCancelarAprendizaje").style.display = "none";
   document.getElementById("aprendizajeBox").style.display = "none";
@@ -853,6 +871,8 @@ function variantesCodigo(codigo) {
 // PROCESAR CÓDIGO
 // ----------------------------
 function procesarCodigo(codigo) {
+  if (!permitirEscaneo) return;
+  permitirEscaneo = false;
 
   let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
 
@@ -866,7 +886,8 @@ function procesarCodigo(codigo) {
   }
 
   if (!referencia) {
-    activarModoOCR();
+    mostrarMensaje("❌ Código sin referencia", "error");
+    permitirEscaneo = true;
     return;
   }
 
@@ -890,6 +911,8 @@ function procesarCodigo(codigo) {
 
   mostrarMensaje("✅ Artículo añadido", "ok");
   actualizarLista();
+  permitirEscaneo = true;
+
 }
 
 
