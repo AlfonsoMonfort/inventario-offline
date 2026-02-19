@@ -16,6 +16,7 @@ body{
   margin:0;
   font-family:Arial, sans-serif;
   background:#f2f2f2;
+  overflow-x: hidden;
 }
 
 header{
@@ -187,6 +188,20 @@ li{
   width: 100%;
 }
 
+/* ===== AJUSTE GLOBAL DE ANCHOS ===== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+.container {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.card {
+  width: 100%;
+}
 
 </style>
 
@@ -198,7 +213,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.12</header>
+<header>Inventario Offline V.1</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
