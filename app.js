@@ -344,23 +344,21 @@ function iniciarScanner() {
 
 
 function activarModoOCR() {
-  if (ocrInterval) clearInterval(ocrInterval);
-  if (ocrTimeout) clearTimeout(ocrTimeout);
 
-  ocrProcesado = false; // 🔒 reset candado
+  cancelarOCR(); // 🔥 limpia cualquier OCR previo
 
   modoOCRActivo = true;
+  ocrProcesado = false;
   permitirEscaneo = false;
 
   mostrarMensaje("🔍 Buscando referencia…", "ok");
 
   ocrInterval = setInterval(() => {
-    if (!modoOCRActivo) return;
-    leerOCRContinuo();
+    if (modoOCRActivo) leerOCRContinuo();
   }, 700);
 
   ocrTimeout = setTimeout(() => {
-    if (modoOCRActivo) {
+    if (modoOCRActivo && !ocrProcesado) {
       cancelarOCR();
       mostrarMensaje("❌ No se detectó referencia", "error");
     }
@@ -547,7 +545,7 @@ function exportarCodigosAprendidos() {
 
 function leerOCRContinuo() {
 
-  // ⛔ seguridad básica
+  // ⛔ protecciones básicas
   if (!modoOCRActivo || ocrProcesado) return;
 
   const video = document.querySelector("#scanner video");
@@ -556,9 +554,7 @@ function leerOCRContinuo() {
 
   if (!video || !frame || !video.videoWidth) return;
 
-  if (debugText) {
-    debugText.innerText = "OCR activo…";
-  }
+  if (debugText) debugText.innerText = "OCR activo…";
 
   // ----------------------------
   // 📐 CÁLCULO DE ZONA OCR
@@ -630,7 +626,7 @@ function leerOCRContinuo() {
       debugText.innerText = `OCR lee: "${texto || "∅"}"`;
     }
 
-    // ❌ no parece una referencia válida
+    // ❌ no parece referencia
     if (!/^\d{5,7}$/.test(texto)) {
       ocrUltimo = null;
       ocrRepeticiones = 0;
@@ -650,22 +646,28 @@ function leerOCRContinuo() {
     if (ocrRepeticiones < 2) return;
 
     // ----------------------------
-    // ✅ OCR CONFIRMADO (UNA SOLA VEZ)
+    // ✅ OCR CONFIRMADO
     // ----------------------------
     ocrProcesado = true;
     modoOCRActivo = false;
 
+    clearInterval(ocrInterval);
+    clearTimeout(ocrTimeout);
+    ocrInterval = null;
+    ocrTimeout = null;
+
     ocrUltimo = null;
     ocrRepeticiones = 0;
 
-    // 🔍 comprobar referencia existente
+    // ❌ referencia no existe
     if (!referencia_a_descripcion[texto]) {
       mostrarMensaje("❌ Referencia no existe", "error");
       permitirEscaneo = true;
+      ocrProcesado = false;
       return;
     }
 
-    // 🧠 guardar referencia detectada
+    // ✅ guardar referencia detectada
     numeroOCRDetectado = texto;
 
     // 📦 mostrar confirmación
@@ -680,8 +682,8 @@ function leerOCRContinuo() {
       box.style.display = "block";
     }
 
-    // ⛔ NO llamar a cancelarOCR aquí
-    // ⛔ el sistema queda esperando aceptarOCR() o cancelarOCR()
+    // ⛔ NO añadir al inventario aquí
+    // ⛔ esperar aceptarOCR() o cancelarOCR()
 
   }).catch(err => {
     console.error("OCR error:", err);
@@ -690,43 +692,30 @@ function leerOCRContinuo() {
 
 
 
+
 function aceptarOCR() {
 
-  modoOCR = false;
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
 
-  if (!referencia_a_descripcion[numeroOCRDetectado]) {
-    mostrarMensaje("❌ Referencia no existe", "error");
-    permitirEscaneo = true;
-    return;
-  }
+  const ref = numeroOCRDetectado;
+  const cantidad = parseInt(document.getElementById("cantidad").value) || 1;
 
-  const cantidad =
-    parseInt(document.getElementById("cantidad").value) || 1;
-
-  // ➕ añadir o sumar cantidad
-  if (inventario.articulos[numeroOCRDetectado]) {
-    inventario.articulos[numeroOCRDetectado] += cantidad;
-
-    // 🔼 mover arriba (último usado)
-    inventario.orden = inventario.orden.filter(
-      r => r !== numeroOCRDetectado
-    );
-    inventario.orden.unshift(numeroOCRDetectado);
-
+  if (inventario.articulos[ref]) {
+    inventario.articulos[ref] += cantidad;
+    inventario.orden = inventario.orden.filter(r => r !== ref);
   } else {
-    inventario.articulos[numeroOCRDetectado] = cantidad;
-
-    // 🆕 nuevo → arriba del todo
-    inventario.orden.unshift(numeroOCRDetectado);
+    inventario.articulos[ref] = cantidad;
   }
+
+  inventario.orden.unshift(ref);
 
   actualizarLista();
 
-  // 🔄 reset
+  // 🔄 reset limpio
   numeroOCRDetectado = null;
+  ocrProcesado = false;
   permitirEscaneo = true;
   document.getElementById("cantidad").value = 1;
 
@@ -734,26 +723,24 @@ function aceptarOCR() {
 }
 
 
+
 function cancelarOCR() {
-  modoOCR = false;
+
   modoOCRActivo = false;
+  ocrProcesado = false;
   numeroOCRDetectado = null;
 
-  if (ocrInterval) {
-    clearInterval(ocrInterval);
-    ocrInterval = null;
-  }
+  clearInterval(ocrInterval);
+  clearTimeout(ocrTimeout);
 
-  if (ocrTimeout) {
-    clearTimeout(ocrTimeout);
-    ocrTimeout = null;
-  }
+  ocrInterval = null;
+  ocrTimeout = null;
 
   document.getElementById("ocrBox").style.display = "none";
+
   permitirEscaneo = true;
-  const debugCanvas = document.getElementById("ocr-debug-canvas");
-  if (debugCanvas) debugCanvas.remove();    
 }
+
 
 
 
