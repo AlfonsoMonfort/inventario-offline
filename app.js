@@ -662,26 +662,25 @@ function leerOCRContinuo() {
 
     cancelarOCR();
 
-    // 🔍 comprobar referencia existente
-  if (!referencia_a_descripcion[texto]) {
-    mostrarMensaje("❌ Referencia no existe", "error");
-    permitirEscaneo = true;
-    return;
-  }
+   // 🔍 comprobar referencia existente
+if (!referencia_a_descripcion[texto]) {
+  mostrarMensaje("❌ Referencia no existe", "error");
+  permitirEscaneo = true;
+  return;
+}
 
-  // 🆕 guardar número detectado
-  numeroOCRDetectado = texto;
+// 🆕 guardar referencia detectada
+numeroOCRDetectado = texto;
 
-  // 🖥 mostrar en pantalla para confirmar
-  const box = document.getElementById("ocrBox");
-  box.style.display = "block";
+// ⛔ parar OCR hasta decisión
+modoOCRActivo = false;
 
-  const refMostrada = document.getElementById("ocrNumeroDetectado");
-  if (refMostrada) {
-    refMostrada.textContent = texto;
-  }
+// 🖥 mostrar confirmación OCR
+document.getElementById("ocrConfirmBox").style.display = "block";
+document.getElementById("ocrReferenciaDetectada").textContent =
+  "Referencia detectada: " + texto;
 
-  mostrarMensaje("📋 Confirmar referencia", "ok");
+mostrarMensaje("📋 Confirma la referencia", "ok");
 
 
   });
@@ -689,7 +688,7 @@ function leerOCRContinuo() {
 
 
 function aceptarOCR() {
-
+  document.getElementById("ocrConfirmBox").style.display = "none";
   modoOCR = false;
   document.getElementById("ocrBox").style.display = "none";
 
@@ -733,6 +732,9 @@ function aceptarOCR() {
 
 
 function cancelarOCR() {
+  const box = document.getElementById("ocrConfirmBox");
+  if (box) box.style.display = "none";
+
   modoOCR = false;
   modoOCRActivo = false;
   numeroOCRDetectado = null;
@@ -747,10 +749,10 @@ function cancelarOCR() {
     ocrTimeout = null;
   }
 
-  document.getElementById("ocrBox").style.display = "none";
   permitirEscaneo = true;
+
   const debugCanvas = document.getElementById("ocr-debug-canvas");
-  if (debugCanvas) debugCanvas.remove();    
+  if (debugCanvas) debugCanvas.remove();
 }
 
 
