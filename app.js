@@ -676,7 +676,7 @@ function leerOCRContinuo() {
   const box = document.getElementById("ocrBox");
   box.style.display = "block";
 
-  const refMostrada = document.getElementById("ocrReferenciaDetectada");
+  const refMostrada = document.getElementById("ocrNumeroDetectado");
   if (refMostrada) {
     refMostrada.textContent = texto;
   }
