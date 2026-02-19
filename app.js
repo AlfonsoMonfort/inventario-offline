@@ -38,7 +38,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     new Date().toISOString().split("T")[0];
 
   const almacenInput = document.getElementById("almacen");
-
   almacenInput.addEventListener("input", function () {
     this.value = this.value.toUpperCase().slice(0, 3);
   });
@@ -56,13 +55,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     this.value = "";
   });
 
-  // 👇 LISTENER GLOBAL (NO en #scanner)
-  document.addEventListener("click", () => {
+  // 🔥 ESTE ES EL SITIO CORRECTO
+  const scanner = document.getElementById("scanner");
+
+  scanner.addEventListener("click", () => {
     if (modoOCRActivo || modoAprendizaje) return;
     permitirEscaneo = true;
   });
 
 });
+
 
 
 
@@ -267,10 +269,7 @@ function calcularAreaDesdeMarco() {
 // ----------------------------
 function iniciarScanner() {
 
-  // 🔁 Evitar listeners duplicados
-  if (Quagga.offDetected) {
-    Quagga.offDetected();
-  }
+ 
 
   Quagga.init({
     inputStream: {
