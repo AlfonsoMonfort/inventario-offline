@@ -162,6 +162,8 @@ li{
   pointer-events: none;
 }
 
+/* ===== FILAS HORIZONTALES BIEN HECHAS ===== */
+
 .fila-horizontal {
   display: flex;
   align-items: center;
@@ -179,16 +181,10 @@ li{
 .fila-horizontal input,
 .fila-horizontal select {
   flex: 1;
-  max-width: 100%;
+  min-width: 0;          /* 🔑 LA CLAVE QUE FALTABA */
   box-sizing: border-box;
   margin: 0;
-}
-
-/* 🔑 ESTA ES LA CLAVE */
-.fila-horizontal input,
-.fila-horizontal select,
-.fila-horizontal button {
-  width: auto;
+  width: 100%;
 }
 
 
@@ -202,7 +198,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.11</header>
+<header>Inventario Offline V.12</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -275,13 +271,13 @@ li{
 
 
   <!-- CANTIDAD -->
-<div class="card fila-horizontal" style="margin-top:15px;">
+<div class="card fila-horizontal" style="margin-top:4px;">
   <label for="cantidad">Cantidad</label>
   <input type="number" id="cantidad" value="1" min="1">
 </div>
 
   <!-- AÑADIR MANUAL -->
-<div class="card" style="margin-top:15px;">
+<div class="card" style="margin-top:4px;">
   <div class="fila-horizontal">
     <label for="selectManual">Añadir manual</label>
     <select id="selectManual">
@@ -289,7 +285,7 @@ li{
     </select>
   </div>
 
-  <button type="button" onclick="añadirManual()" style="margin-top:10px;">
+  <button type="button" onclick="añadirManual()" style="margin-top:4px;">
     ➕ Añadir artículo
   </button>
 </div>
