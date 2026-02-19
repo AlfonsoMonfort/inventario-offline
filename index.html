@@ -162,6 +162,23 @@ li{
   pointer-events: none;
 }
 
+.fila-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fila-horizontal label {
+  flex: 1;
+  font-weight: bold;
+}
+
+.fila-horizontal input,
+.fila-horizontal select {
+  flex: 1;
+  max-width: 120px;
+}
+
 </style>
 
 
@@ -172,7 +189,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.14</header>
+<header>Inventario Offline V.15</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -228,9 +245,11 @@ li{
 
   <!-- CANTIDAD -->
   <div class="card" style="margin-top:15px;">
-    <label style="font-weight:bold;">Cantidad</label>
+  <div class="fila-horizontal">
+    <label for="cantidad">Cantidad</label>
     <input type="number" id="cantidad" value="1" min="1">
   </div>
+</div>
 <!-- OCR CONFIRMACIÓN -->
 <div id="ocrBox"
      class="card"
@@ -253,11 +272,13 @@ li{
 
   <!-- AÑADIR MANUAL -->
 <div class="card" style="margin-top:15px;">
-  <label style="font-weight:bold;">Añadir manual</label>
+  <div class="fila-horizontal">
+    <label for="selectManual">Añadir manual</label>
 
-  <select id="selectManual">
-    <option value="">-- Selecciona artículo --</option>
-  </select>
+    <select id="selectManual">
+      <option value="">-- Selecciona --</option>
+    </select>
+  </div>
 
   <button type="button" onclick="añadirManual()">
     ➕ Añadir artículo
