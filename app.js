@@ -672,18 +672,26 @@ function leerOCRContinuo() {
     const cantidad =
       parseInt(document.getElementById("cantidad").value) || 1;
 
-    inventario.articulos[texto] =
-      (inventario.articulos[texto] || 0) + cantidad;
+    if (inventario.articulos[texto]) {
+  inventario.articulos[texto] += cantidad;
 
-    actualizarLista();
-    document.getElementById("cantidad").value = 1;
+  // 🔼 mover arriba (último usado)
+  inventario.orden = inventario.orden.filter(r => r !== texto);
+  inventario.orden.unshift(texto);
 
-    mostrarMensaje("✅ Artículo añadido (OCR)", "ok");
-    permitirEscaneo = true;
+} else {
+  inventario.articulos[texto] = cantidad;
 
-  }).catch(err => {
-    // silencioso: OCR continuo ya reintenta
-    console.error(err);
+  // 🆕 nuevo → arriba del todo
+  inventario.orden.unshift(texto);
+}
+
+actualizarLista();
+document.getElementById("cantidad").value = 1;
+
+mostrarMensaje("✅ Artículo añadido (OCR)", "ok");
+permitirEscaneo = true;
+
   });
 }
 
