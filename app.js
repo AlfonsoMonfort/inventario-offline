@@ -545,8 +545,6 @@ function exportarCodigosAprendidos() {
   mostrarMensaje("✅ JSON exportado", "ok");
 }
 
-
-
 function leerOCRContinuo() {
 
   // ⛔ seguridad básica
@@ -660,32 +658,36 @@ function leerOCRContinuo() {
     ocrUltimo = null;
     ocrRepeticiones = 0;
 
-    cancelarOCR();
-
     // 🔍 comprobar referencia existente
-    // 🔍 comprobar referencia existente
-if (!referencia_a_descripcion[texto]) {
-  mostrarMensaje("❌ Referencia no existe", "error");
-  permitirEscaneo = true;
-  return;
-}
+    if (!referencia_a_descripcion[texto]) {
+      mostrarMensaje("❌ Referencia no existe", "error");
+      permitirEscaneo = true;
+      return;
+    }
 
-// 🧠 guardar referencia detectada
-numeroOCRDetectado = texto;
+    // 🧠 guardar referencia detectada
+    numeroOCRDetectado = texto;
 
-// 📦 mostrar confirmación
-document.getElementById("ocrNumeroDetectado").innerText =
-  "Referencia detectada: " + texto;
+    // 📦 mostrar confirmación
+    const box = document.getElementById("ocrBox");
+    const label = document.getElementById("ocrNumeroDetectado");
 
-document.getElementById("ocrBox").style.display = "block";
+    if (label) {
+      label.innerText = "Referencia detectada: " + texto;
+    }
 
-// ⛔ parar OCR (esperando confirmación)
-modoOCRActivo = false;
-ocrProcesado = true;
+    if (box) {
+      box.style.display = "block";
+    }
 
+    // ⛔ NO llamar a cancelarOCR aquí
+    // ⛔ el sistema queda esperando aceptarOCR() o cancelarOCR()
 
+  }).catch(err => {
+    console.error("OCR error:", err);
   });
 }
+
 
 
 function aceptarOCR() {
