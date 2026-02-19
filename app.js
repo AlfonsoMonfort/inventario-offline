@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   window.hayInventarioGuardado =
-  !!localStorage.getItem("inventario_guardado");
+    !!localStorage.getItem("inventario_guardado");
 
   await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
@@ -55,13 +55,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   cantidadInput.addEventListener("focus", function () {
     this.value = "";
   });
-  const scanner = document.getElementById("scanner");
 
-  scanner.addEventListener("click", () => {
+  // 👇 LISTENER GLOBAL (NO en #scanner)
+  document.addEventListener("click", () => {
     if (modoOCRActivo || modoAprendizaje) return;
     permitirEscaneo = true;
   });
+
 });
+
 
 
 async function cargarReferenciasSinCodigo() {
