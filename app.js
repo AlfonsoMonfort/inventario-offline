@@ -345,20 +345,25 @@ function iniciarScanner() {
 
 function activarModoOCR() {
 
-  cancelarOCR(); // 🔥 limpia cualquier OCR previo
+  // limpieza previa
+  cancelarOCR();
+
+  ocrProcesado = false;
+  ocrUltimo = null;
+  ocrRepeticiones = 0;
 
   modoOCRActivo = true;
-  ocrProcesado = false;
   permitirEscaneo = false;
 
   mostrarMensaje("🔍 Buscando referencia…", "ok");
 
   ocrInterval = setInterval(() => {
-    if (modoOCRActivo) leerOCRContinuo();
+    if (!modoOCRActivo) return;
+    leerOCRContinuo();
   }, 700);
 
   ocrTimeout = setTimeout(() => {
-    if (modoOCRActivo && !ocrProcesado) {
+    if (modoOCRActivo) {
       cancelarOCR();
       mostrarMensaje("❌ No se detectó referencia", "error");
     }
@@ -723,23 +728,28 @@ function aceptarOCR() {
 }
 
 
-
 function cancelarOCR() {
 
   modoOCRActivo = false;
   ocrProcesado = false;
   numeroOCRDetectado = null;
 
-  clearInterval(ocrInterval);
-  clearTimeout(ocrTimeout);
+  if (ocrInterval) {
+    clearInterval(ocrInterval);
+    ocrInterval = null;
+  }
 
-  ocrInterval = null;
-  ocrTimeout = null;
+  if (ocrTimeout) {
+    clearTimeout(ocrTimeout);
+    ocrTimeout = null;
+  }
 
-  document.getElementById("ocrBox").style.display = "none";
+  const box = document.getElementById("ocrBox");
+  if (box) box.style.display = "none";
 
   permitirEscaneo = true;
 }
+
 
 
 
@@ -856,9 +866,10 @@ function procesarCodigo(codigo) {
   }
 
   if (!referencia) {
-    mostrarMensaje("❌ Código no encontrado", "error");
+    activarModoOCR();
     return;
   }
+
 
   // ➕ añadir o sumar cantidad
   if (inventario.articulos[referencia]) {
