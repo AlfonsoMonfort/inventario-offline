@@ -166,19 +166,24 @@ li{
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
 }
 
 .fila-horizontal label {
   font-weight: bold;
   white-space: nowrap;
   width: 130px;
+  flex-shrink: 0;
 }
 
 .fila-horizontal input,
 .fila-horizontal select {
   flex: 1;
+  max-width: 100%;
+  box-sizing: border-box;
   margin: 0;
 }
+
 
 
 </style>
@@ -191,7 +196,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.9</header>
+<header>Inventario Offline V.10</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
