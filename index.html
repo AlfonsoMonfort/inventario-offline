@@ -162,23 +162,6 @@ li{
   pointer-events: none;
 }
 
-.fila-horizontal {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.fila-horizontal label {
-  flex: 1;
-  font-weight: bold;
-}
-
-.fila-horizontal input,
-.fila-horizontal select {
-  flex: 1;
-  max-width: 120px;
-}
-
 </style>
 
 
@@ -189,7 +172,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.19</header>
+<header>Inventario Offline V.8</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -222,9 +205,28 @@ li{
             color:#444;">
 </div>
   <div class="mensaje" id="mensajeEstado"></div>
-  <div id="aprendizajeBox"
-     class="card"
-     style="display:none; margin-top:10px;">
+  <div id="aprendizajeBox" class="card" style="display:none; margin-top:10px;">
+
+    <div id="ocrBox"
+      class="card"
+      style="display:none; margin-top:10px;">
+
+    <div id="ocrNumeroDetectado"
+        style="font-weight:bold; margin-bottom:8px;">
+    </div>
+
+    <button type="button" onclick="aceptarOCR()">
+      ✅ Usar este número
+    </button>
+
+    <button type="button"
+            class="secondary"
+            style="margin-top:8px;"
+            onclick="cancelarOCR()">
+      ❌ Cancelar
+    </button>
+  </div>
+
 
   <div id="codigoAprendidoMostrado"
        style="display:none;
@@ -234,51 +236,27 @@ li{
   </div>
 
   <label style="font-weight:bold;">Referencia</label>
-  <input type="text"
-         id="inputReferenciaAprendida"
-         placeholder="Escribe la referencia">
+  <input type="text" id="inputReferenciaAprendida" placeholder="Escribe la referencia">
 
   <button type="button" onclick="guardarCodigoAprendido()">
     Aceptar
   </button>
 </div>
 
+
   <!-- CANTIDAD -->
   <div class="card" style="margin-top:15px;">
-  <div class="fila-horizontal">
-    <label for="cantidad">Cantidad</label>
+    <label style="font-weight:bold;">Cantidad</label>
     <input type="number" id="cantidad" value="1" min="1">
   </div>
-</div>
-<!-- OCR CONFIRMACIÓN -->
-<div id="ocrBox"
-     class="card"
-     style="display:none; margin-top:15px;">
-
-  <p id="ocrNumeroDetectado"
-     style="font-weight:bold; font-size:18px;">
-  </p>
-
-  <button type="button" onclick="aceptarOCR()">
-    ✅ Aceptar referencia
-  </button>
-
-  <button type="button"
-          class="secondary"
-          onclick="cancelarOCR()">
-    ❌ Cancelar
-  </button>
-</div>
 
   <!-- AÑADIR MANUAL -->
 <div class="card" style="margin-top:15px;">
-  <div class="fila-horizontal">
-    <label for="selectManual">Añadir manual</label>
+  <label style="font-weight:bold;">Añadir manual</label>
 
-    <select id="selectManual">
-      <option value="">-- Selecciona --</option>
-    </select>
-  </div>
+  <select id="selectManual">
+    <option value="">-- Selecciona artículo --</option>
+  </select>
 
   <button type="button" onclick="añadirManual()">
     ➕ Añadir artículo

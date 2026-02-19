@@ -38,12 +38,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     new Date().toISOString().split("T")[0];
 
   const almacenInput = document.getElementById("almacen");
+
   almacenInput.addEventListener("input", function () {
     this.value = this.value.toUpperCase().slice(0, 3);
   });
 
   window.hayInventarioGuardado =
-    !!localStorage.getItem("inventario_guardado");
+  !!localStorage.getItem("inventario_guardado");
 
   await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
@@ -54,18 +55,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   cantidadInput.addEventListener("focus", function () {
     this.value = "";
   });
-
-  // 🔥 ESTE ES EL SITIO CORRECTO
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
-    if (modoOCRActivo || modoAprendizaje) return;
-    permitirEscaneo = true;
+
+    permitirEscaneo = true; // 📦 escáner normal
   });
-
 });
-
-
 
 
 async function cargarReferenciasSinCodigo() {
@@ -200,7 +196,6 @@ function empezar() {
   document.getElementById("pantallaInicio").style.display = "none";
   document.getElementById("pantallaEscaner").style.display = "block";
 
-  permitirEscaneo = true;
   iniciarScanner();
 }
 
@@ -216,7 +211,6 @@ function cargarInventarioGuardado() {
   document.getElementById("pantallaEscaner").style.display = "block";
 
   actualizarLista();
-  permitirEscaneo = true;
   iniciarScanner();
 
   mostrarMensaje("↩️ Inventario recuperado", "ok");
@@ -269,17 +263,15 @@ function calcularAreaDesdeMarco() {
 // ----------------------------
 function iniciarScanner() {
 
- 
-
   Quagga.init({
     inputStream: {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#scanner'),
-      constraints: {
-        facingMode: "environment",
-        focusMode: "continuous"
-      }
+     constraints: {
+      facingMode: "environment",
+      focusMode: "continuous"
+    }
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
@@ -301,7 +293,6 @@ function iniciarScanner() {
       const area = calcularAreaDesdeMarco();
       if (!area) return;
 
-      // 🔄 Reinicio con área ajustada
       Quagga.stop();
 
       Quagga.init({
@@ -323,53 +314,40 @@ function iniciarScanner() {
     }, { once: true });
   });
 
-  // ===============================
-  // 📸 DETECCIÓN DE CÓDIGOS
-  // ===============================
   Quagga.onDetected(function (result) {
+  if (!permitirEscaneo) return;
+  if (!result?.codeResult?.code) return;
 
-    // ⛔ protecciones de estado
-    if (!permitirEscaneo) return;
-    if (modoOCRActivo) return;
-    if (!result?.codeResult?.code) return;
+  const code = result.codeResult.code.replace(/\D/g, "");
+  if (![8, 12, 13].includes(code.length)) return;
 
-    const code = result.codeResult.code.replace(/\D/g, "");
-    if (![8, 12, 13].includes(code.length)) return;
+  permitirEscaneo = false;
 
-    // 🔒 bloqueo inmediato
-    permitirEscaneo = false;
+  // 🧠 MODO APRENDIZAJE
+  if (modoAprendizaje) {
+  codigoPendienteAprender = code;
 
-    // 🧠 MODO APRENDIZAJE
-    if (modoAprendizaje) {
+  const divCodigo = document.getElementById("codigoAprendidoMostrado");
+  divCodigo.textContent = "Código leído: " + code;
+  divCodigo.style.display = "block";
 
-      codigoPendienteAprender = code;
+  mostrarMensaje("✅ Código leído", "ok");
+  mostrarFormularioAprendizaje();
+  return;
+}
 
-      const divCodigo = document.getElementById("codigoAprendidoMostrado");
-      if (divCodigo) {
-        divCodigo.textContent = "Código leído: " + code;
-        divCodigo.style.display = "block";
-      }
+  // flujo normal
+  procesarCodigo(code);
+});
 
-      mostrarMensaje("✅ Código leído", "ok");
-      mostrarFormularioAprendizaje();
-      return;
-    }
-
-    // 📦 FLUJO NORMAL
-    procesarCodigo(code);
-  });
 }
 
 
-
 function activarModoOCR() {
+  if (ocrInterval) clearInterval(ocrInterval);
+  if (ocrTimeout) clearTimeout(ocrTimeout);
 
-  // limpieza previa
-  cancelarOCR();
-
-  ocrProcesado = false;
-  ocrUltimo = null;
-  ocrRepeticiones = 0;
+  ocrProcesado = false; // 🔒 reset candado
 
   modoOCRActivo = true;
   permitirEscaneo = false;
@@ -567,9 +545,11 @@ function exportarCodigosAprendidos() {
   mostrarMensaje("✅ JSON exportado", "ok");
 }
 
+
+
 function leerOCRContinuo() {
 
-  // ⛔ protecciones básicas
+  // ⛔ seguridad básica
   if (!modoOCRActivo || ocrProcesado) return;
 
   const video = document.querySelector("#scanner video");
@@ -578,7 +558,9 @@ function leerOCRContinuo() {
 
   if (!video || !frame || !video.videoWidth) return;
 
-  if (debugText) debugText.innerText = "OCR activo…";
+  if (debugText) {
+    debugText.innerText = "OCR activo…";
+  }
 
   // ----------------------------
   // 📐 CÁLCULO DE ZONA OCR
@@ -650,7 +632,7 @@ function leerOCRContinuo() {
       debugText.innerText = `OCR lee: "${texto || "∅"}"`;
     }
 
-    // ❌ no parece referencia
+    // ❌ no parece una referencia válida
     if (!/^\d{5,7}$/.test(texto)) {
       ocrUltimo = null;
       ocrRepeticiones = 0;
@@ -670,76 +652,88 @@ function leerOCRContinuo() {
     if (ocrRepeticiones < 2) return;
 
     // ----------------------------
-    // ✅ OCR CONFIRMADO
+    // ✅ OCR CONFIRMADO (UNA SOLA VEZ)
     // ----------------------------
     ocrProcesado = true;
     modoOCRActivo = false;
 
-    clearInterval(ocrInterval);
-    clearTimeout(ocrTimeout);
-    ocrInterval = null;
-    ocrTimeout = null;
-
     ocrUltimo = null;
     ocrRepeticiones = 0;
 
-    // ❌ referencia no existe
+    cancelarOCR();
+
+    // 🔍 comprobar referencia existente
     if (!referencia_a_descripcion[texto]) {
       mostrarMensaje("❌ Referencia no existe", "error");
-      cancelarOCR();
+      permitirEscaneo = true;
       return;
     }
 
-    // ✅ guardar referencia detectada
-    numeroOCRDetectado = texto;
+    const cantidad =
+      parseInt(document.getElementById("cantidad").value) || 1;
 
-    // 📦 mostrar confirmación
-    const box = document.getElementById("ocrBox");
-    const label = document.getElementById("ocrNumeroDetectado");
+    if (inventario.articulos[texto]) {
+  inventario.articulos[texto] += cantidad;
 
-    if (label) {
-      label.innerText = "Referencia detectada: " + texto;
-    }
+  // 🔼 mover arriba (último usado)
+  inventario.orden = inventario.orden.filter(r => r !== texto);
+  inventario.orden.unshift(texto);
 
-    if (box) {
-      box.style.display = "block";
-    }
+} else {
+  inventario.articulos[texto] = cantidad;
 
-    // ⛔ NO añadir al inventario aquí
-    // ⛔ esperar aceptarOCR() o cancelarOCR()
+  // 🆕 nuevo → arriba del todo
+  inventario.orden.unshift(texto);
+}
 
-  }).catch(err => {
-    console.error("OCR error:", err);
+actualizarLista();
+document.getElementById("cantidad").value = 1;
+
+mostrarMensaje("✅ Artículo añadido (OCR)", "ok");
+permitirEscaneo = true;
+
   });
 }
 
 
-
-
 function aceptarOCR() {
 
+  modoOCR = false;
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
 
-  const ref = numeroOCRDetectado;
-  const cantidad = parseInt(document.getElementById("cantidad").value) || 1;
-
-  if (inventario.articulos[ref]) {
-    inventario.articulos[ref] += cantidad;
-    inventario.orden = inventario.orden.filter(r => r !== ref);
-  } else {
-    inventario.articulos[ref] = cantidad;
+  if (!referencia_a_descripcion[numeroOCRDetectado]) {
+    mostrarMensaje("❌ Referencia no existe", "error");
+    permitirEscaneo = true;
+    return;
   }
 
-  inventario.orden.unshift(ref);
+  const cantidad =
+    parseInt(document.getElementById("cantidad").value) || 1;
+
+  // ➕ añadir o sumar cantidad
+  if (inventario.articulos[numeroOCRDetectado]) {
+    inventario.articulos[numeroOCRDetectado] += cantidad;
+
+    // 🔼 mover arriba (último usado)
+    inventario.orden = inventario.orden.filter(
+      r => r !== numeroOCRDetectado
+    );
+    inventario.orden.unshift(numeroOCRDetectado);
+
+  } else {
+    inventario.articulos[numeroOCRDetectado] = cantidad;
+
+    // 🆕 nuevo → arriba del todo
+    inventario.orden.unshift(numeroOCRDetectado);
+  }
 
   actualizarLista();
 
-  // 🔄 reset limpio
+  // 🔄 reset
   numeroOCRDetectado = null;
-  ocrProcesado = false;
-  modoOCRActivo = false;
+  permitirEscaneo = true;
   document.getElementById("cantidad").value = 1;
 
   mostrarMensaje("✅ Referencia añadida", "ok");
@@ -747,9 +741,8 @@ function aceptarOCR() {
 
 
 function cancelarOCR() {
-
+  modoOCR = false;
   modoOCRActivo = false;
-  ocrProcesado = false;
   numeroOCRDetectado = null;
 
   if (ocrInterval) {
@@ -762,15 +755,11 @@ function cancelarOCR() {
     ocrTimeout = null;
   }
 
-  const box = document.getElementById("ocrBox");
-  if (box) box.style.display = "none";
-
+  document.getElementById("ocrBox").style.display = "none";
   permitirEscaneo = true;
-  ocrUltimo = null;
-  ocrRepeticiones = 0;
+  const debugCanvas = document.getElementById("ocr-debug-canvas");
+  if (debugCanvas) debugCanvas.remove();    
 }
-
-
 
 
 
@@ -842,7 +831,7 @@ function activarModoAprendizaje() {
 function cancelarAprendizaje() {
   modoAprendizaje = false;
   codigoPendienteAprender = null;
-  permitirEscaneo = true;
+  permitirEscaneo = false;
 
   document.getElementById("btnCancelarAprendizaje").style.display = "none";
   document.getElementById("aprendizajeBox").style.display = "none";
@@ -873,8 +862,6 @@ function variantesCodigo(codigo) {
 // PROCESAR CÓDIGO
 // ----------------------------
 function procesarCodigo(codigo) {
-  if (!permitirEscaneo) return;
-  permitirEscaneo = false;
 
   let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
 
@@ -888,11 +875,9 @@ function procesarCodigo(codigo) {
   }
 
   if (!referencia) {
-    mostrarMensaje("❌ Código sin referencia", "error");
-    permitirEscaneo = true;
+    mostrarMensaje("❌ Código no encontrado", "error");
     return;
   }
-
 
   // ➕ añadir o sumar cantidad
   if (inventario.articulos[referencia]) {
@@ -913,8 +898,6 @@ function procesarCodigo(codigo) {
 
   mostrarMensaje("✅ Artículo añadido", "ok");
   actualizarLista();
-  permitirEscaneo = true;
-
 }
 
 
