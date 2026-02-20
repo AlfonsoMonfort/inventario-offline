@@ -156,10 +156,21 @@ function cargarEquivalenciasAprendidas() {
     }
 }
 
-function normalizarCodigoEAN13(codigo) {
+function normalizarCodigo(codigo) {
   codigo = codigo.replace(/\D/g, "");
 
-  if (codigo.length >= 10 && codigo.length <= 13) {
+  // ✅ EAN-8
+  if (codigo.length === 8) {
+    return codigo;
+  }
+
+  // ✅ EAN-13
+  if (codigo.length === 13) {
+    return codigo;
+  }
+
+  // 🔄 UPC / EAN incompleto → a 13
+  if (codigo.length >= 10 && codigo.length <= 12) {
     return codigo.padStart(13, "0");
   }
 
@@ -328,12 +339,13 @@ function iniciarScanner() {
   if (!permitirEscaneo) return;
   if (!result?.codeResult?.code) return;
 
-  let code = normalizarCodigoEAN13(result.codeResult.code);
+  let code = normalizarCodigo(result.codeResult.code);
   if (!code) return;
 
 
   permitirEscaneo = false;
-
+  procesarCodigo(code);
+  
   // 🧠 MODO APRENDIZAJE
   if (modoAprendizaje) {
   codigoPendienteAprender = code;
