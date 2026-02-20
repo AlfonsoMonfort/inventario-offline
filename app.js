@@ -156,6 +156,16 @@ function cargarEquivalenciasAprendidas() {
     }
 }
 
+function normalizarCodigoEAN13(codigo) {
+  codigo = codigo.replace(/\D/g, "");
+
+  if (codigo.length >= 10 && codigo.length <= 13) {
+    return codigo.padStart(13, "0");
+  }
+
+  return null;
+}
+
 // ----------------------------
 // EMPEZAR INVENTARIO
 // ----------------------------
@@ -318,8 +328,9 @@ function iniciarScanner() {
   if (!permitirEscaneo) return;
   if (!result?.codeResult?.code) return;
 
-  const code = result.codeResult.code.replace(/\D/g, "");
-  if (![8, 10, 11, 12, 13].includes(code.length)) return;
+  let code = normalizarCodigoEAN13(result.codeResult.code);
+  if (!code) return;
+
 
   permitirEscaneo = false;
 
@@ -863,17 +874,9 @@ function variantesCodigo(codigo) {
 // PROCESAR CÓDIGO
 // ----------------------------
 function procesarCodigo(codigo) {
-
   let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
 
-  let referencia = null;
-
-  for (const v of variantesCodigo(codigo)) {
-    if (codigo_a_referencia[v]) {
-      referencia = codigo_a_referencia[v];
-      break;
-    }
-  }
+  const referencia = codigo_a_referencia[codigo];
 
   if (!referencia) {
     mostrarMensaje("❌ Código no encontrado", "error");
