@@ -325,8 +325,8 @@ function iniciarScanner() {
   if (!permitirEscaneo) return;
   if (!result?.codeResult?.code) return;
 
-  const code = result.codeResult.code.replace(/\D/g, "");
-  if (![8, 10, 11, 12, 13].includes(code.length)) return;
+  let code = result.codeResult.code.replace(/\D/g, "");
+  code = code.replace(/^0+/, "");
 
   permitirEscaneo = false;
 
@@ -871,16 +871,13 @@ function variantesCodigo(codigo) {
 // ----------------------------
 function procesarCodigo(codigo) {
 
-  let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
+  // 🔒 seguridad extra (por si alguien llama sin normalizar)
+  codigo = String(codigo).replace(/^0+/, "");
 
-  let referencia = null;
+  let cantidad =
+    parseInt(document.getElementById("cantidad").value) || 1;
 
-  for (const v of variantesCodigo(codigo)) {
-    if (codigo_a_referencia[v]) {
-      referencia = codigo_a_referencia[v];
-      break;
-    }
-  }
+  const referencia = codigo_a_referencia[codigo];
 
   if (!referencia) {
     mostrarMensaje("❌ Código no encontrado", "error");
