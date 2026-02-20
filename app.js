@@ -156,22 +156,6 @@ function cargarEquivalenciasAprendidas() {
     }
 }
 
-function normalizarCodigo(codigo) {
-  codigo = codigo.replace(/\D/g, "");
-
-  // 🟢 EAN-8
-  if (codigo.length === 8) {
-    return codigo;
-  }
-
-  // 🟢 Todo lo que NO es EAN-8 → a EAN-13
-  if (codigo.length >= 11 && codigo.length <= 13) {
-    return codigo.padStart(13, "0");
-  }
-
-  return null;
-}
-
 // ----------------------------
 // EMPEZAR INVENTARIO
 // ----------------------------
@@ -330,31 +314,29 @@ function iniciarScanner() {
     }, { once: true });
   });
 
-  Quagga.onDetected(result => {
+  Quagga.onDetected(function (result) {
   if (!permitirEscaneo) return;
   if (!result?.codeResult?.code) return;
 
-  const code = normalizarCodigo(result.codeResult.code);
-  if (!code) {
-    permitirEscaneo = true;
-    return;
-  }
+  const code = result.codeResult.code.replace(/\D/g, "");
+  if (![8, 10, 11, 12, 13].includes(code.length)) return;
+
+  permitirEscaneo = false;
 
   // 🧠 MODO APRENDIZAJE
   if (modoAprendizaje) {
-    codigoPendienteAprender = code;
+  codigoPendienteAprender = code;
 
-    const divCodigo =
-      document.getElementById("codigoAprendidoMostrado");
-    divCodigo.textContent = "Código leído: " + code;
-    divCodigo.style.display = "block";
+  const divCodigo = document.getElementById("codigoAprendidoMostrado");
+  divCodigo.textContent = "Código leído: " + code;
+  divCodigo.style.display = "block";
 
-    mostrarMensaje("✅ Código leído", "ok");
-    mostrarFormularioAprendizaje();
-    return;
-  }
+  mostrarMensaje("✅ Código leído", "ok");
+  mostrarFormularioAprendizaje();
+  return;
+}
 
-  permitirEscaneo = false;
+  // flujo normal
   procesarCodigo(code);
 });
 
@@ -707,7 +689,7 @@ mostrarMensaje("📋 Confirma la referencia", "ok");
 
 function aceptarOCR() {
   document.getElementById("ocrConfirmBox").style.display = "none";
-  
+  modoOCR = false;
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
@@ -753,7 +735,7 @@ function cancelarOCR() {
   const box = document.getElementById("ocrConfirmBox");
   if (box) box.style.display = "none";
 
-  
+  modoOCR = false;
   modoOCRActivo = false;
   numeroOCRDetectado = null;
 
@@ -851,37 +833,74 @@ function cancelarAprendizaje() {
   mostrarMensaje("❌ Grabación cancelada", "error");
 }
 
+function variantesCodigo(codigo) {
+  const variantes = new Set();
 
+  variantes.add(codigo);
+
+  // EAN-13 → UPC-A
+  if (codigo.length === 13 && codigo.startsWith("0")) {
+    variantes.add(codigo.slice(1));
+  }
+
+  // UPC-A → EAN-13
+  if (codigo.length === 12) {
+    variantes.add("0" + codigo);
+  }
+
+  if (codigo.length === 11) {
+    variantes.add("00" + codigo);
+  }
+  if (codigo.length === 10) {
+    variantes.add("000" + codigo);
+  }
+
+  return [...variantes];
+}
 
 
 // ----------------------------
 // PROCESAR CÓDIGO
 // ----------------------------
 function procesarCodigo(codigo) {
-  const cantidad =
-    parseInt(document.getElementById("cantidad").value) || 1;
 
-  const referencia = codigo_a_referencia[codigo];
+  let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
+
+  let referencia = null;
+
+  for (const v of variantesCodigo(codigo)) {
+    if (codigo_a_referencia[v]) {
+      referencia = codigo_a_referencia[v];
+      break;
+    }
+  }
 
   if (!referencia) {
     mostrarMensaje("❌ Código no encontrado", "error");
-    permitirEscaneo = true; // 🔓 nunca bloquear
     return;
   }
 
+  // ➕ añadir o sumar cantidad
   if (inventario.articulos[referencia]) {
     inventario.articulos[referencia] += cantidad;
+
+    // 🔼 mover arriba (último usado)
     inventario.orden = inventario.orden.filter(r => r !== referencia);
     inventario.orden.unshift(referencia);
+
   } else {
     inventario.articulos[referencia] = cantidad;
+
+    // 🆕 nuevo → arriba del todo
     inventario.orden.unshift(referencia);
   }
 
   document.getElementById("cantidad").value = 1;
+
   mostrarMensaje("✅ Artículo añadido", "ok");
   actualizarLista();
 }
+
 
 
 // ----------------------------
