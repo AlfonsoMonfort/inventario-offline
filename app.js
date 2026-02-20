@@ -905,7 +905,9 @@ function procesarCodigo(codigo) {
   actualizarLista();
 }
 
-
+function esSamsung() {
+  return /samsung/i.test(navigator.userAgent);
+}
 
 // ----------------------------
 // ACTUALIZAR LISTA
