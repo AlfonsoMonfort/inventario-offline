@@ -319,7 +319,7 @@ function iniciarScanner() {
   if (!result?.codeResult?.code) return;
 
   const code = result.codeResult.code.replace(/\D/g, "");
-  if (![8, 12, 13].includes(code.length)) return;
+  if (![8, 10, 11, 12, 13].includes(code.length)) return;
 
   permitirEscaneo = false;
 
