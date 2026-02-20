@@ -169,8 +169,13 @@ function normalizarCodigo(codigo) {
     return codigo;
   }
 
-  // 🔄 UPC / EAN incompleto → a 13
-  if (codigo.length >= 10 && codigo.length <= 12) {
+  // ✅ UPC-A sin 0 inicial (11 dígitos)
+  if (codigo.length === 11) {
+    return ("0" + codigo).padStart(13, "0");
+  }
+
+  // ✅ UPC / EAN incompleto
+  if (codigo.length === 10 || codigo.length === 12) {
     return codigo.padStart(13, "0");
   }
 
@@ -345,7 +350,7 @@ function iniciarScanner() {
 
   permitirEscaneo = false;
   procesarCodigo(code);
-  
+
   // 🧠 MODO APRENDIZAJE
   if (modoAprendizaje) {
   codigoPendienteAprender = code;
