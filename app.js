@@ -159,23 +159,13 @@ function cargarEquivalenciasAprendidas() {
 function normalizarCodigo(codigo) {
   codigo = codigo.replace(/\D/g, "");
 
-  // ✅ EAN-8
+  // 🟢 EAN-8
   if (codigo.length === 8) {
     return codigo;
   }
 
-  // ✅ EAN-13
-  if (codigo.length === 13) {
-    return codigo;
-  }
-
-  // ✅ UPC-A sin 0 inicial (11 dígitos)
-  if (codigo.length === 11) {
-    return ("0" + codigo).padStart(13, "0");
-  }
-
-  // ✅ UPC / EAN incompleto
-  if (codigo.length === 10 || codigo.length === 12) {
+  // 🟢 Todo lo que NO es EAN-8 → a EAN-13
+  if (codigo.length >= 11 && codigo.length <= 13) {
     return codigo.padStart(13, "0");
   }
 
@@ -340,31 +330,31 @@ function iniciarScanner() {
     }, { once: true });
   });
 
-  Quagga.onDetected(function (result) {
+  Quagga.onDetected(result => {
   if (!permitirEscaneo) return;
   if (!result?.codeResult?.code) return;
 
-  let code = normalizarCodigo(result.codeResult.code);
-  if (!code) return;
-
-
-  permitirEscaneo = false;
-  procesarCodigo(code);
+  const code = normalizarCodigo(result.codeResult.code);
+  if (!code) {
+    permitirEscaneo = true;
+    return;
+  }
 
   // 🧠 MODO APRENDIZAJE
   if (modoAprendizaje) {
-  codigoPendienteAprender = code;
+    codigoPendienteAprender = code;
 
-  const divCodigo = document.getElementById("codigoAprendidoMostrado");
-  divCodigo.textContent = "Código leído: " + code;
-  divCodigo.style.display = "block";
+    const divCodigo =
+      document.getElementById("codigoAprendidoMostrado");
+    divCodigo.textContent = "Código leído: " + code;
+    divCodigo.style.display = "block";
 
-  mostrarMensaje("✅ Código leído", "ok");
-  mostrarFormularioAprendizaje();
-  return;
-}
+    mostrarMensaje("✅ Código leído", "ok");
+    mostrarFormularioAprendizaje();
+    return;
+  }
 
-  // flujo normal
+  permitirEscaneo = false;
   procesarCodigo(code);
 });
 
@@ -717,7 +707,7 @@ mostrarMensaje("📋 Confirma la referencia", "ok");
 
 function aceptarOCR() {
   document.getElementById("ocrConfirmBox").style.display = "none";
-  modoOCR = false;
+  
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
@@ -763,7 +753,7 @@ function cancelarOCR() {
   const box = document.getElementById("ocrConfirmBox");
   if (box) box.style.display = "none";
 
-  modoOCR = false;
+  
   modoOCRActivo = false;
   numeroOCRDetectado = null;
 
@@ -861,51 +851,21 @@ function cancelarAprendizaje() {
   mostrarMensaje("❌ Grabación cancelada", "error");
 }
 
-function variantesCodigo(codigo) {
-  const variantes = new Set();
 
-  variantes.add(codigo);
-
-  // EAN-13 → UPC-A
-  if (codigo.length === 13 && codigo.startsWith("0")) {
-    variantes.add(codigo.slice(1));
-  }
-
-  // UPC-A → EAN-13
-  if (codigo.length === 12) {
-    variantes.add("0" + codigo);
-  }
-
-  if (codigo.length === 11) {
-    variantes.add("00" + codigo);
-  }
-  if (codigo.length === 10) {
-    variantes.add("000" + codigo);
-  }
-
-  return [...variantes];
-}
 
 
 // ----------------------------
 // PROCESAR CÓDIGO
 // ----------------------------
 function procesarCodigo(codigo) {
-  let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
+  const cantidad =
+    parseInt(document.getElementById("cantidad").value) || 1;
 
-  const posibles = variantesCodigo(codigo);
-
-  let referencia = null;
-
-  for (let c of posibles) {
-    if (codigo_a_referencia[c]) {
-      referencia = codigo_a_referencia[c];
-      break;
-    }
-  }
+  const referencia = codigo_a_referencia[codigo];
 
   if (!referencia) {
     mostrarMensaje("❌ Código no encontrado", "error");
+    permitirEscaneo = true; // 🔓 nunca bloquear
     return;
   }
 
