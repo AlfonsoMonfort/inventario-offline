@@ -848,6 +848,13 @@ function variantesCodigo(codigo) {
     variantes.add("0" + codigo);
   }
 
+  if (codigo.length === 11) {
+    variantes.add("00" + codigo);
+  }
+  if (codigo.length === 10) {
+    variantes.add("000" + codigo);
+  }
+
   return [...variantes];
 }
 
