@@ -97,51 +97,58 @@ async function cargarReferenciasSinCodigo() {
 // ----------------------------
 async function cargarEquivalencias() {
 
-    try {
+  try {
 
-        let datosGuardados = localStorage.getItem("equivalencias");
+    let datosGuardados = localStorage.getItem("equivalencias");
 
-        if (datosGuardados) {
-            console.log("Cargando equivalencias desde almacenamiento local");
-            let datos = JSON.parse(datosGuardados);
+    if (datosGuardados) {
+      console.log("Cargando equivalencias desde almacenamiento local");
+      let datos = JSON.parse(datosGuardados);
 
-            datos.forEach(item => {
-                codigo_a_referencia[item.codigo] = item.referencia;
-                referencia_a_descripcion[item.referencia] = item.descripcion;
-            });
+      datos.forEach(item => {
+        const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
 
-            console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
-            return;
-        }
+        codigo_a_referencia[codigoNormalizado] = item.referencia;
+        referencia_a_descripcion[item.referencia] = item.descripcion;
+      });
 
-        console.log("Descargando equivalencias por primera vez");
-
-        const response = await fetch("equivalencias.json");
-
-        if (!response.ok) {
-            throw new Error("No se pudo cargar equivalencias.json");
-        }
-
-        const datos = await response.json();
-
-        console.log("Datos recibidos:", datos);
-
-        localStorage.setItem("equivalencias", JSON.stringify(datos));
-
-        datos.forEach(item => {
-            codigo_a_referencia[item.codigo] = item.referencia;
-            referencia_a_descripcion[item.referencia] = item.descripcion;
-        });
-
-        console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
-
-    } catch (error) {
-        console.log("Error cargando equivalencias:", error);
+      console.log(
+        "Total códigos cargados:",
+        Object.keys(codigo_a_referencia).length
+      );
+      return;
     }
-}
 
-function esSamsung() {
-  return /samsung/i.test(navigator.userAgent);
+    console.log("Descargando equivalencias por primera vez");
+
+    const response = await fetch("equivalencias.json");
+
+    if (!response.ok) {
+      throw new Error("No se pudo cargar equivalencias.json");
+    }
+
+    const datos = await response.json();
+
+    console.log("Datos recibidos:", datos);
+
+    // Guardamos TAL CUAL llegaron (pero se normalizan al usar)
+    localStorage.setItem("equivalencias", JSON.stringify(datos));
+
+    datos.forEach(item => {
+      const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
+
+      codigo_a_referencia[codigoNormalizado] = item.referencia;
+      referencia_a_descripcion[item.referencia] = item.descripcion;
+    });
+
+    console.log(
+      "Total códigos cargados:",
+      Object.keys(codigo_a_referencia).length
+    );
+
+  } catch (error) {
+    console.log("Error cargando equivalencias:", error);
+  }
 }
 
 // 🔧 NUEVO
