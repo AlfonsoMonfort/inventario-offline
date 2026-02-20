@@ -893,34 +893,35 @@ function variantesCodigo(codigo) {
 function procesarCodigo(codigo) {
   let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
 
-  const referencia = codigo_a_referencia[codigo];
+  const posibles = variantesCodigo(codigo);
+
+  let referencia = null;
+
+  for (let c of posibles) {
+    if (codigo_a_referencia[c]) {
+      referencia = codigo_a_referencia[c];
+      break;
+    }
+  }
 
   if (!referencia) {
     mostrarMensaje("❌ Código no encontrado", "error");
     return;
   }
 
-  // ➕ añadir o sumar cantidad
   if (inventario.articulos[referencia]) {
     inventario.articulos[referencia] += cantidad;
-
-    // 🔼 mover arriba (último usado)
     inventario.orden = inventario.orden.filter(r => r !== referencia);
     inventario.orden.unshift(referencia);
-
   } else {
     inventario.articulos[referencia] = cantidad;
-
-    // 🆕 nuevo → arriba del todo
     inventario.orden.unshift(referencia);
   }
 
   document.getElementById("cantidad").value = 1;
-
   mostrarMensaje("✅ Artículo añadido", "ok");
   actualizarLista();
 }
-
 
 
 // ----------------------------
