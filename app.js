@@ -66,6 +66,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (btnAyuda && modalAyuda) {
     btnAyuda.addEventListener("click", () => {
+      console.log("CLICK AYUDA");   // 👈 AÑADE ESTO
       modalAyuda.style.display = "flex";
     });
   }
