@@ -61,15 +61,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     permitirEscaneo = true; // 📦 escáner normal
   });
-  const btnAyuda = document.getElementById("btnAyuda");
-  const modalAyuda = document.getElementById("modalAyuda");
-
-  if (btnAyuda && modalAyuda) {
-    btnAyuda.addEventListener("click", () => {
-      console.log("CLICK AYUDA");   // 👈 AÑADE ESTO
-      modalAyuda.style.display = "flex";
-    });
-  }
 });
 
 
@@ -705,7 +696,7 @@ mostrarMensaje("📋 Confirma la referencia", "ok");
 
 function aceptarOCR() {
   document.getElementById("ocrConfirmBox").style.display = "none";
-  modoOCRActivo = false;
+  modoOCR = false;
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
@@ -751,6 +742,7 @@ function cancelarOCR() {
   const box = document.getElementById("ocrConfirmBox");
   if (box) box.style.display = "none";
 
+  modoOCR = false;
   modoOCRActivo = false;
   numeroOCRDetectado = null;
 
@@ -776,7 +768,9 @@ function cancelarOCR() {
 // BOTÓN AYUDA
 // ===============================
 
-
+document.getElementById("btnAyuda").addEventListener("click", () => {
+  document.getElementById("modalAyuda").style.display = "flex";
+});
 
 function cerrarAyuda() {
   document.getElementById("modalAyuda").style.display = "none";
