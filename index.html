@@ -119,7 +119,7 @@ li{
   color: #fff;
   font-size: 18px;
   cursor: pointer;
-   z-index: 9999;
+   z-index: 10;
 }
 
 /* MODAL AYUDA */
@@ -133,7 +133,7 @@ li{
   background: rgba(0,0,0,0.6);
   justify-content: center;
   align-items: center;
-  z-index: 3000;
+  z-index: 10000;
 }
 
 .modal-contenido {
@@ -215,7 +215,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.4</header>
+<header>Inventario Offline V.5</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -230,9 +230,9 @@ li{
   <input type="text" id="almacen" placeholder="Almacén">
   <input type="text" id="vendedor" placeholder="Número vendedor">
   <button type="button" onclick="empezar()">Empezar</button>
-  <button id="btnAyuda" class="btn-ayuda">❓</button>
+ 
 </div>
-
+ <button id="btnAyuda" class="btn-ayuda">❓</button>
 <!-- PANTALLA 2 -->
 <div id="pantallaEscaner" style="display:none">
 
