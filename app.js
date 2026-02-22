@@ -696,7 +696,7 @@ mostrarMensaje("📋 Confirma la referencia", "ok");
 
 function aceptarOCR() {
   document.getElementById("ocrConfirmBox").style.display = "none";
-  modoOCR = false;
+  modoOCRActivo = false;
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
@@ -742,7 +742,6 @@ function cancelarOCR() {
   const box = document.getElementById("ocrConfirmBox");
   if (box) box.style.display = "none";
 
-  modoOCR = false;
   modoOCRActivo = false;
   numeroOCRDetectado = null;
 
