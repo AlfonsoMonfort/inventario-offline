@@ -213,7 +213,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.2</header>
+<header>Inventario Offline V.3</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -228,7 +228,10 @@ li{
   <input type="text" id="almacen" placeholder="Almacén">
   <input type="text" id="vendedor" placeholder="Número vendedor">
   <button type="button" onclick="empezar()">Empezar</button>
-  <button id="btnAyuda" class="btn-ayuda">❓</button>
+  <button class="btn-ayuda"
+  onclick="document.getElementById('modalAyuda').style.display='flex'">
+  ❓
+</button>
 </div>
 
 <!-- PANTALLA 2 -->
@@ -396,7 +399,10 @@ li{
       <li>Busca el Excel en el gestor de archivos / Files o similar.</li>
     </ol>
     <br>
-    <button onclick="cerrarAyuda()">Cerrar</button>
+    <button
+      onclick="document.getElementById('modalAyuda').style.display='none'">
+      Cerrar
+    </button>
   </div>
 </div>
 
