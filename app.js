@@ -1034,7 +1034,62 @@ setTimeout(() => URL.revokeObjectURL(url), 1000);
     location.reload();
 }
 
+function importarInventarioExcel(e) {
+  const file = e.target.files[0];
+  if (!file) return;
 
+  const reader = new FileReader();
+
+  reader.onload = evt => {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const filas = XLSX.utils.sheet_to_json(sheet);
+
+      sumarInventarioDesdeExcel(filas);
+      mostrarMensaje("✅ Inventario importado y sumado", "ok");
+
+    } catch (error) {
+      console.error(error);
+      mostrarMensaje("❌ Error al importar Excel", "error");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+
+  // 🔄 permitir volver a importar el mismo archivo si hace falta
+  e.target.value = "";
+}
+
+function sumarInventarioDesdeExcel(filas) {
+  if (!Array.isArray(filas)) return;
+
+  filas.forEach(fila => {
+    const ref = String(fila.referencia || "").trim();
+    const cantidad = parseInt(fila.cantidad, 10) || 0;
+
+    if (!ref || cantidad <= 0) return;
+
+    if (inventario.articulos[ref]) {
+      inventario.articulos[ref] += cantidad;
+
+      // mover arriba (último usado)
+      inventario.orden = inventario.orden.filter(r => r !== ref);
+      inventario.orden.unshift(ref);
+
+    } else {
+      inventario.articulos[ref] = cantidad;
+      inventario.orden.unshift(ref);
+    }
+  });
+
+  actualizarLista();
+}
+
+document
+  .getElementById("importarExcel")
+  .addEventListener("change", importarInventarioExcel);
 
 // ----------------------------
 // SERVICE WORKER

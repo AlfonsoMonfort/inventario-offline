@@ -213,7 +213,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.3</header>
+<header>Inventario Offline V.1</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -339,10 +339,27 @@ li{
     <ul id="listaArticulos"></ul>
   </div>
 
+
   <!-- BOTON GUARDAR INVENTARIO -->
   <button class="secondary" onclick="guardarInventario()">
     💾 Guardar inventario
   </button>
+  <!-- IMPORTAR INVENTARIO DESDE EXCEL -->
+<input
+  type="file"
+  id="importarExcel"
+  accept=".xlsx"
+  style="display:none"
+/>
+
+<button
+  type="button"
+  class="secondary"
+  onclick="document.getElementById('importarExcel').click()"
+  style="margin-top:8px;"
+>
+  📥 Importar inventario
+</button>
 
   <!-- BOTÓN FINALIZAR INVENTARIO -->
   <div style="margin-top:20px;">
