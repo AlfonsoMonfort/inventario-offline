@@ -763,19 +763,23 @@ function cancelarOCR() {
 }
 
 
-
 // ===============================
-// BOTÓN AYUDA
+// AYUDA (LIMPIO Y CONTROLADO)
 // ===============================
 
-document.getElementById("btnAyuda").addEventListener("click", () => {
-  document.getElementById("modalAyuda").style.display = "flex";
-});
-
-function cerrarAyuda() {
-  document.getElementById("modalAyuda").style.display = "none";
+function abrirAyuda() {
+  const modal = document.getElementById("modalAyuda");
+  if (modal) {
+    modal.style.display = "flex";
+  }
 }
 
+function cerrarAyuda() {
+  const modal = document.getElementById("modalAyuda");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
 
 
 function añadirManual() {
