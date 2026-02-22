@@ -217,7 +217,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.8</header>
+<header>Inventario Offline V.9</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -392,12 +392,16 @@ li{
 <!-- TU APP -->
 <script src="app.js"></script>
 
-<!-- MODAL AYUDA (AQUÍ SÍ) -->
+<!-- MODAL AYUDA -->
 <div id="modalAyuda" class="modal-ayuda">
   <div class="modal-contenido">
     <h2>Instrucciones de uso</h2>
     <p>Texto de ayuda...</p>
-    <button onclick="document.getElementById('modalAyuda').style.display='none'">
+
+    <button onclick="
+      document.getElementById('modalAyuda').style.display='none';
+      document.getElementById('pantallaInicio').style.display='block';
+    ">
       Cerrar
     </button>
   </div>
@@ -407,13 +411,12 @@ li{
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('btnAyuda');
   const modal = document.getElementById('modalAyuda');
+  const inicio = document.getElementById('pantallaInicio');
 
-  if (!btn || !modal) {
-    alert('NO EXISTE btn o modal');
-    return;
-  }
+  if (!btn || !modal || !inicio) return;
 
   btn.addEventListener('click', () => {
+    inicio.style.display = 'none';
     modal.style.display = 'flex';
   });
 });
