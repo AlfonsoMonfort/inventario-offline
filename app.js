@@ -11,6 +11,7 @@ let ocrTimeout = null;
 let ocrUltimo = null;
 let ocrRepeticiones = 0;
 let ocrProcesado = false;
+let scannerInicializado = false;
 
 const DEBUG_OCR = true;
 
@@ -247,14 +248,7 @@ function calcularAreaDesdeMarco() {
   const right = (rightPx / videoRect.width) * 100;
 
   const clamp = v => Math.max(0, Math.min(100, v));
-  if (esSamsung()) {
-    return {
-      top: "15%",
-      bottom: "15%",
-      left: "5%",
-      right: "5%"
-    };
-  }
+  
 
   // resto de móviles → cálculo exacto
   return {
