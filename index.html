@@ -19,10 +19,6 @@ body{
   overflow-x: hidden;
 }
 
-body {
-  position: relative;
-}
-
 header{
   background:#111;
   color:white;
@@ -124,6 +120,20 @@ li{
   cursor: pointer;
 }
 
+/* MODAL AYUDA */
+.modal-ayuda {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+}
+
 .modal-contenido {
   background: white;
   padding: 20px;
@@ -193,20 +203,6 @@ li{
   width: 100%;
 }
 
-.modal-ayuda {
-  position: fixed;
-  inset: 0;
-  display: none;
-  background: rgba(0,0,0,0.6);
-  justify-content: center;
-  align-items: center;
-  z-index: 999999;
-}
-
-.modal-ayuda {
-  outline: 5px solid lime;
-}
-
 </style>
 
 
@@ -217,7 +213,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.9</header>
+<header>Inventario Offline V.1</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -232,7 +228,7 @@ li{
   <input type="text" id="almacen" placeholder="Almacén">
   <input type="text" id="vendedor" placeholder="Número vendedor">
   <button type="button" onclick="empezar()">Empezar</button>
-  <button class="btn-ayuda" id="btnAyuda">❓</button>
+  <button id="btnAyuda" class="btn-ayuda">❓</button>
 </div>
 
 <!-- PANTALLA 2 -->
@@ -384,45 +380,30 @@ li{
 
 </div>
 
-
+<div id="modalAyuda" class="modal-ayuda">
+  <div class="modal-contenido">
+    <h2>Instrucciones de uso</h2>
+    <ol>
+      <li>Rellena fecha, almacén y vendedor.</li>
+      <li>Pulsa empezar inventario.</li>
+      <li>Selecciona cantidad (por defecto 1).</li>
+      <li>Acerca el lector al código de barras.</li>
+      <li>Pulsa la pantalla de escaneo.</li>
+      <li>Separa poco a poco el móvil del lector.</li>
+      <li>Si sale mensaje en verde = OK.  
+          Si es rojo = acerca y separa de nuevo.</li>
+      <li>Finaliza para generar el Excel.</li>
+      <li>Busca el Excel en el gestor de archivos / Files o similar.</li>
+    </ol>
+    <br>
+    <button onclick="cerrarAyuda()">Cerrar</button>
+  </div>
+</div>
 
 <!-- OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <!-- TU APP -->
 <script src="app.js"></script>
-
-<!-- MODAL AYUDA -->
-<div id="modalAyuda" class="modal-ayuda">
-  <div class="modal-contenido">
-    <h2>Instrucciones de uso</h2>
-    <p>Texto de ayuda...</p>
-
-    <button onclick="
-      document.getElementById('modalAyuda').style.display='none';
-      document.getElementById('pantallaInicio').style.display='block';
-    ">
-      Cerrar
-    </button>
-  </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('btnAyuda');
-  const modal = document.getElementById('modalAyuda');
-  const inicio = document.getElementById('pantallaInicio');
-
-  if (!btn || !modal || !inicio) return;
-
-  btn.addEventListener('click', () => {
-    inicio.style.display = 'none';
-    modal.style.display = 'flex';
-  });
-});
-</script>
-
-<!--<script src="app.js"></script> -->
-
 </body>
 </html>

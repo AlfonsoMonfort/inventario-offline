@@ -696,7 +696,7 @@ mostrarMensaje("📋 Confirma la referencia", "ok");
 
 function aceptarOCR() {
   document.getElementById("ocrConfirmBox").style.display = "none";
-  modoOCRActivo = false;
+  modoOCR = false;
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
@@ -742,6 +742,7 @@ function cancelarOCR() {
   const box = document.getElementById("ocrConfirmBox");
   if (box) box.style.display = "none";
 
+  modoOCR = false;
   modoOCRActivo = false;
   numeroOCRDetectado = null;
 
@@ -762,23 +763,19 @@ function cancelarOCR() {
 }
 
 
+
 // ===============================
-// AYUDA (LIMPIO Y CONTROLADO)
+// BOTÓN AYUDA
 // ===============================
 
-function abrirAyuda() {
-  const modal = document.getElementById("modalAyuda");
-  if (modal) {
-    modal.style.display = "flex";
-  }
-}
+document.getElementById("btnAyuda").addEventListener("click", () => {
+  document.getElementById("modalAyuda").style.display = "flex";
+});
 
 function cerrarAyuda() {
-  const modal = document.getElementById("modalAyuda");
-  if (modal) {
-    modal.style.display = "none";
-  }
+  document.getElementById("modalAyuda").style.display = "none";
 }
+
 
 
 function añadirManual() {
