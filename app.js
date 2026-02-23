@@ -11,7 +11,6 @@ let ocrTimeout = null;
 let ocrUltimo = null;
 let ocrRepeticiones = 0;
 let ocrProcesado = false;
-let scannerInicializado = false;
 
 const DEBUG_OCR = true;
 
@@ -226,46 +225,11 @@ function cargarInventarioGuardado() {
 
 
 
-function calcularAreaDesdeMarco() {
-  const scanner = document.getElementById("scanner");
-  const frame = document.querySelector(".scanner-frame");
-  const video = scanner.querySelector("video");
-
-  if (!video.videoWidth || !video.videoHeight) return null;
-
-  const frameRect = frame.getBoundingClientRect();
-  const videoRect = video.getBoundingClientRect();
-
-  // Posición del marco respecto al vídeo real
-  const topPx = frameRect.top - videoRect.top;
-  const leftPx = frameRect.left - videoRect.left;
-  const bottomPx = videoRect.bottom - frameRect.bottom;
-  const rightPx = videoRect.right - frameRect.right;
-
-  const top = (topPx / videoRect.height) * 100;
-  const bottom = (bottomPx / videoRect.height) * 100;
-  const left = (leftPx / videoRect.width) * 100;
-  const right = (rightPx / videoRect.width) * 100;
-
-  const clamp = v => Math.max(0, Math.min(100, v));
-  
-
-  // resto de móviles → cálculo exacto
-  return {
-    top: `${clamp(top)}%`,
-    bottom: `${clamp(bottom)}%`,
-    left: `${clamp(left)}%`,
-    right: `${clamp(right)}%`
-  };
-}
 
 // ----------------------------
 // INICIAR ESCÁNER
 // ----------------------------
 function iniciarScanner() {
-
-  if (scannerInicializado) return;
-  scannerInicializado = true;
 
   Quagga.init({
     inputStream: {
@@ -273,57 +237,27 @@ function iniciarScanner() {
       type: "LiveStream",
       target: document.querySelector('#scanner'),
       constraints: {
-        facingMode: "environment",
-        focusMode: "continuous"
+        facingMode: "environment"
+      },
+      area: {
+        top: "27.5%",
+        right: "7.5%",
+        left: "7.5%",
+        bottom: "27.5%"
       }
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
     },
-    locate: false // 🔑 SIEMPRE
+    locate: true
   }, function (err) {
-
     if (err) {
       console.error(err);
-      scannerInicializado = false;
       return;
     }
-
     Quagga.start();
-
-    const video = document.querySelector("#scanner video");
-    if (!video) return;
-
-    video.addEventListener("loadedmetadata", () => {
-
-      const area = obtenerAreaEscaneo();
-      if (!area) return;
-
-      Quagga.stop();
-
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: document.querySelector('#scanner'),
-          constraints: {
-            facingMode: "environment"
-          },
-          area
-        },
-        decoder: {
-          readers: ["ean_reader", "ean_8_reader", "upc_reader"]
-        },
-        locate: !esSamsung()
-      }, function () {
-        Quagga.start();
-      });
-
-    }, { once: true });
-
   });
-
-  // ⬇️ ESTO SE QUEDA EXACTAMENTE COMO LO TENÍAS
+  Quagga.offDetected();
   Quagga.onDetected(function (result) {
     if (!permitirEscaneo) return;
     if (!result?.codeResult?.code) return;
@@ -333,23 +267,18 @@ function iniciarScanner() {
 
     permitirEscaneo = false;
 
-    // 🧠 MODO APRENDIZAJE
     if (modoAprendizaje) {
       codigoPendienteAprender = code;
-
-      const divCodigo = document.getElementById("codigoAprendidoMostrado");
-      divCodigo.textContent = "Código leído: " + code;
-      divCodigo.style.display = "block";
-
+      document.getElementById("codigoAprendidoMostrado").textContent =
+        "Código leído: " + code;
+      document.getElementById("codigoAprendidoMostrado").style.display = "block";
       mostrarMensaje("✅ Código leído", "ok");
       mostrarFormularioAprendizaje();
       return;
     }
 
-    // flujo normal
     procesarCodigo(code);
   });
-
 }
 
 
@@ -699,7 +628,7 @@ mostrarMensaje("📋 Confirma la referencia", "ok");
 
 function aceptarOCR() {
   document.getElementById("ocrConfirmBox").style.display = "none";
-  modoOCR = false;
+  modoOCRActivo  = false;
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
@@ -745,7 +674,7 @@ function cancelarOCR() {
   const box = document.getElementById("ocrConfirmBox");
   if (box) box.style.display = "none";
 
-  modoOCR = false;
+ 
   modoOCRActivo = false;
   numeroOCRDetectado = null;
 
@@ -910,22 +839,6 @@ function procesarCodigo(codigo) {
 
 function esSamsung() {
   return /samsung/i.test(navigator.userAgent);
-}
-
-function obtenerAreaEscaneo() {
-
-  // 📱 SAMSUNG → área fija alineada con el marco rojo
-  if (esSamsung()) {
-    return {
-      top: "27.5%",
-      bottom: "27.5%",
-      left: "7.5%",
-      right: "7.5%"
-    };
-  }
-
-  // 📱 RESTO → área exacta desde .scanner-frame
-  return calcularAreaDesdeMarco();
 }
 
 // ----------------------------
