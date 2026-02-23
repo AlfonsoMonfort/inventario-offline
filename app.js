@@ -468,11 +468,12 @@ function exportarCodigosAprendidos() {
 
   const url = URL.createObjectURL(blob);
 
-  // iOS → compartir
-  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-    window.open(url);
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  if (isIOS) {
+    // Truco iOS: abrir en la MISMA pestaña
+    window.location.href = url;
   } else {
-    // Android / PC → descarga
     const a = document.createElement("a");
     a.href = url;
     a.download = nombre;
@@ -919,53 +920,57 @@ function guardarInventario() {
 // ----------------------------
 function finalizar() {
 
-    let datos = [];
+  let datos = [];
 
-    for (let ref in inventario.articulos) {
+  for (let ref in inventario.articulos) {
+    datos.push({
+      fecha: formatearFecha(inventario.fecha),
+      almacen: inventario.almacen,
+      referencia: ref,
+      cantidad: inventario.articulos[ref],
+      numero_vendedor: inventario.vendedor
+    });
+  }
 
-        datos.push({
-            fecha: formatearFecha(inventario.fecha),
-            almacen: inventario.almacen,
-            referencia: ref,
-            cantidad: inventario.articulos[ref],
-            numero_vendedor: inventario.vendedor
-        });
-    }
+  let wb = XLSX.utils.book_new();
+  let ws = XLSX.utils.json_to_sheet(datos);
+  XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
-    let wb = XLSX.utils.book_new();
-    let ws = XLSX.utils.json_to_sheet(datos);
-    XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+  let nombre = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
 
-    let nombre = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
+  const wbout = XLSX.write(wb, {
+    bookType: "xlsx",
+    type: "array"
+  });
 
-    const wbout = XLSX.write(wb, {
-  bookType: "xlsx",
-  type: "array"
-});
+  const blob = new Blob([wbout], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
 
-const blob = new Blob([wbout], {
-  type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-});
+  const url = URL.createObjectURL(blob);
 
-const url = URL.createObjectURL(blob);
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-// iOS → abrir para compartir
-if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-  window.open(url);
-} else {
-  // resto → descarga normal
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = nombre;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
+  if (isIOS) {
+    mostrarMensaje("📂 Usa Compartir → Guardar en Archivos", "ok");
 
-setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // 🔥 CLAVE para iOS
+    setTimeout(() => {
+      window.location.href = url;
+    }, 300);
 
+  } else {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 
-    location.reload();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+  location.reload();
 }
 
 function importarInventarioExcel(e) {
