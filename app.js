@@ -237,7 +237,9 @@ function iniciarScanner() {
       type: "LiveStream",
       target: document.querySelector('#scanner'),
       constraints: {
-        facingMode: "environment"
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
       },
       area: {
         top: "27.5%",
@@ -249,7 +251,7 @@ function iniciarScanner() {
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
     },
-    locate: true
+    locate: false
   }, function (err) {
     if (err) {
       console.error(err);
