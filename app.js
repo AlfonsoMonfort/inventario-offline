@@ -280,7 +280,7 @@ function iniciarScanner() {
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
     },
-    locate: !esSamsung()
+    locate: false // 🔑 SIEMPRE
   }, function (err) {
 
     if (err) {
