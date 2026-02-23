@@ -265,44 +265,33 @@ function calcularAreaDesdeMarco() {
   };
 }
 
-function obtenerAreaEscaneo() {
-
-  // 📱 Samsung → área fija (estable)
-  if (esSamsung()) {
-    return {
-      top: "18%",
-      bottom: "18%",
-      left: "8%",
-      right: "8%"
-    };
-  }
-
-  // 📐 Resto → área calculada según el marco
-  return calcularAreaDesdeMarco();
-}
-
 // ----------------------------
 // INICIAR ESCÁNER
 // ----------------------------
 function iniciarScanner() {
+
+  if (scannerInicializado) return;
+  scannerInicializado = true;
 
   Quagga.init({
     inputStream: {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#scanner'),
-     constraints: {
-      facingMode: "environment",
-      focusMode: "continuous"
-    }
+      constraints: {
+        facingMode: "environment",
+        focusMode: "continuous"
+      }
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
     },
     locate: !esSamsung()
   }, function (err) {
+
     if (err) {
       console.error(err);
+      scannerInicializado = false;
       return;
     }
 
@@ -313,55 +302,59 @@ function iniciarScanner() {
 
     video.addEventListener("loadedmetadata", () => {
 
-    const area = obtenerAreaEscaneo();
-    if (!area) return;
+      const area = obtenerAreaEscaneo();
+      if (!area) return;
 
-    Quagga.stop();
+      Quagga.stop();
 
-    Quagga.init({
-      inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: document.querySelector('#scanner'),
-        constraints: {
-          facingMode: "environment"
+      Quagga.init({
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: document.querySelector('#scanner'),
+          constraints: {
+            facingMode: "environment"
+          },
+          area
         },
-        area
-      },
-      decoder: {
-        readers: ["ean_reader", "ean_8_reader", "upc_reader"]
-      },
-      locate: !esSamsung()
-    }, () => Quagga.start());
+        decoder: {
+          readers: ["ean_reader", "ean_8_reader", "upc_reader"]
+        },
+        locate: !esSamsung()
+      }, function () {
+        Quagga.start();
+      });
 
-  }, { once: true });
+    }, { once: true });
+
   });
 
+  // ⬇️ ESTO SE QUEDA EXACTAMENTE COMO LO TENÍAS
   Quagga.onDetected(function (result) {
-  if (!permitirEscaneo) return;
-  if (!result?.codeResult?.code) return;
+    if (!permitirEscaneo) return;
+    if (!result?.codeResult?.code) return;
 
-  let code = result.codeResult.code.replace(/\D/g, "");
-  code = code.replace(/^0+/, "");
+    let code = result.codeResult.code.replace(/\D/g, "");
+    code = code.replace(/^0+/, "");
 
-  permitirEscaneo = false;
+    permitirEscaneo = false;
 
-  // 🧠 MODO APRENDIZAJE
-  if (modoAprendizaje) {
-  codigoPendienteAprender = code;
+    // 🧠 MODO APRENDIZAJE
+    if (modoAprendizaje) {
+      codigoPendienteAprender = code;
 
-  const divCodigo = document.getElementById("codigoAprendidoMostrado");
-  divCodigo.textContent = "Código leído: " + code;
-  divCodigo.style.display = "block";
+      const divCodigo = document.getElementById("codigoAprendidoMostrado");
+      divCodigo.textContent = "Código leído: " + code;
+      divCodigo.style.display = "block";
 
-  mostrarMensaje("✅ Código leído", "ok");
-  mostrarFormularioAprendizaje();
-  return;
-}
+      mostrarMensaje("✅ Código leído", "ok");
+      mostrarFormularioAprendizaje();
+      return;
+    }
 
-  // flujo normal
-  procesarCodigo(code);
-});
+    // flujo normal
+    procesarCodigo(code);
+  });
 
 }
 
@@ -923,6 +916,22 @@ function procesarCodigo(codigo) {
 
 function esSamsung() {
   return /samsung/i.test(navigator.userAgent);
+}
+
+function obtenerAreaEscaneo() {
+
+  // 📱 SAMSUNG → área fija alineada con el marco rojo
+  if (esSamsung()) {
+    return {
+      top: "27.5%",
+      bottom: "27.5%",
+      left: "7.5%",
+      right: "7.5%"
+    };
+  }
+
+  // 📱 RESTO → área exacta desde .scanner-frame
+  return calcularAreaDesdeMarco();
 }
 
 // ----------------------------
