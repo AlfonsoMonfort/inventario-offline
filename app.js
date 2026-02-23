@@ -265,6 +265,22 @@ function calcularAreaDesdeMarco() {
   };
 }
 
+function obtenerAreaEscaneo() {
+
+  // 📱 Samsung → área fija (estable)
+  if (esSamsung()) {
+    return {
+      top: "18%",
+      bottom: "18%",
+      left: "8%",
+      right: "8%"
+    };
+  }
+
+  // 📐 Resto → área calculada según el marco
+  return calcularAreaDesdeMarco();
+}
+
 // ----------------------------
 // INICIAR ESCÁNER
 // ----------------------------
@@ -297,28 +313,28 @@ function iniciarScanner() {
 
     video.addEventListener("loadedmetadata", () => {
 
-      const area = calcularAreaDesdeMarco();
-      if (!area) return;
+    const area = obtenerAreaEscaneo();
+    if (!area) return;
 
-      Quagga.stop();
+    Quagga.stop();
 
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: document.querySelector('#scanner'),
-          constraints: {
-            facingMode: "environment"
-          },
-          area
+    Quagga.init({
+      inputStream: {
+        name: "Live",
+        type: "LiveStream",
+        target: document.querySelector('#scanner'),
+        constraints: {
+          facingMode: "environment"
         },
-        decoder: {
-          readers: ["ean_reader", "ean_8_reader", "upc_reader"]
-        },
-        locate: !esSamsung()
-      }, () => Quagga.start());
+        area
+      },
+      decoder: {
+        readers: ["ean_reader", "ean_8_reader", "upc_reader"]
+      },
+      locate: !esSamsung()
+    }, () => Quagga.start());
 
-    }, { once: true });
+  }, { once: true });
   });
 
   Quagga.onDetected(function (result) {
