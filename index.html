@@ -70,8 +70,10 @@ button.secondary{
   height: 100%;
   object-fit: cover;
   object-position: center center;
-  transform: translateZ(0);      /* ✅ AÑADIR */
-  will-change: transform;       /* ✅ AÑADIR */
+  position: absolute;   /* 👈 AÑADIR */
+  top: 0;
+  left: 0;
+  z-index: 1;           /* 👈 AÑADIR */
 }
 
 .mensaje{
@@ -163,6 +165,7 @@ li{
   border-radius: 12px;
   box-sizing: border-box;
   pointer-events: none;
+   z-index: 2; 
 }
 
 /* ===== FILAS HORIZONTALES BIEN HECHAS ===== */
@@ -215,7 +218,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.4</header>
+<header>Inventario Offline V.5</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
