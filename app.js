@@ -383,6 +383,29 @@ document.getElementById("btnInstalar").addEventListener("click", async () => {
     }
 });
 
+function esPWAenIOS() {
+  return (
+    /iphone|ipad|ipod/i.test(navigator.userAgent) &&
+    window.matchMedia('(display-mode: standalone)').matches
+  );
+
+async function compartirExcelIOS(blob, nombreArchivo) {
+
+  const file = new File([blob], nombreArchivo, {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      files: [file],
+      title: "Inventario",
+      text: "Guardar inventario"
+    });
+  } else {
+    alert("Este iPhone no permite compartir archivos desde la app");
+  }
+}
+
 function esIOS() {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }
@@ -920,7 +943,9 @@ function guardarInventario() {
 // ----------------------------
 function finalizar() {
 
-  let datos = [];
+  /* ========= 1. PREPARAR DATOS ========= */
+
+  const datos = [];
 
   for (let ref in inventario.articulos) {
     datos.push({
@@ -932,8 +957,15 @@ function finalizar() {
     });
   }
 
-  let wb = XLSX.utils.book_new();
-  let ws = XLSX.utils.json_to_sheet(datos);
+  if (datos.length === 0) {
+    mostrarMensaje("❌ No hay artículos para exportar", "error");
+    return;
+  }
+
+  /* ========= 2. CREAR EXCEL ========= */
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(datos);
   XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
   const wbout = XLSX.write(wb, {
@@ -945,39 +977,77 @@ function finalizar() {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   });
 
-  const url = URL.createObjectURL(blob);
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const nombreArchivo =
+    `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
 
-  if (isIOS) {
+  /* ========= 3. DETECCIÓN ENTORNO ========= */
+
+  const ua = navigator.userAgent.toLowerCase();
+  const esIOS = /iphone|ipad|ipod/.test(ua);
+  const esPWA = window.matchMedia("(display-mode: standalone)").matches;
+
+  /* ========= 4. iOS PWA → SHARE API ========= */
+
+  if (esIOS && esPWA) {
+
+    const file = new File([blob], nombreArchivo, {
+      type: blob.type
+    });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+
+      mostrarMensaje(
+        "📤 Pulsa Guardar en Archivos para conservar el Excel",
+        "ok"
+      );
+
+      navigator.share({
+        files: [file],
+        title: "Inventario",
+        text: "Guardar inventario"
+      });
+
+    } else {
+      alert("Este iPhone no permite compartir archivos desde la app.");
+    }
+
+    return;
+  }
+
+  /* ========= 5. iOS SAFARI → ABRIR ARCHIVO ========= */
+
+  if (esIOS && !esPWA) {
+
+    const url = URL.createObjectURL(blob);
 
     mostrarMensaje(
       "📂 Se abrirá el Excel. Pulsa Compartir → Guardar en Archivos",
       "ok"
     );
 
-    // ⏱ darle tiempo REAL a Safari
     setTimeout(() => {
       window.open(url, "_blank");
-    }, 500);
+    }, 300);
 
-    // ❌ NO reload en iOS
-    // ❌ NO limpiar inventario automáticamente
-
-  } else {
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    // aquí sí puedes recargar
-    location.reload();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    return;
   }
 
-  // 🧹 limpiar blob tarde (iOS necesita tiempo)
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  /* ========= 6. ANDROID / PC → DESCARGA NORMAL ========= */
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = nombreArchivo;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+  mostrarMensaje("✅ Inventario descargado correctamente", "ok");
 }
 
 function importarInventarioExcel(e) {
