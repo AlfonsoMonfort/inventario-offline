@@ -388,6 +388,7 @@ function esPWAenIOS() {
     /iphone|ipad|ipod/i.test(navigator.userAgent) &&
     window.matchMedia('(display-mode: standalone)').matches
   );
+}
 
 async function compartirExcelIOS(blob, nombreArchivo) {
 
