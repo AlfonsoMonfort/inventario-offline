@@ -936,8 +936,6 @@ function finalizar() {
   let ws = XLSX.utils.json_to_sheet(datos);
   XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
-  let nombre = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
-
   const wbout = XLSX.write(wb, {
     bookType: "xlsx",
     type: "array"
@@ -948,29 +946,38 @@ function finalizar() {
   });
 
   const url = URL.createObjectURL(blob);
-
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   if (isIOS) {
-    mostrarMensaje("📂 Usa Compartir → Guardar en Archivos", "ok");
 
-    // 🔥 CLAVE para iOS
+    mostrarMensaje(
+      "📂 Se abrirá el Excel. Pulsa Compartir → Guardar en Archivos",
+      "ok"
+    );
+
+    // ⏱ darle tiempo REAL a Safari
     setTimeout(() => {
-      window.location.href = url;
-    }, 300);
+      window.open(url, "_blank");
+    }, 500);
+
+    // ❌ NO reload en iOS
+    // ❌ NO limpiar inventario automáticamente
 
   } else {
+
     const a = document.createElement("a");
     a.href = url;
-    a.download = nombre;
+    a.download = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+
+    // aquí sí puedes recargar
+    location.reload();
   }
 
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-
-  location.reload();
+  // 🧹 limpiar blob tarde (iOS necesita tiempo)
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
 function importarInventarioExcel(e) {
