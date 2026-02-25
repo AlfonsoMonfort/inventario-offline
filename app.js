@@ -1140,7 +1140,7 @@ function registrarServiceWorker() {
 }
 
 // ===============================
-// BOTÓN CANTIDAD NEGATIVA
+// BOTÓN MENOS EN CANTIDAD (SOLO NEGATIVO)
 // ===============================
 const btnMenos = document.getElementById("btnCantidadNegativa");
 
@@ -1149,11 +1149,12 @@ if (btnMenos) {
     const input = document.getElementById("cantidad");
     let valor = parseInt(input.value, 10);
 
-    if (isNaN(valor)) {
-      input.value = 1;
+    if (isNaN(valor) || valor === 0) {
+      input.value = -1;
       return;
     }
 
-    input.value = valor * -1;
+    // 👉 SOLO poner negativo, nunca volver a positivo
+    input.value = Math.abs(valor) * -1;
   });
 }
