@@ -213,7 +213,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.8</header>
+<header>Inventario Offline V.9</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -279,7 +279,22 @@ li{
   <!-- CANTIDAD -->
 <div class="card fila-horizontal" style="margin-top:4px;">
   <label for="cantidad">Cantidad</label>
-  <input type="number" id="cantidad" value="1" min="1">
+
+  <div class="cantidad-wrapper">
+    <button
+      type="button"
+      id="btnCantidadNegativa"
+      class="btn-menos"
+      aria-label="Cambiar signo"
+    >−</button>
+
+    <input
+      type="number"
+      id="cantidad"
+      value="1"
+      inputmode="numeric"
+    >
+  </div>
 </div>
 
 <!-- CONFIRMACIÓN OCR -->

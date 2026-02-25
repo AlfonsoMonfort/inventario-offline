@@ -1138,3 +1138,22 @@ function registrarServiceWorker() {
     });
   }
 }
+
+// ===============================
+// BOTÓN CANTIDAD NEGATIVA
+// ===============================
+const btnMenos = document.getElementById("btnCantidadNegativa");
+
+if (btnMenos) {
+  btnMenos.addEventListener("click", () => {
+    const input = document.getElementById("cantidad");
+    let valor = parseInt(input.value, 10);
+
+    if (isNaN(valor)) {
+      input.value = 1;
+      return;
+    }
+
+    input.value = valor * -1;
+  });
+}
