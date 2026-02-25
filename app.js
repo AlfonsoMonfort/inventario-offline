@@ -979,7 +979,7 @@ function finalizar() {
   });
 
   const nombreArchivo =
-    `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
+  `${inventario.almacen}_${obtenerFechaHoraArchivo()}.xlsx`;
 
   /* ========= 3. DETECCIÓN ENTORNO ========= */
 
@@ -1077,6 +1077,19 @@ function importarInventarioExcel(e) {
 
   // 🔄 permitir volver a importar el mismo archivo si hace falta
   e.target.value = "";
+}
+
+function obtenerFechaHoraArchivo() {
+  const ahora = new Date();
+
+  const dia = String(ahora.getDate()).padStart(2, "0");
+  const mes = String(ahora.getMonth() + 1).padStart(2, "0");
+  const anio = ahora.getFullYear();
+
+  const hora = String(ahora.getHours()).padStart(2, "0");
+  const minuto = String(ahora.getMinutes()).padStart(2, "0");
+
+  return `${dia}_${mes}_${anio}_${hora}_${minuto}`;
 }
 
 function sumarInventarioDesdeExcel(filas) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v7";
+const CACHE_NAME = "inventario-cache-v8";
 
 const urlsToCache = [
   "./",
@@ -14,7 +14,6 @@ const urlsToCache = [
   
 ];
 
-
 // --------------------
 // INSTALL
 // --------------------
@@ -27,7 +26,6 @@ self.addEventListener("install", event => {
   // 🔥 Fuerza activación inmediata
   self.skipWaiting();
 });
-
 
 // --------------------
 // ACTIVATE
