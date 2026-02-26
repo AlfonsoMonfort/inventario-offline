@@ -15,6 +15,8 @@ let ocrProcesado = false;
 let usuariosPermitidos = [];
 let usuarioLogueado = null;
 
+let modoPDA = false;
+
 const DIAS_OFFLINE_PERMITIDOS = 15;
 
 const DEBUG_OCR = true;
@@ -225,6 +227,11 @@ function empezar() {
   document.getElementById("pantallaInicio").style.display = "none";
   document.getElementById("pantallaEscaner").style.display = "block";
 
+  if (modoPDA) {
+  activarModoPDA();
+  return;
+}
+
   iniciarScanner();
 }
 
@@ -305,6 +312,29 @@ function iniciarScanner() {
   });
 }
 
+function activarModoPDA() {
+
+  // ❌ no usar cámara
+  permitirEscaneo = false;
+
+  // 🎯 foco permanente al input
+  const input = document.getElementById("inputPDA");
+  input.value = "";
+  input.focus();
+
+  mostrarMensaje("📟 Modo PDA activo", "ok");
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const codigo = input.value.replace(/\D/g, "").replace(/^0+/, "");
+      input.value = "";
+
+      if (codigo) {
+        procesarCodigo(codigo);
+      }
+    }
+  });
+}
 
 function activarModoOCR() {
   if (ocrInterval) clearInterval(ocrInterval);
@@ -1192,6 +1222,10 @@ async function login() {
   } catch (e) {
     mostrarMensaje("❌ Sin conexión", "error");
   }
+
+  if (u === "PDA") {
+  modoPDA = true;
+}
 }
 
 function verificarSesion() {
