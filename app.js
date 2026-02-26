@@ -341,9 +341,21 @@ function activarModoPDA() {
       const codigo = input.value.replace(/\D/g, "").replace(/^0+/, "");
       input.value = "";
 
-      if (codigo) {
-        procesarCodigo(codigo);
+      if (!codigo) return;
+
+      if (modoAprendizaje) {
+        codigoPendienteAprender = codigo;
+
+        document.getElementById("codigoAprendidoMostrado").textContent =
+          "Código leído: " + codigo;
+        document.getElementById("codigoAprendidoMostrado").style.display = "block";
+
+        mostrarFormularioAprendizaje();
+        mostrarMensaje("🧠 Código listo para asociar", "ok");
+        return;
       }
+
+procesarCodigo(codigo);
     }
   };
 }
@@ -845,20 +857,26 @@ function añadirManual() {
 function activarModoAprendizaje() {
   modoAprendizaje = true;
   codigoPendienteAprender = null;
-  permitirEscaneo = true;
+
+  // ⛔ no añadir inventario mientras se aprende
+  permitirEscaneo = false;
 
   document.getElementById("btnCancelarAprendizaje").style.display = "block";
+  document.getElementById("aprendizajeBox").style.display = "none";
 
-  mostrarMensaje("📸 Toca pantalla y escanea el código", "ok");
+  mostrarMensaje("🧠 Escanea el código para asociar", "ok");
 }
 
 function cancelarAprendizaje() {
   modoAprendizaje = false;
   codigoPendienteAprender = null;
+
   permitirEscaneo = false;
 
   document.getElementById("btnCancelarAprendizaje").style.display = "none";
   document.getElementById("aprendizajeBox").style.display = "none";
+  document.getElementById("codigoAprendidoMostrado").style.display = "none";
+  document.getElementById("inputReferenciaAprendida").value = "";
 
   mostrarMensaje("❌ Grabación cancelada", "error");
 }
