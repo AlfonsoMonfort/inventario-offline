@@ -247,7 +247,11 @@ function cargarInventarioGuardado() {
   document.getElementById("pantallaEscaner").style.display = "block";
 
   actualizarLista();
-  iniciarScanner();
+  if (modoPDA) {
+    activarModoPDA();
+  } else {
+    iniciarScanner();
+  }
 
   mostrarMensaje("↩️ Inventario recuperado", "ok");
 }
@@ -324,7 +328,7 @@ function activarModoPDA() {
 
   mostrarMensaje("📟 Modo PDA activo", "ok");
 
-  input.addEventListener("keydown", (e) => {
+  input.onkeydown = (e) => {
     if (e.key === "Enter") {
       const codigo = input.value.replace(/\D/g, "").replace(/^0+/, "");
       input.value = "";
@@ -333,7 +337,7 @@ function activarModoPDA() {
         procesarCodigo(codigo);
       }
     }
-  });
+  };
 }
 
 function activarModoOCR() {
@@ -1250,6 +1254,9 @@ function verificarSesion() {
   usuarioLogueado = u;
   document.getElementById("pantallaLogin").style.display = "none";
   document.getElementById("pantallaInicio").style.display = "block";
+  if (usuarioLogueado === "PDA") {
+  modoPDA = true;
+}
 }
 
 function mostrarLogin() {
