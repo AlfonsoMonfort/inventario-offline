@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarUsuarios();
   verificarSesion();
 
-  document.getElementById("pantallaLogin").style.display = "block";
+  
 
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
@@ -1156,6 +1156,41 @@ function registrarServiceWorker() {
           console.log('Error registrando Service Worker:', error);
         });
     });
+  }
+}
+
+function login() {
+  const u = document.getElementById("loginUsuario").value.trim();
+  const p = document.getElementById("loginPassword").value.trim();
+
+  const valido = usuariosPermitidos.find(
+    x => x.usuario === u && x.password === p
+  );
+
+  if (!valido) {
+    mostrarMensaje("❌ Usuario o contraseña incorrectos", "error");
+    return;
+  }
+
+  usuarioLogueado = u;
+  localStorage.setItem("usuario_logueado", u);
+
+  document.getElementById("pantallaLogin").style.display = "none";
+  document.getElementById("pantallaInicio").style.display = "block";
+
+  mostrarMensaje("✅ Acceso correcto", "ok");
+}
+
+function verificarSesion() {
+  const u = localStorage.getItem("usuario_logueado");
+
+  if (u) {
+    usuarioLogueado = u;
+    document.getElementById("pantallaLogin").style.display = "none";
+    document.getElementById("pantallaInicio").style.display = "block";
+  } else {
+    document.getElementById("pantallaLogin").style.display = "block";
+    document.getElementById("pantallaInicio").style.display = "none";
   }
 }
 
