@@ -213,7 +213,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.10</header>
+<header>Inventario Offline V.11</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -221,8 +221,31 @@ li{
 
 <div class="container">
 
+  <!-- PANTALLA LOGIN -->
+<div id="pantallaLogin" class="card" style="display:none">
+  <h3>🔐 Acceso</h3>
+
+  <input
+    type="text"
+    id="loginUsuario"
+    placeholder="Usuario"
+    autocomplete="username"
+  >
+
+  <input
+    type="password"
+    id="loginPassword"
+    placeholder="Contraseña"
+    autocomplete="current-password"
+  >
+
+  <button type="button" onclick="login()">
+    Entrar
+  </button>
+</div>
+
 <!-- PANTALLA 1 -->
-<div id="pantallaInicio" class="card">
+<div id="pantallaInicio" class="card" style="display:none">
   <h3>Inicio Inventario</h3>
   <input type="date" id="fecha">
   <input type="text" id="almacen" placeholder="Almacén">

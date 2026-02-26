@@ -12,6 +12,9 @@ let ocrUltimo = null;
 let ocrRepeticiones = 0;
 let ocrProcesado = false;
 
+let usuariosPermitidos = [];
+let usuarioLogueado = null;
+
 const DEBUG_OCR = true;
 
 let inventario = {
@@ -33,6 +36,11 @@ let equivalenciasAprendidas = {};
 // INICIO
 // ----------------------------
 document.addEventListener("DOMContentLoaded", async () => {
+
+  await cargarUsuarios();
+  verificarSesion();
+
+  document.getElementById("pantallaLogin").style.display = "block";
 
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
@@ -63,6 +71,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 });
 
+async function cargarUsuarios() {
+  try {
+    const res = await fetch("usuarios.json");
+    if (!res.ok) throw new Error("No se pudo cargar usuarios");
+
+    usuariosPermitidos = await res.json();
+    console.log("Usuarios cargados:", usuariosPermitidos.length);
+  } catch (e) {
+    alert("Error cargando usuarios");
+    console.error(e);
+  }
+}
 
 async function cargarReferenciasSinCodigo() {
   try {
