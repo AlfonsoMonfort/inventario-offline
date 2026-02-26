@@ -1173,7 +1173,7 @@ function login() {
   }
 
   usuarioLogueado = u;
-  localStorage.setItem("usuario_logueado", u);
+  
 
   document.getElementById("pantallaLogin").style.display = "none";
   document.getElementById("pantallaInicio").style.display = "block";
@@ -1182,16 +1182,9 @@ function login() {
 }
 
 function verificarSesion() {
-  const u = localStorage.getItem("usuario_logueado");
-
-  if (u) {
-    usuarioLogueado = u;
-    document.getElementById("pantallaLogin").style.display = "none";
-    document.getElementById("pantallaInicio").style.display = "block";
-  } else {
-    document.getElementById("pantallaLogin").style.display = "block";
-    document.getElementById("pantallaInicio").style.display = "none";
-  }
+  usuarioLogueado = null;
+  document.getElementById("pantallaLogin").style.display = "block";
+  document.getElementById("pantallaInicio").style.display = "none";
 }
 
 // ===============================
