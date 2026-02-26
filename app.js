@@ -318,15 +318,23 @@ function iniciarScanner() {
 
 function activarModoPDA() {
 
-  // ❌ no usar cámara
   permitirEscaneo = false;
 
-  // 🎯 foco permanente al input
   const input = document.getElementById("inputPDA");
   input.value = "";
-  input.focus();
+
+  // 🔒 foco permanente (CLAVE)
+  setInterval(() => {
+    if (document.activeElement !== input) {
+      input.focus();
+    }
+  }, 300);
 
   mostrarMensaje("📟 Modo PDA activo", "ok");
+
+  input.oninput = () => {
+    // el lector escribe aquí
+  };
 
   input.onkeydown = (e) => {
     if (e.key === "Enter") {

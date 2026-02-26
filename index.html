@@ -227,7 +227,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.18</header>
+<header>Inventario Offline V.19</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -455,8 +455,10 @@ li{
 <input
   type="text"
   id="inputPDA"
-  style="position:absolute; left:-9999px;"
+  inputmode="none"
   autocomplete="off"
+  autofocus
+  style="opacity:0; position:fixed; top:0; left:0;"
 />
 
 <!-- OCR -->
