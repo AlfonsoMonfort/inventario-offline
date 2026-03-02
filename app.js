@@ -46,9 +46,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     this.value = this.value.toUpperCase().slice(0, 3);
   });
 
-  window.hayInventarioGuardado =
-  !!localStorage.getItem("inventario_guardado");
-
   await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
@@ -183,24 +180,6 @@ function cargarEquivalenciasAprendidas() {
 // ----------------------------
 function empezar() {
 
-  if (window.hayInventarioGuardado) {
-
-    const continuar = confirm(
-      "Hay un inventario guardado.\n\n" +
-      "Aceptar → Continuar inventario\n" +
-      "Cancelar → Empezar uno nuevo"
-    );
-
-    if (continuar) {
-      cargarInventarioGuardado();
-      return;
-    } else {
-      localStorage.removeItem("inventario_guardado");
-      window.hayInventarioGuardado = false;
-      // sigue creando uno nuevo
-    }
-  }
-
   const fechaInput = document.getElementById("fecha");
   const almacenInput = document.getElementById("almacen");
   const vendedorInput = document.getElementById("vendedor");
@@ -225,30 +204,6 @@ function empezar() {
 
   iniciarScanner();
 }
-
-function cargarInventarioGuardado() {
-
-  const datos = JSON.parse(
-    localStorage.getItem("inventario_guardado")
-  );
-
-  inventario = datos.inventario;
-
-  document.getElementById("pantallaInicio").style.display = "none";
-  document.getElementById("pantallaEscaner").style.display = "block";
-
-  actualizarLista();
-  if (modoPDA) {
-    activarModoPDA();
-  } else {
-    iniciarScanner();
-  }
-
-  mostrarMensaje("↩️ Inventario recuperado", "ok");
-}
-
-
-
 
 // ----------------------------
 // INICIAR ESCÁNER
@@ -757,22 +712,6 @@ function mostrarMensaje(texto, tipo) {
 function formatearFecha(fechaISO) {
     const [anio, mes, dia] = fechaISO.split("-");
     return `${dia}/${mes}/${anio}`;
-}
-
-function guardarInventario() {
-
-  const datos = {
-    inventario: inventario
-  };
-
-  localStorage.setItem(
-    "inventario_guardado",
-    JSON.stringify(datos)
-  );
-
-  window.hayInventarioGuardado = true;
-
-  mostrarMensaje("💾 Inventario guardado", "ok");
 }
 
 // ----------------------------
