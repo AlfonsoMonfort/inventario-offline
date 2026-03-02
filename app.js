@@ -4,13 +4,6 @@
 let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
 let referenciasSinCodigo = [];
-let numeroOCRDetectado = null;
-let modoOCRActivo = false;
-let ocrInterval = null;
-let ocrTimeout = null;
-let ocrUltimo = null;
-let ocrRepeticiones = 0;
-let ocrProcesado = false;
 
 let usuariosPermitidos = [];
 let usuarioLogueado = null;
@@ -18,8 +11,6 @@ let usuarioLogueado = null;
 let modoPDA = false;
 
 const DIAS_OFFLINE_PERMITIDOS = 15;
-
-const DEBUG_OCR = true;
 
 let inventario = {
   fecha: "",
@@ -360,30 +351,6 @@ procesarCodigo(codigo);
   };
 }
 
-function activarModoOCR() {
-  if (ocrInterval) clearInterval(ocrInterval);
-  if (ocrTimeout) clearTimeout(ocrTimeout);
-
-  ocrProcesado = false; // 🔒 reset candado
-
-  modoOCRActivo = true;
-  permitirEscaneo = false;
-
-  mostrarMensaje("🔍 Buscando referencia…", "ok");
-
-  ocrInterval = setInterval(() => {
-    if (!modoOCRActivo) return;
-    leerOCRContinuo();
-  }, 700);
-
-  ocrTimeout = setTimeout(() => {
-    if (modoOCRActivo) {
-      cancelarOCR();
-      mostrarMensaje("❌ No se detectó referencia", "error");
-    }
-  }, 10000);
-}
-
 
 
 
@@ -585,216 +552,6 @@ function exportarCodigosAprendidos() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 
   mostrarMensaje("✅ JSON exportado", "ok");
-}
-
-
-
-function leerOCRContinuo() {
-
-  // ⛔ seguridad básica
-  if (!modoOCRActivo || ocrProcesado) return;
-
-  const video = document.querySelector("#scanner video");
-  const frame = document.querySelector(".scanner-frame");
-  const debugText = document.getElementById("ocrTextDebug");
-
-  if (!video || !frame || !video.videoWidth) return;
-
-  if (debugText) {
-    debugText.innerText = "OCR activo…";
-  }
-
-  // ----------------------------
-  // 📐 CÁLCULO DE ZONA OCR
-  // ----------------------------
-  const videoRect = video.getBoundingClientRect();
-  const frameRect = frame.getBoundingClientRect();
-
-  const scaleX = video.videoWidth / videoRect.width;
-  const scaleY = video.videoHeight / videoRect.height;
-
-  let sx = (frameRect.left - videoRect.left) * scaleX;
-  let sy = (frameRect.top - videoRect.top) * scaleY;
-  let sw = frameRect.width * scaleX;
-  let sh = frameRect.height * scaleY;
-
-  // 🔍 recorte central (solo números)
-  const recorte = 0.45;
-  const dx = sw * (1 - recorte) / 2;
-  const dy = sh * (1 - recorte) / 2;
-
-  sx += dx;
-  sy += dy;
-  sw *= recorte;
-  sh *= recorte;
-
-  // ----------------------------
-  // 🎨 CANVAS OCR
-  // ----------------------------
-  const canvas = document.createElement("canvas");
-  canvas.width = sw * 2;
-  canvas.height = sh * 2;
-
-  const ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-
-  // 🔲 binarización fuerte
-  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imgData.data;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    const v = avg > 145 ? 255 : 0;
-    data[i] = data[i + 1] = data[i + 2] = v;
-  }
-
-  ctx.putImageData(imgData, 0, 0);
-
-  // ----------------------------
-  // 🔠 TESSERACT
-  // ----------------------------
-  Tesseract.recognize(
-    canvas,
-    "eng",
-    {
-      tessedit_char_whitelist: "0123456789",
-      classify_bln_numeric_mode: 1
-    }
-  ).then(result => {
-
-    if (ocrProcesado) return;
-
-    const texto = (result.data.text || "")
-      .replace(/\s+/g, "")
-      .replace(/[^0-9]/g, "");
-
-    if (debugText) {
-      debugText.innerText = `OCR lee: "${texto || "∅"}"`;
-    }
-
-    // ❌ no parece una referencia válida
-    if (!/^\d{5,7}$/.test(texto)) {
-      ocrUltimo = null;
-      ocrRepeticiones = 0;
-      return;
-    }
-
-    // ----------------------------
-    // 🔁 CONFIRMACIÓN POR REPETICIÓN
-    // ----------------------------
-    if (texto === ocrUltimo) {
-      ocrRepeticiones++;
-    } else {
-      ocrUltimo = texto;
-      ocrRepeticiones = 1;
-    }
-
-    if (ocrRepeticiones < 2) return;
-
-    // ----------------------------
-    // ✅ OCR CONFIRMADO (UNA SOLA VEZ)
-    // ----------------------------
-    ocrProcesado = true;
-    modoOCRActivo = false;
-
-    ocrUltimo = null;
-    ocrRepeticiones = 0;
-
-    cancelarOCR();
-
-   // 🔍 comprobar referencia existente
-if (!referencia_a_descripcion[texto]) {
-  mostrarMensaje("❌ Referencia no existe", "error");
-  permitirEscaneo = true;
-  return;
-}
-
-// 🆕 guardar referencia detectada
-numeroOCRDetectado = texto;
-
-// ⛔ parar OCR hasta decisión
-modoOCRActivo = false;
-
-// 🖥 mostrar confirmación OCR
-document.getElementById("ocrConfirmBox").style.display = "block";
-document.getElementById("ocrReferenciaDetectada").textContent =
-  "Referencia detectada: " + texto;
-
-mostrarMensaje("📋 Confirma la referencia", "ok");
-
-
-  });
-}
-
-
-function aceptarOCR() {
-  document.getElementById("ocrConfirmBox").style.display = "none";
-  modoOCRActivo  = false;
-  document.getElementById("ocrBox").style.display = "none";
-
-  if (!numeroOCRDetectado) return;
-
-  if (!referencia_a_descripcion[numeroOCRDetectado]) {
-    mostrarMensaje("❌ Referencia no existe", "error");
-    permitirEscaneo = true;
-    return;
-  }
-
-  const cantidad =
-    parseInt(document.getElementById("cantidad").value) || 1;
-
-  // ➕ añadir o sumar cantidad
-  if (inventario.articulos[numeroOCRDetectado]) {
-    inventario.articulos[numeroOCRDetectado] += cantidad;
-
-    // 🔼 mover arriba (último usado)
-    inventario.orden = inventario.orden.filter(
-      r => r !== numeroOCRDetectado
-    );
-    inventario.orden.unshift(numeroOCRDetectado);
-
-  } else {
-    inventario.articulos[numeroOCRDetectado] = cantidad;
-
-    // 🆕 nuevo → arriba del todo
-    inventario.orden.unshift(numeroOCRDetectado);
-  }
-
-  actualizarLista();
-
-  // 🔄 reset
-  numeroOCRDetectado = null;
-  permitirEscaneo = true;
-  document.getElementById("cantidad").value = 1;
-
-  mostrarMensaje("✅ Referencia añadida", "ok");
-}
-
-
-function cancelarOCR() {
-  const box = document.getElementById("ocrConfirmBox");
-  if (box) box.style.display = "none";
-
- 
-  modoOCRActivo = false;
-  numeroOCRDetectado = null;
-
-  if (ocrInterval) {
-    clearInterval(ocrInterval);
-    ocrInterval = null;
-  }
-
-  if (ocrTimeout) {
-    clearTimeout(ocrTimeout);
-    ocrTimeout = null;
-  }
-
-  permitirEscaneo = true;
-
-  const debugCanvas = document.getElementById("ocr-debug-canvas");
-  if (debugCanvas) debugCanvas.remove();
 }
 
 

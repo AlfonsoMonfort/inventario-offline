@@ -227,7 +227,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.20</header>
+<header>Inventario Offline V.1</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -276,22 +276,10 @@ li{
     <div id="scanner">
   <div class="scanner-frame"></div>
 </div>
-<div id="ocrTextDebug"
-     style="margin-top:8px;
-            font-family:monospace;
-            font-size:14px;
-            color:#444;">
+
 </div>
   <div class="mensaje" id="mensajeEstado"></div>
   <div id="aprendizajeBox" class="card" style="display:none; margin-top:10px;">
-
-    <div id="ocrBox"
-      class="card"
-      style="display:none; margin-top:10px;">
-
-    <div id="ocrNumeroDetectado"
-        style="font-weight:bold; margin-bottom:8px;">
-    </div>
   </div>
   <div id="codigoAprendidoMostrado"
        style="display:none;
@@ -311,7 +299,6 @@ li{
       ❌ Cancelar
     </button>
 </div>
-
 
   <!-- CANTIDAD -->
 <div class="card fila-horizontal" style="margin-top:4px;">
@@ -334,26 +321,7 @@ li{
   </div>
 </div>
 
-<!-- CONFIRMACIÓN OCR -->
-<div id="ocrConfirmBox"
-     class="card"
-     style="display:none; margin-top:10px;">
 
-  <div id="ocrReferenciaDetectada"
-       style="font-weight:bold; margin-bottom:8px;">
-  </div>
-
-  <button type="button" onclick="aceptarOCR()">
-    ✅ Aceptar referencia
-  </button>
-
-  <button type="button"
-          class="secondary"
-          style="margin-top:8px;"
-          onclick="cancelarOCR()">
-    ❌ Cancelar
-  </button>
-</div>
 
   <!-- AÑADIR MANUAL -->
 <div class="card" style="margin-top:4px;">
@@ -377,11 +345,6 @@ li{
   onclick="activarModoAprendizaje()"
 >
   🧠 Grabar código
-</button>
-
-
-<button class="secondary" onclick="activarModoOCR()">
-  🔢 Leer referencia impresa
 </button>
 
 
@@ -461,8 +424,6 @@ li{
   style="opacity:0; position:fixed; top:0; left:0;"
 />
 
-<!-- OCR -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <!-- TU APP -->
 <script src="app.js"></script>
