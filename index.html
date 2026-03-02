@@ -150,19 +150,6 @@ li{
   position: relative;
 }
 
-.scanner-frame {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 85%;
-  height: 45%;
-  transform: translate(-50%, -50%);
-  border: 3px solid red;
-  border-radius: 12px;
-  box-sizing: border-box;
-  pointer-events: none;
-}
-
 /* ===== FILAS HORIZONTALES BIEN HECHAS ===== */
 
 .fila-horizontal {
@@ -227,7 +214,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.1</header>
+<header>Inventario Offline V.2</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -274,13 +261,10 @@ li{
   <!-- ESCÁNER ARRIBA -->
   <div class="card">
     <div id="scanner">
-  <div class="scanner-frame"></div>
 </div>
 
-</div>
   <div class="mensaje" id="mensajeEstado"></div>
   <div id="aprendizajeBox" class="card" style="display:none; margin-top:10px;">
-  </div>
   <div id="codigoAprendidoMostrado"
        style="display:none;
               font-weight:bold;
@@ -299,6 +283,7 @@ li{
       ❌ Cancelar
     </button>
 </div>
+
 
   <!-- CANTIDAD -->
 <div class="card fila-horizontal" style="margin-top:4px;">
@@ -320,7 +305,6 @@ li{
     >
   </div>
 </div>
-
 
 
   <!-- AÑADIR MANUAL -->
@@ -346,7 +330,6 @@ li{
 >
   🧠 Grabar código
 </button>
-
 
   <!-- LISTA ARTÍCULOS -->
   <div class="card" style="margin-top:15px;">

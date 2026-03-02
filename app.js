@@ -351,10 +351,6 @@ procesarCodigo(codigo);
   };
 }
 
-
-
-
-
 function mostrarFormularioAprendizaje() {
   document.getElementById("aprendizajeBox").style.display = "block";
 }
@@ -553,6 +549,7 @@ function exportarCodigosAprendidos() {
 
   mostrarMensaje("✅ JSON exportado", "ok");
 }
+
 
 
 
