@@ -72,6 +72,19 @@ button.secondary{
   object-position: center center;
 }
 
+.scanner-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 85%;
+  height: 45%;
+  transform: translate(-50%, -50%);
+  border: 3px solid red;
+  border-radius: 12px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
 .mensaje{
   display:none;
   padding:12px;
@@ -214,7 +227,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.3</header>
+<header>Inventario Offline V.4</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
