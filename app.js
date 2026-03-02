@@ -566,12 +566,14 @@ function añadirManual() {
 function activarModoAprendizaje() {
   modoAprendizaje = true;
   codigoPendienteAprender = null;
-
-  // ⛔ no añadir inventario mientras se aprende
   permitirEscaneo = false;
 
   document.getElementById("btnCancelarAprendizaje").style.display = "block";
-  document.getElementById("aprendizajeBox").style.display = "none";
+  document.getElementById("aprendizajeBox").style.display = "block";
+
+  // 🔄 limpiar buscador
+  document.getElementById("buscadorAprendizaje").value = "";
+  document.getElementById("resultadosAprendizaje").innerHTML = "";
 
   mostrarMensaje("🧠 Escanea el código para asociar", "ok");
 }
@@ -1000,5 +1002,46 @@ if (btnMenos) {
 
     // 👉 SOLO poner negativo, nunca volver a positivo
     input.value = Math.abs(valor) * -1;
+  });
+}
+
+const buscadorAprendizaje =
+  document.getElementById("buscadorAprendizaje");
+const resultadosAprendizaje =
+  document.getElementById("resultadosAprendizaje");
+
+if (buscadorAprendizaje) {
+  buscadorAprendizaje.addEventListener("input", () => {
+    const texto = buscadorAprendizaje.value
+      .toLowerCase()
+      .trim();
+
+    resultadosAprendizaje.innerHTML = "";
+
+    if (texto.length < 2) return;
+
+    // 🔍 buscamos en TODAS las equivalencias cargadas
+    const resultados = Object.entries(referencia_a_descripcion)
+      .filter(([ref, desc]) =>
+        ref.toLowerCase().includes(texto) ||
+        desc.toLowerCase().includes(texto)
+      )
+      .slice(0, 25); // límite por rendimiento
+
+    resultados.forEach(([ref, desc]) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<b>${desc}</b><br>Ref: ${ref}`;
+
+      li.onclick = () => {
+        document.getElementById(
+          "inputReferenciaAprendida"
+        ).value = ref;
+
+        buscadorAprendizaje.value = "";
+        resultadosAprendizaje.innerHTML = "";
+      };
+
+      resultadosAprendizaje.appendChild(li);
+    });
   });
 }

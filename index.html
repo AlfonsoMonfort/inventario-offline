@@ -213,6 +213,24 @@ li{
   width: 100%;
 }
 
+#resultadosAprendizaje {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 6px;
+  padding-left: 0;
+}
+
+#resultadosAprendizaje li {
+  list-style: none;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+
+#resultadosAprendizaje li:hover {
+  background: #f0f0f0;
+}
+
 </style>
 
 
@@ -227,7 +245,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.5</header>
+<header>Inventario Offline V.6</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -288,6 +306,14 @@ li{
   <label style="font-weight:bold;">Referencia</label>
   <input type="text" id="inputReferenciaAprendida" placeholder="Escribe la referencia">
 
+  <label style="font-weight:bold;">Buscar artículo</label>
+  <input
+    type="text"
+    id="buscadorAprendizaje"
+    placeholder="Buscar por nombre o referencia"
+  >
+
+  <ul id="resultadosAprendizaje"></ul>
   <button type="button" onclick="guardarCodigoAprendido()">
     Aceptar
   </button>
