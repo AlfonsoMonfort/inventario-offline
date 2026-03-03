@@ -1166,9 +1166,7 @@ function generarPDFEtiquetasSeleccionadas() {
   const MARGIN_Y = 15;
 
   const BARCODE_HEIGHT_MM = 7.5;
-  const BARCODE_GAP = 0.5;
-
-  const pageHeight = doc.internal.pageSize.getHeight();
+  const BARCODE_GAP = 2; // pequeño espacio visual
 
   let col = 0;
   let row = 0;
@@ -1182,38 +1180,29 @@ function generarPDFEtiquetasSeleccionadas() {
     if (/^\d{13}$/.test(codigo)) formato = "EAN13";
     else if (/^\d{12}$/.test(codigo)) formato = "UPC";
 
-    // ===== GENERAR BARCODE SIN FORZAR ANCHO =====
-    const canvas = document.createElement("canvas");
-
-    JsBarcode(canvas, codigo, {
-      format: formato,
-      displayValue: false,
-      width: 1,   // grosor barra
-      height: 40, // altura en px (da igual exacta)
-      margin: 0
-    });
-
-    const imgData = canvas.toDataURL("image/png");
-
-    // === POSICIÓN ETIQUETA ===
+    // === Posición base etiqueta (en jsPDF Y crece hacia abajo)
     const x = MARGIN_X + col * LABEL_WIDTH;
-    const y = pageHeight - MARGIN_Y - (row + 1) * LABEL_HEIGHT;
+    const y = MARGIN_Y + row * LABEL_HEIGHT;
+
     const centerX = x + LABEL_WIDTH / 2;
 
-    // ===== TEXTO =====
+    // ===== DESCRIPCIÓN (ARRIBA) =====
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
+
+    const descripcionY = y + 6;
+
     doc.text(
       a.Descripcion.substring(0, 45),
       centerX,
-      y + LABEL_HEIGHT - 6,
+      descripcionY,
       { align: "center" }
     );
 
+    // ===== REFERENCIA (DEBAJO) =====
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
 
-    const refY = y + LABEL_HEIGHT - 10;
+    const refY = descripcionY + 4;
 
     doc.text(
       "Ref: " + a.Referencia,
@@ -1222,8 +1211,21 @@ function generarPDFEtiquetasSeleccionadas() {
       { align: "center" }
     );
 
-    // ===== ESCALAR SOLO POR ALTURA =====
-    const pxToMm = 0.264583; // 96dpi estándar
+    // ===== GENERAR BARCODE =====
+    const canvas = document.createElement("canvas");
+
+    JsBarcode(canvas, codigo, {
+      format: formato,
+      displayValue: false,
+      width: 1,
+      height: 40,
+      margin: 0
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+
+    // Escalar solo por altura real
+    const pxToMm = 0.264583;
 
     const realWidthMM = canvas.width * pxToMm;
     const realHeightMM = canvas.height * pxToMm;
@@ -1233,7 +1235,7 @@ function generarPDFEtiquetasSeleccionadas() {
     const finalWidth = realWidthMM * scale;
     const finalHeight = BARCODE_HEIGHT_MM;
 
-    const barcodeY = refY - BARCODE_GAP - finalHeight;
+    const barcodeY = refY + BARCODE_GAP;
     const barcodeX = centerX - finalWidth / 2;
 
     doc.addImage(
