@@ -1058,6 +1058,13 @@ if (buscadorAprendizaje) {
 }
 
 function abrirListadoEtiquetas() {
+
+  etiquetasSeleccionadas = [];
+  renderListaEtiquetas();
+
+  document.getElementById("buscadorEtiquetas").value = "";
+  document.getElementById("resultadosEtiquetas").innerHTML = "";
+
   document.getElementById("modalEtiquetas").style.display = "flex";
   cargarBuscadorEtiquetas();
 }
@@ -1099,12 +1106,24 @@ function cargarBuscadorEtiquetas() {
 
 function añadirEtiqueta(referencia, descripcion) {
 
-  etiquetasSeleccionadas.push({
-    Referencia: referencia,
-    Descripcion: descripcion
-  });
+  // 🔒 evitar duplicados
+  if (!etiquetasSeleccionadas.find(a => a.Referencia === referencia)) {
+    etiquetasSeleccionadas.push({
+      Referencia: referencia,
+      Descripcion: descripcion
+    });
+  }
 
   renderListaEtiquetas();
+
+  // 🔥 LIMPIAR BUSCADOR
+  const input = document.getElementById("buscadorEtiquetas");
+  const resultados = document.getElementById("resultadosEtiquetas");
+
+  input.value = "";
+  resultados.innerHTML = "";
+
+  input.blur(); // 🔥 quita foco (muy importante en móvil)
 }
 
 function renderListaEtiquetas() {
