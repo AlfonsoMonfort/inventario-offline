@@ -1274,5 +1274,15 @@ function generarPDFEtiquetasSeleccionadas() {
 
   });
 
-  doc.save("etiquetas.pdf");
+  const ahora = new Date();
+
+  const year = ahora.getFullYear();
+  const month = String(ahora.getMonth() + 1).padStart(2, "0");
+  const day = String(ahora.getDate()).padStart(2, "0");
+  const hour = String(ahora.getHours()).padStart(2, "0");
+  const minute = String(ahora.getMinutes()).padStart(2, "0");
+
+  const nombreArchivo = `etiquetas_${year}.${month}.${day}.${hour}.${minute}.pdf`;
+
+  doc.save(nombreArchivo);
 }
