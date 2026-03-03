@@ -231,6 +231,19 @@ li{
   background: #f0f0f0;
 }
 
+#listaEtiquetas {
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding-left: 0;
+}
+
+#listaEtiquetas li {
+  list-style: none;
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
+}
+
 </style>
 
 
@@ -245,7 +258,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.10</header>
+<header>Inventario Offline V.11</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -475,8 +488,8 @@ li{
 </div>
 
 <!-- TU APP -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
 </body>
 </html>

@@ -1127,16 +1127,17 @@ function añadirEtiqueta(referencia, descripcion) {
 }
 
 function renderListaEtiquetas() {
+
   const lista = document.getElementById("listaEtiquetas");
   lista.innerHTML = "";
 
-  etiquetasSeleccionadas.forEach((a, index) => {
+  etiquetasSeleccionadas.forEach(a => {
+
     const li = document.createElement("li");
-    li.innerHTML = `
-      ${a.Referencia} - ${a.Descripcion}
-      <button onclick="eliminarEtiqueta(${index})">❌</button>
-    `;
+    li.textContent = a.Referencia + " - " + a.Descripcion;
+
     lista.appendChild(li);
+
   });
 }
 
