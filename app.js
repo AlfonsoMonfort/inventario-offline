@@ -1247,6 +1247,18 @@ function generarPDFEtiquetasSeleccionadas() {
       finalHeight
     );
 
+    // ===== NÚMERO DEBAJO DEL CÓDIGO =====
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+
+    const codigoTextoY = barcodeY + finalHeight + 3;
+
+    doc.text(
+      codigo,
+      centerX,
+      codigoTextoY,
+      { align: "center" }
+    );
     // ===== AVANZAR =====
     col++;
     if (col === COLS) {
