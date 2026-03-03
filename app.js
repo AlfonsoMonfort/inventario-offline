@@ -1148,7 +1148,7 @@ function eliminarEtiqueta(index) {
 
 function generarPDFEtiquetasSeleccionadas() {
 
-  if (etiquetasSeleccionadas.length === 0) {
+  if (!etiquetasSeleccionadas || etiquetasSeleccionadas.length === 0) {
     alert("No hay artículos seleccionados");
     return;
   }
@@ -1156,17 +1156,18 @@ function generarPDFEtiquetasSeleccionadas() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF("p", "mm", "a4");
 
+  // ===== CONFIG EXACTA IGUAL A PYTHON =====
   const COLS = 3;
   const ROWS = 8;
 
-  const LABEL_WIDTH = 70;
-  const LABEL_HEIGHT = 35;
+  const LABEL_WIDTH = 70;      // mm
+  const LABEL_HEIGHT = 35;     // mm
 
-  const MARGIN_X = 10;
-  const MARGIN_Y = 15;
+  const MARGIN_X = 10;         // mm
+  const MARGIN_Y = 15;         // mm
 
-  const BARCODE_HEIGHT = 7.5;
-  const BARCODE_GAP = 0.5;
+  const BARCODE_HEIGHT = 7.5;  // mm
+  const BARCODE_GAP = 0.5;     // mm
 
   const pageHeight = doc.internal.pageSize.getHeight();
 
@@ -1178,29 +1179,30 @@ function generarPDFEtiquetasSeleccionadas() {
     const codigo = referencia_a_codigo[a.Referencia];
     if (!codigo) return;
 
-    // ===== Detectar formato igual que Python =====
+    // ===== Detectar tipo igual que Python =====
     let formato = "CODE128";
-
     if (/^\d{13}$/.test(codigo)) formato = "EAN13";
     else if (/^\d{12}$/.test(codigo)) formato = "UPC";
 
-    // ===== Crear código de barras =====
+    // ===== Crear barcode SIN deformarlo =====
     const canvas = document.createElement("canvas");
 
     JsBarcode(canvas, codigo, {
       format: formato,
       displayValue: false,
-      height: 40 // altura interna del barcode (no en mm)
+      width: 1,     // grosor fino (clave)
+      height: 30,   // altura interna en px
+      margin: 0
     });
 
     const imgData = canvas.toDataURL("image/png");
 
-    // ===== Posición etiqueta EXACTA =====
+    // ===== POSICIÓN EXACTA IGUAL A REPORTLAB =====
     const x = MARGIN_X + col * LABEL_WIDTH;
     const y = pageHeight - MARGIN_Y - (row + 1) * LABEL_HEIGHT;
     const centerX = x + LABEL_WIDTH / 2;
 
-    // ===== Texto =====
+    // ===== TEXTO =====
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.text(
@@ -1222,7 +1224,7 @@ function generarPDFEtiquetasSeleccionadas() {
       { align: "center" }
     );
 
-    // ===== Código de barras =====
+    // ===== CÓDIGO DE BARRAS =====
     const barcodeY = refY - BARCODE_GAP - BARCODE_HEIGHT;
 
     doc.addImage(
@@ -1230,13 +1232,11 @@ function generarPDFEtiquetasSeleccionadas() {
       "PNG",
       x + 5,
       barcodeY,
-      LABEL_WIDTH - 10,
-      BARCODE_HEIGHT,
-      undefined,
-      "FAST"
+      LABEL_WIDTH - 10,   // ancho igual que Python
+      BARCODE_HEIGHT      // 7.5 mm reales
     );
 
-    // ===== Avanzar posición =====
+    // ===== AVANZAR POSICIÓN =====
     col++;
     if (col === COLS) {
       col = 0;
