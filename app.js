@@ -1285,4 +1285,6 @@ function generarPDFEtiquetasSeleccionadas() {
   const nombreArchivo = `etiquetas_${year}.${month}.${day}.${hour}.${minute}.pdf`;
 
   doc.save(nombreArchivo);
+
+  mostrarMensaje("✅ Etiquetas generadas correctamente", "ok");
 }
