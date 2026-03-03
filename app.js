@@ -1156,53 +1156,50 @@ function generarPDFEtiquetasSeleccionadas() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF("p", "mm", "a4");
 
-  // ===== CONFIG EXACTA IGUAL A PYTHON =====
   const COLS = 3;
   const ROWS = 8;
 
-  const LABEL_WIDTH = 70;      // mm
-  const LABEL_HEIGHT = 35;     // mm
+  const LABEL_WIDTH = 70;
+  const LABEL_HEIGHT = 35;
 
-  const MARGIN_X = 10;         // mm
-  const MARGIN_Y = 15;         // mm
+  const MARGIN_X = 10;
+  const MARGIN_Y = 15;
 
-  const BARCODE_HEIGHT = 7.5;  // mm
-  const BARCODE_GAP = 0.5;     // mm
+  const BARCODE_HEIGHT_MM = 7.5;
+  const BARCODE_GAP = 0.5;
 
   const pageHeight = doc.internal.pageSize.getHeight();
 
   let col = 0;
   let row = 0;
 
-  etiquetasSeleccionadas.forEach((a, index) => {
+  etiquetasSeleccionadas.forEach((a) => {
 
     const codigo = referencia_a_codigo[a.Referencia];
     if (!codigo) return;
 
-    // ===== Detectar tipo igual que Python =====
     let formato = "CODE128";
     if (/^\d{13}$/.test(codigo)) formato = "EAN13";
     else if (/^\d{12}$/.test(codigo)) formato = "UPC";
 
-    // ===== Crear barcode SIN deformarlo =====
     const canvas = document.createElement("canvas");
 
     JsBarcode(canvas, codigo, {
       format: formato,
       displayValue: false,
-      width: 1,     // grosor fino (clave)
-      height: 30,   // altura interna en px
+      width: 1,
+      height: 30,
       margin: 0
     });
 
     const imgData = canvas.toDataURL("image/png");
 
-    // ===== POSICIÓN EXACTA IGUAL A REPORTLAB =====
+    // === POSICIÓN IGUAL QUE PYTHON ===
     const x = MARGIN_X + col * LABEL_WIDTH;
     const y = pageHeight - MARGIN_Y - (row + 1) * LABEL_HEIGHT;
     const centerX = x + LABEL_WIDTH / 2;
 
-    // ===== TEXTO =====
+    // === TEXTO ===
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.text(
@@ -1213,30 +1210,43 @@ function generarPDFEtiquetasSeleccionadas() {
     );
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-
-    const refY = y + LABEL_HEIGHT - 10;
-
     doc.text(
       "Ref: " + a.Referencia,
       centerX,
-      refY,
+      y + LABEL_HEIGHT - 10,
       { align: "center" }
     );
 
-    // ===== CÓDIGO DE BARRAS =====
-    const barcodeY = refY - BARCODE_GAP - BARCODE_HEIGHT;
+    // === CÓDIGO DE BARRAS CON PROPORCIÓN REAL ===
+    const barcodeY = y + LABEL_HEIGHT - 10 - BARCODE_GAP - BARCODE_HEIGHT_MM;
+
+    const maxWidthMM = LABEL_WIDTH - 10;
+
+    // Convertir tamaño real del canvas (px → mm)
+    const pxToMm = 0.264583; // 96dpi estándar
+    const realWidthMM = canvas.width * pxToMm;
+    const realHeightMM = canvas.height * pxToMm;
+
+    const scale = Math.min(
+      maxWidthMM / realWidthMM,
+      BARCODE_HEIGHT_MM / realHeightMM
+    );
+
+    const finalWidth = realWidthMM * scale;
+    const finalHeight = realHeightMM * scale;
+
+    const barcodeX = centerX - finalWidth / 2;
 
     doc.addImage(
       imgData,
       "PNG",
-      x + 5,
+      barcodeX,
       barcodeY,
-      LABEL_WIDTH - 10,   // ancho igual que Python
-      BARCODE_HEIGHT      // 7.5 mm reales
+      finalWidth,
+      finalHeight
     );
 
-    // ===== AVANZAR POSICIÓN =====
+    // === AVANZAR ===
     col++;
     if (col === COLS) {
       col = 0;
