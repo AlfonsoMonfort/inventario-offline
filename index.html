@@ -245,7 +245,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.8</header>
+<header>Inventario Offline V.9</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -411,6 +411,15 @@ li{
   📤 Exportar códigos aprendidos
 </button>
 
+<button
+  type="button"
+  class="secondary"
+  onclick="abrirListadoEtiquetas()"
+  style="margin-top:8px;"
+>
+  🏷 Listar etiquetas
+</button>
+
 </div>
 
 <div id="modalAyuda" class="modal-ayuda">
@@ -442,8 +451,32 @@ li{
   style="opacity:0; position:fixed; top:0; left:0;"
 />
 
+<div id="modalEtiquetas" class="modal-ayuda">
+  <div class="modal-contenido">
+    <h3>Generar etiquetas</h3>
+
+    <label><b>Buscar artículo</b></label>
+    <input type="text" id="buscadorEtiquetas" placeholder="Buscar por nombre o referencia">
+
+    <ul id="resultadosEtiquetas"></ul>
+
+    <hr>
+
+    <h4>Artículos seleccionados</h4>
+    <ul id="listaEtiquetas"></ul>
+
+    <button onclick="generarPDFEtiquetasSeleccionadas()">
+      🖨 Generar etiquetas
+    </button>
+
+    <br><br>
+    <button onclick="cerrarListadoEtiquetas()">Cerrar</button>
+  </div>
+</div>
 
 <!-- TU APP -->
 <script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
 </body>
 </html>

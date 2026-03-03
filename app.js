@@ -5,6 +5,8 @@ let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
 let referenciasSinCodigo = [];
 
+let referencia_a_codigo = {};
+
 let usuariosPermitidos = [];
 let usuarioLogueado = null;
 
@@ -26,6 +28,8 @@ let permitirEscaneo = false;
 let modoAprendizaje = false;
 let codigoPendienteAprender = null;
 let equivalenciasAprendidas = {};
+
+let etiquetasSeleccionadas = [];
 
 // ----------------------------
 // INICIO
@@ -122,6 +126,7 @@ async function cargarEquivalencias() {
 
         codigo_a_referencia[codigoNormalizado] = item.referencia;
         referencia_a_descripcion[item.referencia] = item.descripcion;
+        referencia_a_codigo[item.referencia] = codigoNormalizado;
       });
 
       console.log(
@@ -147,10 +152,12 @@ async function cargarEquivalencias() {
     localStorage.setItem("equivalencias", JSON.stringify(datos));
 
     datos.forEach(item => {
+
       const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
 
       codigo_a_referencia[codigoNormalizado] = item.referencia;
       referencia_a_descripcion[item.referencia] = item.descripcion;
+      referencia_a_codigo[item.referencia] = codigoNormalizado; // 👈 AÑADIR
     });
 
     console.log(
@@ -163,16 +170,20 @@ async function cargarEquivalencias() {
   }
 }
 
-// 🔧 NUEVO
 function cargarEquivalenciasAprendidas() {
-    const guardadas = localStorage.getItem("equivalencias_aprendidas");
-    if (!guardadas) return;
 
-    equivalenciasAprendidas = JSON.parse(guardadas);
+  const guardadas = localStorage.getItem("equivalencias_aprendidas");
+  if (!guardadas) return;
 
-    for (let codigo in equivalenciasAprendidas) {
-        codigo_a_referencia[codigo] = equivalenciasAprendidas[codigo];
-    }
+  equivalenciasAprendidas = JSON.parse(guardadas);
+
+  for (let codigo in equivalenciasAprendidas) {
+
+    const referencia = equivalenciasAprendidas[codigo];
+
+    codigo_a_referencia[codigo] = referencia;
+    referencia_a_codigo[referencia] = codigo; // 🔥 AÑADIR
+  }
 }
 
 // ----------------------------
@@ -1044,4 +1055,146 @@ if (buscadorAprendizaje) {
       resultadosAprendizaje.appendChild(li);
     });
   });
+}
+
+function abrirListadoEtiquetas() {
+  document.getElementById("modalEtiquetas").style.display = "flex";
+  cargarBuscadorEtiquetas();
+}
+
+function cerrarListadoEtiquetas() {
+  document.getElementById("modalEtiquetas").style.display = "none";
+}
+
+function cargarBuscadorEtiquetas() {
+
+  const input = document.getElementById("buscadorEtiquetas");
+  const resultados = document.getElementById("resultadosEtiquetas");
+
+  input.oninput = () => {
+
+    const texto = input.value.toLowerCase().trim();
+    resultados.innerHTML = "";
+
+    if (texto.length < 2) return;
+
+    const resultadosFiltrados = Object.entries(referencia_a_descripcion)
+      .filter(([ref, desc]) =>
+        ref.toLowerCase().includes(texto) ||
+        desc.toLowerCase().includes(texto)
+      )
+      .slice(0, 25);
+
+    resultadosFiltrados.forEach(([ref, desc]) => {
+
+      const li = document.createElement("li");
+      li.innerHTML = `<b>${desc}</b><br>Ref: ${ref}`;
+
+      li.onclick = () => añadirEtiqueta(ref, desc);
+
+      resultados.appendChild(li);
+    });
+  };
+}
+
+function añadirEtiqueta(referencia, descripcion) {
+
+  etiquetasSeleccionadas.push({
+    Referencia: referencia,
+    Descripcion: descripcion
+  });
+
+  renderListaEtiquetas();
+}
+
+function renderListaEtiquetas() {
+  const lista = document.getElementById("listaEtiquetas");
+  lista.innerHTML = "";
+
+  etiquetasSeleccionadas.forEach((a, index) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      ${a.Referencia} - ${a.Descripcion}
+      <button onclick="eliminarEtiqueta(${index})">❌</button>
+    `;
+    lista.appendChild(li);
+  });
+}
+
+function eliminarEtiqueta(index) {
+  etiquetasSeleccionadas.splice(index, 1);
+  renderListaEtiquetas();
+}
+
+function generarPDFEtiquetasSeleccionadas() {
+
+  if (etiquetasSeleccionadas.length === 0) {
+    alert("No hay artículos seleccionados");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p", "mm", "a4");
+
+  const COLS = 3;
+  const ROWS = 8;
+  const LABEL_WIDTH = 70;
+  const LABEL_HEIGHT = 35;
+
+  let col = 0;
+  let row = 0;
+
+  etiquetasSeleccionadas.forEach((a, index) => {
+
+    const x = 10 + col * LABEL_WIDTH;
+    const y = 15 + row * LABEL_HEIGHT;
+
+    // Descripción
+    doc.setFontSize(7);
+    doc.text(a.Descripcion.substring(0,45), x + LABEL_WIDTH/2, y + 5, { align:"center" });
+
+    // Referencia
+    doc.text("Ref: " + a.Referencia, x + LABEL_WIDTH/2, y + 10, { align:"center" });
+
+    // Crear canvas temporal
+    const canvas = document.createElement("canvas");
+    const codigo = referencia_a_codigo[a.Referencia];
+
+    if (!codigo) {
+      console.warn("No hay código para:", a.Referencia);
+      return;
+    }
+
+    // 🔥 Detectar automáticamente formato correcto
+    let formato = "CODE128";
+
+    if (/^\d{13}$/.test(codigo)) formato = "EAN13";
+    if (/^\d{12}$/.test(codigo)) formato = "UPC";
+    if (/^\d{8}$/.test(codigo)) formato = "EAN8";
+
+    JsBarcode(canvas, codigo, {
+      format: formato,
+      displayValue: false,
+      height: 25
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+
+    doc.addImage(imgData, "PNG", x + 5, y + 15, LABEL_WIDTH - 10, 10);
+
+    col++;
+    if (col === COLS) {
+      col = 0;
+      row++;
+    }
+
+    if (row === ROWS) {
+      doc.addPage();
+      row = 0;
+      col = 0;
+    }
+
+  });
+
+  doc.save("etiquetas.pdf");
 }
