@@ -1156,7 +1156,6 @@ function generarPDFEtiquetasSeleccionadas() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF("p", "mm", "a4");
 
-  // === CONFIG IGUAL QUE PYTHON ===
   const COLS = 3;
   const ROWS = 8;
 
@@ -1166,7 +1165,7 @@ function generarPDFEtiquetasSeleccionadas() {
   const MARGIN_X = 10;
   const MARGIN_Y = 15;
 
-  const BARCODE_HEIGHT = 7.5;
+  const BARCODE_HEIGHT_MM = 7.5;
   const BARCODE_GAP = 0.5;
 
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -1183,27 +1182,25 @@ function generarPDFEtiquetasSeleccionadas() {
     if (/^\d{13}$/.test(codigo)) formato = "EAN13";
     else if (/^\d{12}$/.test(codigo)) formato = "UPC";
 
-    // === Crear barcode simple y estable ===
+    // ===== GENERAR BARCODE SIN FORZAR ANCHO =====
     const canvas = document.createElement("canvas");
 
     JsBarcode(canvas, codigo, {
       format: formato,
       displayValue: false,
-      width: 1,
-      height: 30,
+      width: 1,   // grosor barra
+      height: 40, // altura en px (da igual exacta)
       margin: 0
     });
 
     const imgData = canvas.toDataURL("image/png");
 
-    // === POSICIÓN BASE IGUAL QUE REPORTLAB ===
+    // === POSICIÓN ETIQUETA ===
     const x = MARGIN_X + col * LABEL_WIDTH;
     const y = pageHeight - MARGIN_Y - (row + 1) * LABEL_HEIGHT;
     const centerX = x + LABEL_WIDTH / 2;
 
     // ===== TEXTO =====
-
-    // Descripción (6mm desde arriba)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.text(
@@ -1213,7 +1210,6 @@ function generarPDFEtiquetasSeleccionadas() {
       { align: "center" }
     );
 
-    // Referencia (10mm desde arriba)
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
 
@@ -1226,19 +1222,30 @@ function generarPDFEtiquetasSeleccionadas() {
       { align: "center" }
     );
 
-    // ===== CÓDIGO DE BARRAS EXACTAMENTE DEBAJO =====
-    const barcodeY = refY - BARCODE_GAP - BARCODE_HEIGHT;
+    // ===== ESCALAR SOLO POR ALTURA =====
+    const pxToMm = 0.264583; // 96dpi estándar
+
+    const realWidthMM = canvas.width * pxToMm;
+    const realHeightMM = canvas.height * pxToMm;
+
+    const scale = BARCODE_HEIGHT_MM / realHeightMM;
+
+    const finalWidth = realWidthMM * scale;
+    const finalHeight = BARCODE_HEIGHT_MM;
+
+    const barcodeY = refY - BARCODE_GAP - finalHeight;
+    const barcodeX = centerX - finalWidth / 2;
 
     doc.addImage(
       imgData,
       "PNG",
-      x + 5,
+      barcodeX,
       barcodeY,
-      LABEL_WIDTH - 10,
-      BARCODE_HEIGHT
+      finalWidth,
+      finalHeight
     );
 
-    // === AVANZAR ===
+    // ===== AVANZAR =====
     col++;
     if (col === COLS) {
       col = 0;
