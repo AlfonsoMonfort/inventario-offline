@@ -128,7 +128,7 @@ function cargarQuaggaSiNecesario() {
   }
 
   const script = document.createElement("script");
-  script.src = "quagga.min.js";
+  script.src = "/quagga.min.js";
 
   script.onload = function () {
     console.log("Quagga cargado");
@@ -295,7 +295,7 @@ function iniciarScanner() {
 
   Quagga.onDetected(function (result) {
     if (!permitirEscaneo) return;
-    if (!result?.codeResult?.code) return;
+    if (!result || !result.codeResult || !result.codeResult.code) return;
 
     let code = result.codeResult.code.replace(/\D/g, "");
     code = code.replace(/^0+/, "");
@@ -965,7 +965,7 @@ if (inputImportar) {
 function registrarServiceWorker() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
-      .register('./service-worker.js')
+      .register('/service-worker.js')
       .then(function (registration) {
         console.log('Service Worker registrado:', registration.scope);
       })
