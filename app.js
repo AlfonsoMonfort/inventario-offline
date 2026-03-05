@@ -41,8 +41,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarUsuarios();
   verificarSesion();
 
-  
-
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
 
@@ -61,37 +59,57 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   cantidadInput.addEventListener("focus", function () {
     this.value = "";
-    editandoCantidad = true;   // 🧠 el usuario está escribiendo
-    permitirEscaneo = false;   // 🔒 evitar que el lector escriba aquí
+    editandoCantidad = true;
+    permitirEscaneo = false;
   });
 
   cantidadInput.addEventListener("blur", function () {
-    editandoCantidad = false;  // 🧠 deja de editar
-    permitirEscaneo = true;    // 🔓 volver a permitir escaneo
+    editandoCantidad = false;
+    permitirEscaneo = true;
   });
 
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
 
-  const inputPDA = document.getElementById("inputPDA");
-  const cantidadInput = document.getElementById("cantidad");
+    const inputPDA = document.getElementById("inputPDA");
 
-  // cerrar teclado
-  cantidadInput.blur();
+    // simular ENTER automático
+    cantidadInput.blur();
+    editandoCantidad = false;
 
-  editandoCantidad = false;
+    // devolver foco al lector
+    if (inputPDA) {
+      inputPDA.focus();
+      inputPDA.value = "";
+    }
 
-  // devolver foco al lector
-  if (inputPDA) {
-    inputPDA.focus();
-    inputPDA.value = "";
-  }
-
-  permitirEscaneo = true;
+    permitirEscaneo = true;
 
   });
+
+
+  // 🔧 ENTER AUTOMÁTICO SI ESCANEAS DESDE CANTIDAD
+  document.addEventListener("keydown", function () {
+
+    const inputPDA = document.getElementById("inputPDA");
+
+    if (document.activeElement === cantidadInput) {
+
+      cantidadInput.blur();
+      editandoCantidad = false;
+      permitirEscaneo = true;
+
+      if (inputPDA) {
+        inputPDA.focus();
+        inputPDA.value = "";
+      }
+
+    }
+
   });
+
+});
 
 async function cargarUsuarios() {
   try {
