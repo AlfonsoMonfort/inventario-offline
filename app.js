@@ -97,58 +97,51 @@ async function cargarReferenciasSinCodigo() {
 // ----------------------------
 async function cargarEquivalencias() {
 
-  try {
+    try {
 
-    let datosGuardados = localStorage.getItem("equivalencias");
+        let datosGuardados = localStorage.getItem("equivalencias");
 
-    if (datosGuardados) {
-      console.log("Cargando equivalencias desde almacenamiento local");
-      let datos = JSON.parse(datosGuardados);
+        if (datosGuardados) {
+            console.log("Cargando equivalencias desde almacenamiento local");
+            let datos = JSON.parse(datosGuardados);
 
-      datos.forEach(item => {
-        const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
+            datos.forEach(item => {
+                codigo_a_referencia[item.codigo] = item.referencia;
+                referencia_a_descripcion[item.referencia] = item.descripcion;
+            });
 
-        codigo_a_referencia[codigoNormalizado] = item.referencia;
-        referencia_a_descripcion[item.referencia] = item.descripcion;
-      });
+            console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
+            return;
+        }
 
-      console.log(
-        "Total códigos cargados:",
-        Object.keys(codigo_a_referencia).length
-      );
-      return;
+        console.log("Descargando equivalencias por primera vez");
+
+        const response = await fetch("equivalencias.json");
+
+        if (!response.ok) {
+            throw new Error("No se pudo cargar equivalencias.json");
+        }
+
+        const datos = await response.json();
+
+        console.log("Datos recibidos:", datos);
+
+        localStorage.setItem("equivalencias", JSON.stringify(datos));
+
+        datos.forEach(item => {
+            codigo_a_referencia[item.codigo] = item.referencia;
+            referencia_a_descripcion[item.referencia] = item.descripcion;
+        });
+
+        console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
+
+    } catch (error) {
+        console.log("Error cargando equivalencias:", error);
     }
+}
 
-    console.log("Descargando equivalencias por primera vez");
-
-    const response = await fetch("equivalencias.json");
-
-    if (!response.ok) {
-      throw new Error("No se pudo cargar equivalencias.json");
-    }
-
-    const datos = await response.json();
-
-    console.log("Datos recibidos:", datos);
-
-    // Guardamos TAL CUAL llegaron (pero se normalizan al usar)
-    localStorage.setItem("equivalencias", JSON.stringify(datos));
-
-    datos.forEach(item => {
-      const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
-
-      codigo_a_referencia[codigoNormalizado] = item.referencia;
-      referencia_a_descripcion[item.referencia] = item.descripcion;
-    });
-
-    console.log(
-      "Total códigos cargados:",
-      Object.keys(codigo_a_referencia).length
-    );
-
-  } catch (error) {
-    console.log("Error cargando equivalencias:", error);
-  }
+function esSamsung() {
+  return /samsung/i.test(navigator.userAgent);
 }
 
 // 🔧 NUEVO
@@ -225,6 +218,45 @@ function cargarInventarioGuardado() {
 
 
 
+function calcularAreaDesdeMarco() {
+  const scanner = document.getElementById("scanner");
+  const frame = document.querySelector(".scanner-frame");
+  const video = scanner.querySelector("video");
+
+  if (!video.videoWidth || !video.videoHeight) return null;
+
+  const frameRect = frame.getBoundingClientRect();
+  const videoRect = video.getBoundingClientRect();
+
+  // Posición del marco respecto al vídeo real
+  const topPx = frameRect.top - videoRect.top;
+  const leftPx = frameRect.left - videoRect.left;
+  const bottomPx = videoRect.bottom - frameRect.bottom;
+  const rightPx = videoRect.right - frameRect.right;
+
+  const top = (topPx / videoRect.height) * 100;
+  const bottom = (bottomPx / videoRect.height) * 100;
+  const left = (leftPx / videoRect.width) * 100;
+  const right = (rightPx / videoRect.width) * 100;
+
+  const clamp = v => Math.max(0, Math.min(100, v));
+  if (esSamsung()) {
+    return {
+      top: "15%",
+      bottom: "15%",
+      left: "5%",
+      right: "5%"
+    };
+  }
+
+  // resto de móviles → cálculo exacto
+  return {
+    top: `${clamp(top)}%`,
+    bottom: `${clamp(bottom)}%`,
+    left: `${clamp(left)}%`,
+    right: `${clamp(right)}%`
+  };
+}
 
 // ----------------------------
 // INICIAR ESCÁNER
@@ -236,51 +268,78 @@ function iniciarScanner() {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#scanner'),
-      constraints: {
-        facingMode: "environment",
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      area: {
-        top: "27.5%",
-        right: "7.5%",
-        left: "7.5%",
-        bottom: "27.5%"
-      }
+     constraints: {
+      facingMode: "environment",
+      focusMode: "continuous"
+    }
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
     },
-    locate: false
+    locate: !esSamsung()
   }, function (err) {
     if (err) {
       console.error(err);
       return;
     }
+
     Quagga.start();
+
+    const video = document.querySelector("#scanner video");
+    if (!video) return;
+
+    video.addEventListener("loadedmetadata", () => {
+
+      const area = calcularAreaDesdeMarco();
+      if (!area) return;
+
+      Quagga.stop();
+
+      Quagga.init({
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: document.querySelector('#scanner'),
+          constraints: {
+            facingMode: "environment"
+          },
+          area
+        },
+        decoder: {
+          readers: ["ean_reader", "ean_8_reader", "upc_reader"]
+        },
+        locate: !esSamsung()
+      }, () => Quagga.start());
+
+    }, { once: true });
   });
-  Quagga.offDetected();
+
   Quagga.onDetected(function (result) {
-    if (!permitirEscaneo) return;
-    if (!result?.codeResult?.code) return;
+  if (!permitirEscaneo) return;
+  if (!result?.codeResult?.code) return;
 
-    let code = result.codeResult.code.replace(/\D/g, "");
-    code = code.replace(/^0+/, "");
+  const code = result.codeResult.code.replace(/\D/g, "");
+  if (![8, 12, 13].includes(code.length)) return;
 
-    permitirEscaneo = false;
+  permitirEscaneo = false;
 
-    if (modoAprendizaje) {
-      codigoPendienteAprender = code;
-      document.getElementById("codigoAprendidoMostrado").textContent =
-        "Código leído: " + code;
-      document.getElementById("codigoAprendidoMostrado").style.display = "block";
-      mostrarMensaje("✅ Código leído", "ok");
-      mostrarFormularioAprendizaje();
-      return;
-    }
+  // 🧠 MODO APRENDIZAJE
+  if (modoAprendizaje) {
+  codigoPendienteAprender = code;
 
-    procesarCodigo(code);
-  });
+  const divCodigo = document.getElementById("codigoAprendidoMostrado");
+  divCodigo.textContent = "Código leído: " + code;
+  divCodigo.style.display = "block";
+
+  mostrarMensaje("✅ Código leído", "ok");
+  mostrarFormularioAprendizaje();
+  return;
+}
+
+  // flujo normal
+  procesarCodigo(code);
+});
+
 }
 
 
@@ -383,30 +442,6 @@ document.getElementById("btnInstalar").addEventListener("click", async () => {
     }
 });
 
-function esPWAenIOS() {
-  return (
-    /iphone|ipad|ipod/i.test(navigator.userAgent) &&
-    window.matchMedia('(display-mode: standalone)').matches
-  );
-}
-
-async function compartirExcelIOS(blob, nombreArchivo) {
-
-  const file = new File([blob], nombreArchivo, {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  });
-
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({
-      files: [file],
-      title: "Inventario",
-      text: "Guardar inventario"
-    });
-  } else {
-    alert("Este iPhone no permite compartir archivos desde la app");
-  }
-}
-
 function esIOS() {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }
@@ -492,12 +527,11 @@ function exportarCodigosAprendidos() {
 
   const url = URL.createObjectURL(blob);
 
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-
-  if (isIOS) {
-    // Truco iOS: abrir en la MISMA pestaña
-    window.location.href = url;
+  // iOS → compartir
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    window.open(url);
   } else {
+    // Android / PC → descarga
     const a = document.createElement("a");
     a.href = url;
     a.download = nombre;
@@ -628,34 +662,43 @@ function leerOCRContinuo() {
 
     cancelarOCR();
 
-   // 🔍 comprobar referencia existente
-if (!referencia_a_descripcion[texto]) {
-  mostrarMensaje("❌ Referencia no existe", "error");
-  permitirEscaneo = true;
-  return;
+    // 🔍 comprobar referencia existente
+    if (!referencia_a_descripcion[texto]) {
+      mostrarMensaje("❌ Referencia no existe", "error");
+      permitirEscaneo = true;
+      return;
+    }
+
+    const cantidad =
+      parseInt(document.getElementById("cantidad").value) || 1;
+
+    if (inventario.articulos[texto]) {
+  inventario.articulos[texto] += cantidad;
+
+  // 🔼 mover arriba (último usado)
+  inventario.orden = inventario.orden.filter(r => r !== texto);
+  inventario.orden.unshift(texto);
+
+} else {
+  inventario.articulos[texto] = cantidad;
+
+  // 🆕 nuevo → arriba del todo
+  inventario.orden.unshift(texto);
 }
 
-// 🆕 guardar referencia detectada
-numeroOCRDetectado = texto;
+actualizarLista();
+document.getElementById("cantidad").value = 1;
 
-// ⛔ parar OCR hasta decisión
-modoOCRActivo = false;
-
-// 🖥 mostrar confirmación OCR
-document.getElementById("ocrConfirmBox").style.display = "block";
-document.getElementById("ocrReferenciaDetectada").textContent =
-  "Referencia detectada: " + texto;
-
-mostrarMensaje("📋 Confirma la referencia", "ok");
-
+mostrarMensaje("✅ Artículo añadido (OCR)", "ok");
+permitirEscaneo = true;
 
   });
 }
 
 
 function aceptarOCR() {
-  document.getElementById("ocrConfirmBox").style.display = "none";
-  modoOCRActivo  = false;
+
+  modoOCR = false;
   document.getElementById("ocrBox").style.display = "none";
 
   if (!numeroOCRDetectado) return;
@@ -698,10 +741,7 @@ function aceptarOCR() {
 
 
 function cancelarOCR() {
-  const box = document.getElementById("ocrConfirmBox");
-  if (box) box.style.display = "none";
-
- 
+  modoOCR = false;
   modoOCRActivo = false;
   numeroOCRDetectado = null;
 
@@ -715,10 +755,10 @@ function cancelarOCR() {
     ocrTimeout = null;
   }
 
+  document.getElementById("ocrBox").style.display = "none";
   permitirEscaneo = true;
-
   const debugCanvas = document.getElementById("ocr-debug-canvas");
-  if (debugCanvas) debugCanvas.remove();
+  if (debugCanvas) debugCanvas.remove();    
 }
 
 
@@ -814,13 +854,6 @@ function variantesCodigo(codigo) {
     variantes.add("0" + codigo);
   }
 
-  if (codigo.length === 11) {
-    variantes.add("00" + codigo);
-  }
-  if (codigo.length === 10) {
-    variantes.add("000" + codigo);
-  }
-
   return [...variantes];
 }
 
@@ -830,13 +863,16 @@ function variantesCodigo(codigo) {
 // ----------------------------
 function procesarCodigo(codigo) {
 
-  // 🔒 seguridad extra (por si alguien llama sin normalizar)
-  codigo = String(codigo).replace(/^0+/, "");
+  let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
 
-  let cantidad =
-    parseInt(document.getElementById("cantidad").value) || 1;
+  let referencia = null;
 
-  const referencia = codigo_a_referencia[codigo];
+  for (const v of variantesCodigo(codigo)) {
+    if (codigo_a_referencia[v]) {
+      referencia = codigo_a_referencia[v];
+      break;
+    }
+  }
 
   if (!referencia) {
     mostrarMensaje("❌ Código no encontrado", "error");
@@ -864,9 +900,7 @@ function procesarCodigo(codigo) {
   actualizarLista();
 }
 
-function esSamsung() {
-  return /samsung/i.test(navigator.userAgent);
-}
+
 
 // ----------------------------
 // ACTUALIZAR LISTA
@@ -944,182 +978,56 @@ function guardarInventario() {
 // ----------------------------
 function finalizar() {
 
-  /* ========= 1. PREPARAR DATOS ========= */
+    let datos = [];
 
-  const datos = [];
+    for (let ref in inventario.articulos) {
 
-  for (let ref in inventario.articulos) {
-    datos.push({
-      fecha: formatearFecha(inventario.fecha),
-      almacen: inventario.almacen,
-      referencia: ref,
-      cantidad: inventario.articulos[ref],
-      numero_vendedor: inventario.vendedor
-    });
-  }
-
-  if (datos.length === 0) {
-    mostrarMensaje("❌ No hay artículos para exportar", "error");
-    return;
-  }
-
-  /* ========= 2. CREAR EXCEL ========= */
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(datos);
-  XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-
-  const wbout = XLSX.write(wb, {
-    bookType: "xlsx",
-    type: "array"
-  });
-
-  const blob = new Blob([wbout], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  });
-
-  const nombreArchivo =
-  `${inventario.almacen}_${obtenerFechaHoraArchivo()}.xlsx`;
-
-  /* ========= 3. DETECCIÓN ENTORNO ========= */
-
-  const ua = navigator.userAgent.toLowerCase();
-  const esIOS = /iphone|ipad|ipod/.test(ua);
-  const esPWA = window.matchMedia("(display-mode: standalone)").matches;
-
-  /* ========= 4. iOS PWA → SHARE API ========= */
-
-  if (esIOS && esPWA) {
-
-    const file = new File([blob], nombreArchivo, {
-      type: blob.type
-    });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-
-      mostrarMensaje(
-        "📤 Pulsa Guardar en Archivos para conservar el Excel",
-        "ok"
-      );
-
-      navigator.share({
-        files: [file],
-        title: "Inventario",
-        text: "Guardar inventario"
-      });
-
-    } else {
-      alert("Este iPhone no permite compartir archivos desde la app.");
+        datos.push({
+            fecha: formatearFecha(inventario.fecha),
+            almacen: inventario.almacen,
+            referencia: ref,
+            cantidad: inventario.articulos[ref],
+            numero_vendedor: inventario.vendedor
+        });
     }
 
-    return;
-  }
+    let wb = XLSX.utils.book_new();
+    let ws = XLSX.utils.json_to_sheet(datos);
+    XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
-  /* ========= 5. iOS SAFARI → ABRIR ARCHIVO ========= */
+    let nombre = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
 
-  if (esIOS && !esPWA) {
+    const wbout = XLSX.write(wb, {
+  bookType: "xlsx",
+  type: "array"
+});
 
-    const url = URL.createObjectURL(blob);
+const blob = new Blob([wbout], {
+  type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+});
 
-    mostrarMensaje(
-      "📂 Se abrirá el Excel. Pulsa Compartir → Guardar en Archivos",
-      "ok"
-    );
+const url = URL.createObjectURL(blob);
 
-    setTimeout(() => {
-      window.open(url, "_blank");
-    }, 300);
-
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
-    return;
-  }
-
-  /* ========= 6. ANDROID / PC → DESCARGA NORMAL ========= */
-
-  const url = URL.createObjectURL(blob);
+// iOS → abrir para compartir
+if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+  window.open(url);
+} else {
+  // resto → descarga normal
   const a = document.createElement("a");
-
   a.href = url;
-  a.download = nombreArchivo;
-
+  a.download = nombre;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
-
-  mostrarMensaje("✅ Inventario descargado correctamente", "ok");
 }
 
-function importarInventarioExcel(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-  const reader = new FileReader();
 
-  reader.onload = evt => {
-    try {
-      const data = new Uint8Array(evt.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const filas = XLSX.utils.sheet_to_json(sheet);
-
-      sumarInventarioDesdeExcel(filas);
-      mostrarMensaje("✅ Inventario importado y sumado", "ok");
-
-    } catch (error) {
-      console.error(error);
-      mostrarMensaje("❌ Error al importar Excel", "error");
-    }
-  };
-
-  reader.readAsArrayBuffer(file);
-
-  // 🔄 permitir volver a importar el mismo archivo si hace falta
-  e.target.value = "";
+    location.reload();
 }
 
-function obtenerFechaHoraArchivo() {
-  const ahora = new Date();
 
-  const dia = String(ahora.getDate()).padStart(2, "0");
-  const mes = String(ahora.getMonth() + 1).padStart(2, "0");
-  const anio = ahora.getFullYear();
-
-  const hora = String(ahora.getHours()).padStart(2, "0");
-  const minuto = String(ahora.getMinutes()).padStart(2, "0");
-
-  return `${dia}_${mes}_${anio}_${hora}_${minuto}`;
-}
-
-function sumarInventarioDesdeExcel(filas) {
-  if (!Array.isArray(filas)) return;
-
-  filas.forEach(fila => {
-    const ref = String(fila.referencia || "").trim();
-    const cantidad = parseInt(fila.cantidad, 10) || 0;
-
-    if (!ref || cantidad <= 0) return;
-
-    if (inventario.articulos[ref]) {
-      inventario.articulos[ref] += cantidad;
-
-      // mover arriba (último usado)
-      inventario.orden = inventario.orden.filter(r => r !== ref);
-      inventario.orden.unshift(ref);
-
-    } else {
-      inventario.articulos[ref] = cantidad;
-      inventario.orden.unshift(ref);
-    }
-  });
-
-  actualizarLista();
-}
-
-document
-  .getElementById("importarExcel")
-  .addEventListener("change", importarInventarioExcel);
 
 // ----------------------------
 // SERVICE WORKER
@@ -1137,24 +1045,4 @@ function registrarServiceWorker() {
         });
     });
   }
-}
-
-// ===============================
-// BOTÓN MENOS EN CANTIDAD (SOLO NEGATIVO)
-// ===============================
-const btnMenos = document.getElementById("btnCantidadNegativa");
-
-if (btnMenos) {
-  btnMenos.addEventListener("click", () => {
-    const input = document.getElementById("cantidad");
-    let valor = parseInt(input.value, 10);
-
-    if (isNaN(valor) || valor === 0) {
-      input.value = -1;
-      return;
-    }
-
-    // 👉 SOLO poner negativo, nunca volver a positivo
-    input.value = Math.abs(valor) * -1;
-  });
 }

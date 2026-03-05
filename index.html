@@ -16,7 +16,6 @@ body{
   margin:0;
   font-family:Arial, sans-serif;
   background:#f2f2f2;
-  overflow-x: hidden;
 }
 
 header{
@@ -163,46 +162,6 @@ li{
   pointer-events: none;
 }
 
-/* ===== FILAS HORIZONTALES BIEN HECHAS ===== */
-
-.fila-horizontal {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-.fila-horizontal label {
-  font-weight: bold;
-  white-space: nowrap;
-  width: 130px;
-  flex-shrink: 0;
-}
-
-.fila-horizontal input,
-.fila-horizontal select {
-  flex: 1;
-  min-width: 0;          /* 🔑 LA CLAVE QUE FALTABA */
-  box-sizing: border-box;
-  margin: 0;
-  width: 100%;
-}
-
-/* ===== AJUSTE GLOBAL DE ANCHOS ===== */
-
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-.container {
-  width: 100%;
-  overflow-x: hidden;
-}
-
-.card {
-  width: 100%;
-}
-
 </style>
 
 
@@ -213,7 +172,7 @@ li{
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.10</header>
+<header>Inventario Offline V.8</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -255,84 +214,54 @@ li{
     <div id="ocrNumeroDetectado"
         style="font-weight:bold; margin-bottom:8px;">
     </div>
+
+    <button type="button" onclick="aceptarOCR()">
+      ✅ Usar este número
+    </button>
+
+    <button type="button"
+            class="secondary"
+            style="margin-top:8px;"
+            onclick="cancelarOCR()">
+      ❌ Cancelar
+    </button>
   </div>
+
+
   <div id="codigoAprendidoMostrado"
        style="display:none;
               font-weight:bold;
               margin-bottom:8px;
               color:#111;">
   </div>
+
   <label style="font-weight:bold;">Referencia</label>
   <input type="text" id="inputReferenciaAprendida" placeholder="Escribe la referencia">
 
   <button type="button" onclick="guardarCodigoAprendido()">
     Aceptar
   </button>
-  <button id="btnCancelarAprendizaje"
-            style="display:none; margin-top:8px;"
-            onclick="cancelarAprendizaje()">
-      ❌ Cancelar
-    </button>
 </div>
 
 
   <!-- CANTIDAD -->
-<div class="card fila-horizontal" style="margin-top:4px;">
-  <label for="cantidad">Cantidad</label>
-
-  <div class="cantidad-wrapper">
-    <button
-      type="button"
-      id="btnCantidadNegativa"
-      class="btn-menos"
-      aria-label="Cambiar signo"
-    >−</button>
-
-    <input
-      type="number"
-      id="cantidad"
-      value="1"
-      inputmode="numeric"
-    >
+  <div class="card" style="margin-top:15px;">
+    <label style="font-weight:bold;">Cantidad</label>
+    <input type="number" id="cantidad" value="1" min="1">
   </div>
-</div>
-
-<!-- CONFIRMACIÓN OCR -->
-<div id="ocrConfirmBox"
-     class="card"
-     style="display:none; margin-top:10px;">
-
-  <div id="ocrReferenciaDetectada"
-       style="font-weight:bold; margin-bottom:8px;">
-  </div>
-
-  <button type="button" onclick="aceptarOCR()">
-    ✅ Aceptar referencia
-  </button>
-
-  <button type="button"
-          class="secondary"
-          style="margin-top:8px;"
-          onclick="cancelarOCR()">
-    ❌ Cancelar
-  </button>
-</div>
 
   <!-- AÑADIR MANUAL -->
-<div class="card" style="margin-top:4px;">
-  <div class="fila-horizontal">
-    <label for="selectManual">Añadir manual</label>
-    <select id="selectManual">
-      <option value="">-- Selecciona artículo --</option>
-    </select>
-  </div>
+<div class="card" style="margin-top:15px;">
+  <label style="font-weight:bold;">Añadir manual</label>
 
-  <button type="button" onclick="añadirManual()" style="margin-top:4px;">
+  <select id="selectManual">
+    <option value="">-- Selecciona artículo --</option>
+  </select>
+
+  <button type="button" onclick="añadirManual()">
     ➕ Añadir artículo
   </button>
 </div>
-
-
 
 <button
   type="button"
@@ -341,7 +270,11 @@ li{
 >
   🧠 Grabar código
 </button>
-
+<button id="btnCancelarAprendizaje"
+        style="display:none; margin-top:8px;"
+        onclick="cancelarAprendizaje()">
+  ❌ Cancelar
+</button>
 
 <button class="secondary" onclick="activarModoOCR()">
   🔢 Leer referencia impresa
@@ -354,28 +287,10 @@ li{
     <ul id="listaArticulos"></ul>
   </div>
 
-
   <!-- BOTON GUARDAR INVENTARIO -->
   <button class="secondary" onclick="guardarInventario()">
     💾 Guardar inventario
   </button>
-  <!-- IMPORTAR INVENTARIO DESDE EXCEL -->
-<input
-  type="file"
-  id="importarExcel"
-  accept=".xlsx"
-  style="display:none"
-/>
-
-<button
-  type="button"
-  class="secondary"
-  onclick="document.getElementById('importarExcel').click()"
-  style="margin-top:8px;"
->
-  📥 Importar inventario
-</button>
-
 
   <!-- BOTÓN FINALIZAR INVENTARIO -->
   <div style="margin-top:20px;">
