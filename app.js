@@ -394,15 +394,19 @@ window.addEventListener("beforeinstallprompt", (e) => {
     btn.style.display = "block";
 });
 
-document.getElementById("btnInstalar").addEventListener("click", async () => {
+const btnInstalar = document.getElementById("btnInstalar");
+
+if (btnInstalar) {
+  btnInstalar.addEventListener("click", async () => {
     if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log("Resultado instalación:", outcome);
-        deferredPrompt = null;
-        document.getElementById("btnInstalar").style.display = "none";
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log("Resultado instalación:", outcome);
+      deferredPrompt = null;
+      btnInstalar.style.display = "none";
     }
-});
+  });
+}
 
 function esPWAenIOS() {
   return (
