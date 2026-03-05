@@ -120,6 +120,22 @@ async function cargarReferenciasSinCodigo() {
 };
 
 
+function cargarQuaggaSiNecesario() {
+
+  if (modoPDA) {
+    console.log("Modo PDA: no cargar Quagga");
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.src = "quagga.min.js";
+
+  script.onload = function () {
+    console.log("Quagga cargado");
+  };
+
+  document.body.appendChild(script);
+}
 
 // ----------------------------
 // CARGAR EXCEL EQUIVALENCIAS
@@ -221,18 +237,30 @@ function empezar() {
   document.getElementById("pantallaInicio").style.display = "none";
   document.getElementById("pantallaEscaner").style.display = "block";
 
+  // 🔴 Si es PDA no cargar cámara
   if (modoPDA) {
-  activarModoPDA();
-  return;
-}
+    activarModoPDA();
+    return;
+  }
 
+  // 📱 Solo móviles
+  cargarQuaggaSiNecesario();
   iniciarScanner();
 }
-
 // ----------------------------
 // INICIAR ESCÁNER
 // ----------------------------
 function iniciarScanner() {
+
+  if (modoPDA) {
+    console.log("Modo PDA: usando lector físico");
+    return;
+  }
+
+  if (typeof Quagga === "undefined") {
+    console.log("Quagga no disponible");
+    return;
+  }
 
   Quagga.init({
     inputStream: {
@@ -262,7 +290,9 @@ function iniciarScanner() {
     }
     Quagga.start();
   });
+
   Quagga.offDetected();
+
   Quagga.onDetected(function (result) {
     if (!permitirEscaneo) return;
     if (!result?.codeResult?.code) return;
@@ -949,6 +979,11 @@ async function login() {
   const u = document.getElementById("loginUsuario").value.trim();
   const p = document.getElementById("loginPassword").value.trim();
 
+  // 🔴 detectar modo PDA antes de todo
+  if (u === "PDA") {
+    modoPDA = true;
+  }
+
   try {
     await cargarUsuarios();
 
@@ -976,10 +1011,6 @@ async function login() {
   } catch (e) {
     mostrarMensaje("❌ Sin conexión", "error");
   }
-
-  if (u === "PDA") {
-  modoPDA = true;
-}
 }
 
 function verificarSesion() {

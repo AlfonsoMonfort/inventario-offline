@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v1";
+const CACHE_NAME = "inventario-cache-v3";
 
 const urlsToCache = [
   "./",
@@ -6,7 +6,6 @@ const urlsToCache = [
   "./app.js",
   "./manifest.json",
 
-  "./quagga.min.js",
   "./xlsx.full.min.js",
   "./jspdf.umd.min.js",
   "./JsBarcode.all.min.js",
@@ -14,7 +13,6 @@ const urlsToCache = [
   "./equivalencias.json",
   "./referencias_sin_codigo_barras.json",
   "./usuarios.json",
-  "./equivalencias.xlsx",
 
   "./icon-192.png",
   "./icon-512.png",
@@ -26,14 +24,8 @@ const urlsToCache = [
 
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      for (const url of urlsToCache) {
-        try {
-          await cache.add(url);
-        } catch (e) {
-          console.log("Error cacheando:", url);
-        }
-      }
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache);
     })
   );
 
@@ -59,13 +51,7 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request).then(response => {
-      if (response) {
-        return response;
-      }
-
-      return fetch(event.request).catch(() => {
-        return caches.match("./index.html");
-      });
+      return response || fetch(event.request);
     })
   );
 });
