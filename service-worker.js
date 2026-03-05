@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v1";
+const CACHE_NAME = "inventario-cache-v2";
 
 const urlsToCache = [
   "./",
@@ -10,7 +10,11 @@ const urlsToCache = [
   "./icon-192.png",
   "./icon-512.png",
   "./equivalencias.json",
-  "./referencias_sin_codigo_barras.json"
+  "./referencias_sin_codigo_barras.json",
+  "./jspdf.umd.min.js",
+  "./JsBarcode.all.min.js",
+  "./ok.ogg",
+  "./error.ogg"
 ];
 
 self.addEventListener("install", event => {
