@@ -31,6 +31,8 @@ let equivalenciasAprendidas = {};
 
 let etiquetasSeleccionadas = [];
 
+let editandoCantidad = false;
+
 // ----------------------------
 // INICIO
 // ----------------------------
@@ -59,11 +61,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   cantidadInput.addEventListener("focus", function () {
     this.value = "";
-    permitirEscaneo = false; // 🔒 evitar que el lector escriba aquí
+    editandoCantidad = true;   // 🧠 el usuario está escribiendo
+    permitirEscaneo = false;   // 🔒 evitar que el lector escriba aquí
   });
 
   cantidadInput.addEventListener("blur", function () {
-    permitirEscaneo = true; // 🔓 volver a permitir escaneo
+    editandoCantidad = false;  // 🧠 deja de editar
+    permitirEscaneo = true;    // 🔓 volver a permitir escaneo
   });
 
   const scanner = document.getElementById("scanner");
@@ -288,9 +292,14 @@ function activarModoPDA() {
 
   // 🔒 foco permanente (CLAVE)
   setInterval(() => {
+
+    // 🧠 si el usuario está editando cantidad no robamos foco
+    if (editandoCantidad) return;
+
     if (document.activeElement !== input) {
       input.focus();
     }
+
   }, 300);
 
     mostrarMensaje("📟 Modo PDA activo", "ok");
