@@ -33,17 +33,15 @@ let etiquetasSeleccionadas = [];
 
 let editandoCantidad = false;
 
-
-
-
 // ----------------------------
 // INICIO
 // ----------------------------
-
 document.addEventListener("DOMContentLoaded", async () => {
 
   await cargarUsuarios();
   verificarSesion();
+
+  
 
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
@@ -54,36 +52,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     this.value = this.value.toUpperCase().slice(0, 3);
   });
 
-  await cargarEquivalencias();
+ await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
   registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
-  const inputPDA = document.getElementById("inputPDA");
 
-  // -----------------------------
-  // BOTÓN ESCÁNER
-  // -----------------------------
-  const scanner = document.getElementById("scanner");
-
-  scanner.addEventListener("pointerdown", () => {
-
-    if (cantidadInput) cantidadInput.blur();
-
-    editandoCantidad = false;
-
-    if (inputPDA) {
-      inputPDA.value = "";
-      inputPDA.focus();
-    }
-
-    permitirEscaneo = true;
-
+  // 👇 controlar cuando se está editando cantidad
+  cantidadInput.addEventListener("focus", function () {
+    editandoCantidad = true;
+    this.value = "";
   });
 
-});
+  cantidadInput.addEventListener("blur", function () {
+    editandoCantidad = false;
+  });
 
+  const scanner = document.getElementById("scanner");
+
+  scanner.addEventListener("click", () => {
+    permitirEscaneo = true; // 📦 escáner normal
+  });
+  });
 
 async function cargarUsuarios() {
   try {
@@ -298,27 +289,35 @@ function activarModoPDA() {
   const input = document.getElementById("inputPDA");
   input.value = "";
 
+  // 🔒 foco permanente (CLAVE)
+  setInterval(() => {
+
+    if (editandoCantidad) return;
+
+    if (document.activeElement !== input) {
+      input.focus();
+    }
+
+  }, 300);
+
   mostrarMensaje("📟 Modo PDA activo", "ok");
 
-  // foco inicial
-  input.focus();
+  input.oninput = () => {
+    // el lector escribe aquí
+  };
 
   input.onkeydown = (e) => {
-
     if (e.key === "Enter") {
-
-      let codigo = input.value.replace(/\D/g, "").replace(/^0+/, "");
+      const codigo = input.value.replace(/\D/g, "").replace(/^0+/, "");
       input.value = "";
 
       if (!codigo) return;
 
       if (modoAprendizaje) {
-
         codigoPendienteAprender = codigo;
 
         document.getElementById("codigoAprendidoMostrado").textContent =
           "Código leído: " + codigo;
-
         document.getElementById("codigoAprendidoMostrado").style.display = "block";
 
         mostrarFormularioAprendizaje();
@@ -326,13 +325,7 @@ function activarModoPDA() {
         return;
       }
 
-      procesarCodigo(codigo);
-
-      permitirEscaneo = true;
-
-      setTimeout(() => {
-        input.focus();
-      }, 50);
+procesarCodigo(codigo);
     }
   };
 }
@@ -1237,7 +1230,7 @@ function generarPDFEtiquetasSeleccionadas() {
     JsBarcode(canvas, codigo, {
       format: formato,
       displayValue: false,
-      width: 1.7,
+      width: 1,
       height: 40,
       margin: 0
     });
