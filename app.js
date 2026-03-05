@@ -74,11 +74,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const inputPDA = document.getElementById("inputPDA");
 
-    // simular ENTER automático
+    // 🔹 cerrar cantidad (equivalente a Enter)
     cantidadInput.blur();
     editandoCantidad = false;
 
-    // devolver foco al lector
+    // 🔹 devolver foco al lector
     if (inputPDA) {
       inputPDA.focus();
       inputPDA.value = "";
@@ -88,28 +88,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   });
 
-
-  // 🔧 ENTER AUTOMÁTICO SI ESCANEAS DESDE CANTIDAD
-  document.addEventListener("keydown", function () {
-
-    const inputPDA = document.getElementById("inputPDA");
-
-    if (document.activeElement === cantidadInput) {
-
-      cantidadInput.blur();
-      editandoCantidad = false;
-      permitirEscaneo = true;
-
-      if (inputPDA) {
-        inputPDA.focus();
-        inputPDA.value = "";
-      }
-
-    }
-
-  });
-
 });
+
+
 
 async function cargarUsuarios() {
   try {
