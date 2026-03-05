@@ -406,11 +406,16 @@ function guardarCodigoAprendido() {
 let deferredPrompt;
 
 window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
 
-    const btn = document.getElementById("btnInstalar");
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const btn = document.getElementById("btnInstalar");
+
+  if (btn) {
     btn.style.display = "block";
+  }
+
 });
 
 
@@ -949,7 +954,7 @@ function registrarServiceWorker() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
       navigator.serviceWorker
-        .register('service-worker.js')
+        .register('./service-worker.js')
         .then(function (registration) {
           console.log('Service Worker registrado:', registration.scope);
         })
