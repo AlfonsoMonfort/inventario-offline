@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v5";
+const CACHE_NAME = "inventario-cache-v6";
 
 const urlsToCache = [
   "./",
@@ -13,17 +13,14 @@ const urlsToCache = [
   "./referencias_sin_codigo_barras.json"
 ];
 
-// --------------------
-// INSTALL
-// --------------------
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
       for (const url of urlsToCache) {
         try {
           await cache.add(url);
-        } catch (err) {
-          console.log("No se pudo cachear:", url);
+        } catch (e) {
+          console.log("Error cacheando:", url);
         }
       }
     })
@@ -32,39 +29,24 @@ self.addEventListener("install", event => {
   self.skipWaiting();
 });
 
-// --------------------
-// ACTIVATE
-// --------------------
 self.addEventListener("activate", event => {
   event.waitUntil(
-    Promise.all([
-      caches.keys().then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cache => {
-            if (cache !== CACHE_NAME) {
-              return caches.delete(cache);
-            }
-          })
-        );
-      }),
-      self.clients.claim()
-    ])
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      )
+    )
   );
+
+  self.clients.claim();
 });
 
-// --------------------
-// FETCH
-// --------------------
 self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      if (response) {
-        return response;
-      }
-
-      return fetch(event.request).catch(() => {
-        return caches.match("./index.html");
-      });
-    })
+    caches.match(event.request).then(res => res || fetch(event.request))
   );
 });
