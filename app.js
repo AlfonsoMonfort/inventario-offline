@@ -302,71 +302,71 @@ function empezar() {
 // ----------------------------
 // INICIAR ESCÁNER
 // ----------------------------
-// function iniciarScanner() {
+function iniciarScanner() {
 
-//   if (modoPDA) {
-//     console.log("Modo PDA: usando lector físico");
-//     return;
-//   }
+  if (modoPDA) {
+    console.log("Modo PDA: usando lector físico");
+    return;
+  }
 
-//   if (typeof Quagga === "undefined") {
-//     console.log("Quagga no disponible");
-//     return;
-//   }
+  if (typeof Quagga === "undefined") {
+    console.log("Quagga no disponible");
+    return;
+  }
 
-//   Quagga.init({
-//     inputStream: {
-//       name: "Live",
-//       type: "LiveStream",
-//       target: document.querySelector('#scanner'),
-//       constraints: {
-//         facingMode: "environment",
-//         width: { ideal: 1280 },
-//         height: { ideal: 720 }
-//       },
-//       area: {
-//         top: "27.5%",
-//         right: "7.5%",
-//         left: "7.5%",
-//         bottom: "27.5%"
-//       }
-//     },
-//     decoder: {
-//       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
-//     },
-//     locate: false
-//   }, function (err) {
-//     if (err) {
-//       console.error(err);
-//       return;
-//     }
-//     Quagga.start();
-//   });
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector('#scanner'),
+      constraints: {
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      area: {
+        top: "27.5%",
+        right: "7.5%",
+        left: "7.5%",
+        bottom: "27.5%"
+      }
+    },
+    decoder: {
+      readers: ["ean_reader", "ean_8_reader", "upc_reader"]
+    },
+    locate: false
+  }, function (err) {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    Quagga.start();
+  });
 
-//   Quagga.offDetected();
+  Quagga.offDetected();
 
-//   Quagga.onDetected(function (result) {
-//     if (!permitirEscaneo) return;
-//     if (!result || !result.codeResult || !result.codeResult.code) return;
+  Quagga.onDetected(function (result) {
+    if (!permitirEscaneo) return;
+    if (!result || !result.codeResult || !result.codeResult.code) return;
 
-//     let code = result.codeResult.code.replace(/\D/g, "");
-//     code = code.replace(/^0+/, "");
+    let code = result.codeResult.code.replace(/\D/g, "");
+    code = code.replace(/^0+/, "");
 
-//     permitirEscaneo = false;
+    permitirEscaneo = false;
 
-//     if (modoAprendizaje) {
-//       codigoPendienteAprender = code;
-//       document.getElementById("codigoAprendidoMostrado").textContent =
-//         "Código leído: " + code;
-//       document.getElementById("codigoAprendidoMostrado").style.display = "block";
-//       mostrarMensaje("✅ Código leído", "ok");
-//       mostrarFormularioAprendizaje();
-//       return;
-//     }
+    if (modoAprendizaje) {
+      codigoPendienteAprender = code;
+      document.getElementById("codigoAprendidoMostrado").textContent =
+        "Código leído: " + code;
+      document.getElementById("codigoAprendidoMostrado").style.display = "block";
+      mostrarMensaje("✅ Código leído", "ok");
+      mostrarFormularioAprendizaje();
+      return;
+    }
 
-//     procesarCodigo(code);
-//   });
-// }
+    procesarCodigo(code);
+  });
+}
 
 function activarModoPDA() {
 
