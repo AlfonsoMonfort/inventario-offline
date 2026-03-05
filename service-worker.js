@@ -1,25 +1,25 @@
-const CACHE_NAME = "inventario-cache-v3";
+const CACHE_NAME = "inventario-cache-v4";
 
 const urlsToCache = [
-  "./",
-  "./index.html",
-  "./app.js",
-  "./manifest.json",
+  "/",
+  "/index.html",
+  "/app.js",
+  "/manifest.json",
 
-  "./xlsx.full.min.js",
-  "./jspdf.umd.min.js",
-  "./JsBarcode.all.min.js",
+  "/xlsx.full.min.js",
+  "/jspdf.umd.min.js",
+  "/JsBarcode.all.min.js",
 
-  "./equivalencias.json",
-  "./referencias_sin_codigo_barras.json",
-  "./usuarios.json",
+  "/equivalencias.json",
+  "/referencias_sin_codigo_barras.json",
+  "/usuarios.json",
 
-  "./icon-192.png",
-  "./icon-512.png",
-  "./Logo_BAL_copy.png",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/Logo_BAL_copy.png",
 
-  "./wood_plank_flicks.ogg",
-  "./beep_short.ogg"
+  "/wood_plank_flicks.ogg",
+  "/beep_short.ogg"
 ];
 
 self.addEventListener("install", event => {
