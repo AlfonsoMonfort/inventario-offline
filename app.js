@@ -106,8 +106,11 @@ async function cargarUsuarios() {
     usuariosPermitidos = await res.json();
     console.log("Usuarios cargados:", usuariosPermitidos.length);
   } catch (e) {
-    alert("Error cargando usuarios");
-    console.error(e);
+    console.error("Error cargando usuarios:", e);
+
+    usuariosPermitidos = [];
+
+    mostrarMensaje("⚠️ Usuarios no cargados", "error");
   }
 }
 
