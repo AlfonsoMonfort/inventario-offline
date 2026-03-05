@@ -34,21 +34,7 @@ let etiquetasSeleccionadas = [];
 let editandoCantidad = false;
 
 
-window.addEventListener("load", function () {
 
-  if (modoPDA) {
-
-    const inputPDA = document.getElementById("inputPDA");
-
-    if (inputPDA) {
-      setTimeout(() => {
-        inputPDA.focus();
-      }, 300);
-    }
-
-  }
-
-});
 
 // ----------------------------
 // INICIO
@@ -75,58 +61,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const cantidadInput = document.getElementById("cantidad");
   const inputPDA = document.getElementById("inputPDA");
-
-  // -----------------------------
-  // CONTROL DE EDICIÓN CANTIDAD
-  // -----------------------------
-  cantidadInput.addEventListener("focus", function () {
-
-    this.value = "";
-    editandoCantidad = true;
-    permitirEscaneo = false;
-
-  });
-
-  cantidadInput.addEventListener("blur", function () {
-
-    editandoCantidad = false;
-    permitirEscaneo = true;
-
-    if (modoPDA) {
-      inputPDA.focus();
-    }
-
-  });
-
-  // 🔒 PROTECCIÓN PARA LECTOR LÁSER
-  cantidadInput.addEventListener("keydown", function (e) {
-
-    if (!editandoCantidad) {
-
-      e.preventDefault();
-
-      if (inputPDA) {
-        inputPDA.focus();
-      }
-
-      return;
-
-    }
-
-  });
-
-  // 🔒 PROTECCIÓN GLOBAL PDA
-  document.addEventListener("keydown", function () {
-
-    if (modoPDA && !editandoCantidad) {
-
-      if (document.activeElement !== inputPDA) {
-        inputPDA.focus();
-      }
-
-    }
-
-  });
 
   // -----------------------------
   // BOTÓN ESCÁNER
