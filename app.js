@@ -56,7 +56,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
+  const inputPDA = document.getElementById("inputPDA");
 
+  // -----------------------------
+  // CONTROL DE EDICIÓN CANTIDAD
+  // -----------------------------
   cantidadInput.addEventListener("focus", function () {
     this.value = "";
     editandoCantidad = true;
@@ -68,17 +72,52 @@ document.addEventListener("DOMContentLoaded", async () => {
     permitirEscaneo = true;
   });
 
+  // -----------------------------
+  // DETECTOR DE ESCÁNER (ENTER AUTOMÁTICO)
+  // -----------------------------
+  let bufferEscaner = "";
+  let timerEscaner = null;
+
+  document.addEventListener("keypress", function(e) {
+
+    // solo si estamos en cantidad
+    if (document.activeElement !== cantidadInput) return;
+
+    bufferEscaner += e.key;
+
+    clearTimeout(timerEscaner);
+
+    timerEscaner = setTimeout(() => {
+      bufferEscaner = "";
+    }, 50);
+
+    // si llegan muchos caracteres rápido → lector
+    if (bufferEscaner.length > 6) {
+
+      cantidadInput.blur();
+      editandoCantidad = false;
+      permitirEscaneo = true;
+
+      if (inputPDA) {
+        inputPDA.focus();
+        inputPDA.value = bufferEscaner;
+      }
+
+      bufferEscaner = "";
+    }
+
+  });
+
+  // -----------------------------
+  // BOTÓN ESCÁNER
+  // -----------------------------
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
 
-    const inputPDA = document.getElementById("inputPDA");
-
-    // 🔹 cerrar cantidad (equivalente a Enter)
     cantidadInput.blur();
     editandoCantidad = false;
 
-    // 🔹 devolver foco al lector
     if (inputPDA) {
       inputPDA.focus();
       inputPDA.value = "";
