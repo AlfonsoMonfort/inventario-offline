@@ -4,15 +4,20 @@
 let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
 let referenciasSinCodigo = [];
-
-let referencia_a_codigo = {};
+let numeroOCRDetectado = null;
+let modoOCRActivo = false;
+let ocrInterval = null;
+let ocrTimeout = null;
+let ocrUltimo = null;
+let ocrRepeticiones = 0;
+let ocrProcesado = false;
 
 let usuariosPermitidos = [];
 let usuarioLogueado = null;
 
-let modoPDA = false;
-
 const DIAS_OFFLINE_PERMITIDOS = 15;
+
+const DEBUG_OCR = true;
 
 let inventario = {
   fecha: "",
@@ -29,74 +34,44 @@ let modoAprendizaje = false;
 let codigoPendienteAprender = null;
 let equivalenciasAprendidas = {};
 
-let etiquetasSeleccionadas = [];
-
-let editandoCantidad = false;
-
 // ----------------------------
 // INICIO
 // ----------------------------
-document.addEventListener("DOMContentLoaded", () => {
-  iniciarApp();
-});
-
-async function iniciarApp() {
+document.addEventListener("DOMContentLoaded", async () => {
 
   await cargarUsuarios();
   verificarSesion();
 
-  const btnInstalar = document.getElementById("btnInstalar");
+  
 
-  if (btnInstalar) {
-    btnInstalar.addEventListener("click", async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log("Resultado instalación:", outcome);
-        deferredPrompt = null;
-        btnInstalar.style.display = "none";
-      }
-    });
-  }
-
-  const fechaInput = document.getElementById("fecha");
-  if (fechaInput) {
-    fechaInput.value = new Date().toISOString().split("T")[0];
-  }
+  document.getElementById("fecha").value =
+    new Date().toISOString().split("T")[0];
 
   const almacenInput = document.getElementById("almacen");
-  if (almacenInput) {
-    almacenInput.addEventListener("input", function () {
-      this.value = this.value.toUpperCase().slice(0, 3);
-    });
-  }
+
+  almacenInput.addEventListener("input", function () {
+    this.value = this.value.toUpperCase().slice(0, 3);
+  });
+
+  window.hayInventarioGuardado =
+  !!localStorage.getItem("inventario_guardado");
 
   await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
-
   registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
-  if (cantidadInput) {
-    cantidadInput.addEventListener("focus", function () {
-      editandoCantidad = true;
-      this.value = "";
-    });
-
-    cantidadInput.addEventListener("blur", function () {
-      editandoCantidad = false;
-    });
-  }
-
+  cantidadInput.addEventListener("focus", function () {
+    this.value = "";
+  });
   const scanner = document.getElementById("scanner");
-  if (scanner) {
-    scanner.addEventListener("click", () => {
-      permitirEscaneo = true;
-    });
-  }
 
-}
+  scanner.addEventListener("click", () => {
+
+    permitirEscaneo = true; // 📦 escáner normal
+  });
+});
 
 async function cargarUsuarios() {
   try {
@@ -157,7 +132,6 @@ async function cargarEquivalencias() {
 
         codigo_a_referencia[codigoNormalizado] = item.referencia;
         referencia_a_descripcion[item.referencia] = item.descripcion;
-        referencia_a_codigo[item.referencia] = codigoNormalizado;
       });
 
       console.log(
@@ -183,12 +157,10 @@ async function cargarEquivalencias() {
     localStorage.setItem("equivalencias", JSON.stringify(datos));
 
     datos.forEach(item => {
-
       const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
 
       codigo_a_referencia[codigoNormalizado] = item.referencia;
       referencia_a_descripcion[item.referencia] = item.descripcion;
-      referencia_a_codigo[item.referencia] = codigoNormalizado; // 👈 AÑADIR
     });
 
     console.log(
@@ -201,26 +173,40 @@ async function cargarEquivalencias() {
   }
 }
 
+// 🔧 NUEVO
 function cargarEquivalenciasAprendidas() {
+    const guardadas = localStorage.getItem("equivalencias_aprendidas");
+    if (!guardadas) return;
 
-  const guardadas = localStorage.getItem("equivalencias_aprendidas");
-  if (!guardadas) return;
+    equivalenciasAprendidas = JSON.parse(guardadas);
 
-  equivalenciasAprendidas = JSON.parse(guardadas);
-
-  for (let codigo in equivalenciasAprendidas) {
-
-    const referencia = equivalenciasAprendidas[codigo];
-
-    codigo_a_referencia[codigo] = referencia;
-    referencia_a_codigo[referencia] = codigo; // 🔥 AÑADIR
-  }
+    for (let codigo in equivalenciasAprendidas) {
+        codigo_a_referencia[codigo] = equivalenciasAprendidas[codigo];
+    }
 }
 
 // ----------------------------
 // EMPEZAR INVENTARIO
 // ----------------------------
 function empezar() {
+
+  if (window.hayInventarioGuardado) {
+
+    const continuar = confirm(
+      "Hay un inventario guardado.\n\n" +
+      "Aceptar → Continuar inventario\n" +
+      "Cancelar → Empezar uno nuevo"
+    );
+
+    if (continuar) {
+      cargarInventarioGuardado();
+      return;
+    } else {
+      localStorage.removeItem("inventario_guardado");
+      window.hayInventarioGuardado = false;
+      // sigue creando uno nuevo
+    }
+  }
 
   const fechaInput = document.getElementById("fecha");
   const almacenInput = document.getElementById("almacen");
@@ -239,13 +225,28 @@ function empezar() {
   document.getElementById("pantallaInicio").style.display = "none";
   document.getElementById("pantallaEscaner").style.display = "block";
 
-  if (modoPDA) {
-  activarModoPDA();
-  return;
-}
-
   iniciarScanner();
 }
+
+function cargarInventarioGuardado() {
+
+  const datos = JSON.parse(
+    localStorage.getItem("inventario_guardado")
+  );
+
+  inventario = datos.inventario;
+
+  document.getElementById("pantallaInicio").style.display = "none";
+  document.getElementById("pantallaEscaner").style.display = "block";
+
+  actualizarLista();
+  iniciarScanner();
+
+  mostrarMensaje("↩️ Inventario recuperado", "ok");
+}
+
+
+
 
 // ----------------------------
 // INICIAR ESCÁNER
@@ -304,53 +305,34 @@ function iniciarScanner() {
   });
 }
 
-function activarModoPDA() {
 
+function activarModoOCR() {
+  if (ocrInterval) clearInterval(ocrInterval);
+  if (ocrTimeout) clearTimeout(ocrTimeout);
+
+  ocrProcesado = false; // 🔒 reset candado
+
+  modoOCRActivo = true;
   permitirEscaneo = false;
 
-  const input = document.getElementById("inputPDA");
-  input.value = "";
+  mostrarMensaje("🔍 Buscando referencia…", "ok");
 
-  // 🔒 foco permanente (CLAVE)
-  setInterval(() => {
+  ocrInterval = setInterval(() => {
+    if (!modoOCRActivo) return;
+    leerOCRContinuo();
+  }, 700);
 
-    if (editandoCantidad) return;
-
-    if (document.activeElement !== input) {
-      input.focus();
+  ocrTimeout = setTimeout(() => {
+    if (modoOCRActivo) {
+      cancelarOCR();
+      mostrarMensaje("❌ No se detectó referencia", "error");
     }
-
-  }, 300);
-
-  mostrarMensaje("📟 Modo PDA activo", "ok");
-
-  input.oninput = () => {
-    // el lector escribe aquí
-  };
-
-  input.onkeydown = (e) => {
-    if (e.key === "Enter") {
-      const codigo = input.value.replace(/\D/g, "").replace(/^0+/, "");
-      input.value = "";
-
-      if (!codigo) return;
-
-      if (modoAprendizaje) {
-        codigoPendienteAprender = codigo;
-
-        document.getElementById("codigoAprendidoMostrado").textContent =
-          "Código leído: " + codigo;
-        document.getElementById("codigoAprendidoMostrado").style.display = "block";
-
-        mostrarFormularioAprendizaje();
-        mostrarMensaje("🧠 Código listo para asociar", "ok");
-        return;
-      }
-
-procesarCodigo(codigo);
-    }
-  };
+  }, 10000);
 }
+
+
+
+
 
 function mostrarFormularioAprendizaje() {
   document.getElementById("aprendizajeBox").style.display = "block";
@@ -413,7 +395,15 @@ window.addEventListener("beforeinstallprompt", (e) => {
     btn.style.display = "block";
 });
 
-
+document.getElementById("btnInstalar").addEventListener("click", async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log("Resultado instalación:", outcome);
+        deferredPrompt = null;
+        document.getElementById("btnInstalar").style.display = "none";
+    }
+});
 
 function esPWAenIOS() {
   return (
@@ -545,18 +535,223 @@ function exportarCodigosAprendidos() {
 
 
 
+function leerOCRContinuo() {
+
+  // ⛔ seguridad básica
+  if (!modoOCRActivo || ocrProcesado) return;
+
+  const video = document.querySelector("#scanner video");
+  const frame = document.querySelector(".scanner-frame");
+  const debugText = document.getElementById("ocrTextDebug");
+
+  if (!video || !frame || !video.videoWidth) return;
+
+  if (debugText) {
+    debugText.innerText = "OCR activo…";
+  }
+
+  // ----------------------------
+  // 📐 CÁLCULO DE ZONA OCR
+  // ----------------------------
+  const videoRect = video.getBoundingClientRect();
+  const frameRect = frame.getBoundingClientRect();
+
+  const scaleX = video.videoWidth / videoRect.width;
+  const scaleY = video.videoHeight / videoRect.height;
+
+  let sx = (frameRect.left - videoRect.left) * scaleX;
+  let sy = (frameRect.top - videoRect.top) * scaleY;
+  let sw = frameRect.width * scaleX;
+  let sh = frameRect.height * scaleY;
+
+  // 🔍 recorte central (solo números)
+  const recorte = 0.45;
+  const dx = sw * (1 - recorte) / 2;
+  const dy = sh * (1 - recorte) / 2;
+
+  sx += dx;
+  sy += dy;
+  sw *= recorte;
+  sh *= recorte;
+
+  // ----------------------------
+  // 🎨 CANVAS OCR
+  // ----------------------------
+  const canvas = document.createElement("canvas");
+  canvas.width = sw * 2;
+  canvas.height = sh * 2;
+
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+  // 🔲 binarización fuerte
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    const v = avg > 145 ? 255 : 0;
+    data[i] = data[i + 1] = data[i + 2] = v;
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+
+  // ----------------------------
+  // 🔠 TESSERACT
+  // ----------------------------
+  Tesseract.recognize(
+    canvas,
+    "eng",
+    {
+      tessedit_char_whitelist: "0123456789",
+      classify_bln_numeric_mode: 1
+    }
+  ).then(result => {
+
+    if (ocrProcesado) return;
+
+    const texto = (result.data.text || "")
+      .replace(/\s+/g, "")
+      .replace(/[^0-9]/g, "");
+
+    if (debugText) {
+      debugText.innerText = `OCR lee: "${texto || "∅"}"`;
+    }
+
+    // ❌ no parece una referencia válida
+    if (!/^\d{5,7}$/.test(texto)) {
+      ocrUltimo = null;
+      ocrRepeticiones = 0;
+      return;
+    }
+
+    // ----------------------------
+    // 🔁 CONFIRMACIÓN POR REPETICIÓN
+    // ----------------------------
+    if (texto === ocrUltimo) {
+      ocrRepeticiones++;
+    } else {
+      ocrUltimo = texto;
+      ocrRepeticiones = 1;
+    }
+
+    if (ocrRepeticiones < 2) return;
+
+    // ----------------------------
+    // ✅ OCR CONFIRMADO (UNA SOLA VEZ)
+    // ----------------------------
+    ocrProcesado = true;
+    modoOCRActivo = false;
+
+    ocrUltimo = null;
+    ocrRepeticiones = 0;
+
+    cancelarOCR();
+
+   // 🔍 comprobar referencia existente
+if (!referencia_a_descripcion[texto]) {
+  mostrarMensaje("❌ Referencia no existe", "error");
+  permitirEscaneo = true;
+  return;
+}
+
+// 🆕 guardar referencia detectada
+numeroOCRDetectado = texto;
+
+// ⛔ parar OCR hasta decisión
+modoOCRActivo = false;
+
+// 🖥 mostrar confirmación OCR
+document.getElementById("ocrConfirmBox").style.display = "block";
+document.getElementById("ocrReferenciaDetectada").textContent =
+  "Referencia detectada: " + texto;
+
+mostrarMensaje("📋 Confirma la referencia", "ok");
+
+
+  });
+}
+
+
+function aceptarOCR() {
+  document.getElementById("ocrConfirmBox").style.display = "none";
+  modoOCRActivo  = false;
+  document.getElementById("ocrBox").style.display = "none";
+
+  if (!numeroOCRDetectado) return;
+
+  if (!referencia_a_descripcion[numeroOCRDetectado]) {
+    mostrarMensaje("❌ Referencia no existe", "error");
+    permitirEscaneo = true;
+    return;
+  }
+
+  const cantidad =
+    parseInt(document.getElementById("cantidad").value) || 1;
+
+  // ➕ añadir o sumar cantidad
+  if (inventario.articulos[numeroOCRDetectado]) {
+    inventario.articulos[numeroOCRDetectado] += cantidad;
+
+    // 🔼 mover arriba (último usado)
+    inventario.orden = inventario.orden.filter(
+      r => r !== numeroOCRDetectado
+    );
+    inventario.orden.unshift(numeroOCRDetectado);
+
+  } else {
+    inventario.articulos[numeroOCRDetectado] = cantidad;
+
+    // 🆕 nuevo → arriba del todo
+    inventario.orden.unshift(numeroOCRDetectado);
+  }
+
+  actualizarLista();
+
+  // 🔄 reset
+  numeroOCRDetectado = null;
+  permitirEscaneo = true;
+  document.getElementById("cantidad").value = 1;
+
+  mostrarMensaje("✅ Referencia añadida", "ok");
+}
+
+
+function cancelarOCR() {
+  const box = document.getElementById("ocrConfirmBox");
+  if (box) box.style.display = "none";
+
+ 
+  modoOCRActivo = false;
+  numeroOCRDetectado = null;
+
+  if (ocrInterval) {
+    clearInterval(ocrInterval);
+    ocrInterval = null;
+  }
+
+  if (ocrTimeout) {
+    clearTimeout(ocrTimeout);
+    ocrTimeout = null;
+  }
+
+  permitirEscaneo = true;
+
+  const debugCanvas = document.getElementById("ocr-debug-canvas");
+  if (debugCanvas) debugCanvas.remove();
+}
+
+
 
 // ===============================
 // BOTÓN AYUDA
 // ===============================
 
-const btnAyuda = document.getElementById("btnAyuda");
-
-if (btnAyuda) {
-  btnAyuda.addEventListener("click", () => {
-    document.getElementById("modalAyuda").style.display = "flex";
-  });
-}
+document.getElementById("btnAyuda").addEventListener("click", () => {
+  document.getElementById("modalAyuda").style.display = "flex";
+});
 
 function cerrarAyuda() {
   document.getElementById("modalAyuda").style.display = "none";
@@ -608,28 +803,20 @@ function añadirManual() {
 function activarModoAprendizaje() {
   modoAprendizaje = true;
   codigoPendienteAprender = null;
-  permitirEscaneo = false;
+  permitirEscaneo = true;
 
   document.getElementById("btnCancelarAprendizaje").style.display = "block";
-  document.getElementById("aprendizajeBox").style.display = "block";
 
-  // 🔄 limpiar buscador
-  document.getElementById("buscadorAprendizaje").value = "";
-  document.getElementById("resultadosAprendizaje").innerHTML = "";
-
-  mostrarMensaje("🧠 Escanea el código para asociar", "ok");
+  mostrarMensaje("📸 Toca pantalla y escanea el código", "ok");
 }
 
 function cancelarAprendizaje() {
   modoAprendizaje = false;
   codigoPendienteAprender = null;
-
   permitirEscaneo = false;
 
   document.getElementById("btnCancelarAprendizaje").style.display = "none";
   document.getElementById("aprendizajeBox").style.display = "none";
-  document.getElementById("codigoAprendidoMostrado").style.display = "none";
-  document.getElementById("inputReferenciaAprendida").value = "";
 
   mostrarMensaje("❌ Grabación cancelada", "error");
 }
@@ -756,6 +943,22 @@ function mostrarMensaje(texto, tipo) {
 function formatearFecha(fechaISO) {
     const [anio, mes, dia] = fechaISO.split("-");
     return `${dia}/${mes}/${anio}`;
+}
+
+function guardarInventario() {
+
+  const datos = {
+    inventario: inventario
+  };
+
+  localStorage.setItem(
+    "inventario_guardado",
+    JSON.stringify(datos)
+  );
+
+  window.hayInventarioGuardado = true;
+
+  mostrarMensaje("💾 Inventario guardado", "ok");
 }
 
 // ----------------------------
@@ -936,11 +1139,9 @@ function sumarInventarioDesdeExcel(filas) {
   actualizarLista();
 }
 
-const inputImportar = document.getElementById("importarExcel");
-
-if (inputImportar) {
-  inputImportar.addEventListener("change", importarInventarioExcel);
-}
+document
+  .getElementById("importarExcel")
+  .addEventListener("change", importarInventarioExcel);
 
 // ----------------------------
 // SERVICE WORKER
@@ -991,10 +1192,6 @@ async function login() {
   } catch (e) {
     mostrarMensaje("❌ Sin conexión", "error");
   }
-
-  if (u === "PDA") {
-  modoPDA = true;
-}
 }
 
 function verificarSesion() {
@@ -1019,9 +1216,6 @@ function verificarSesion() {
   usuarioLogueado = u;
   document.getElementById("pantallaLogin").style.display = "none";
   document.getElementById("pantallaInicio").style.display = "block";
-  if (usuarioLogueado === "PDA") {
-  modoPDA = true;
-}
 }
 
 function mostrarLogin() {
@@ -1047,277 +1241,4 @@ if (btnMenos) {
     // 👉 SOLO poner negativo, nunca volver a positivo
     input.value = Math.abs(valor) * -1;
   });
-}
-
-const buscadorAprendizaje =
-  document.getElementById("buscadorAprendizaje");
-const resultadosAprendizaje =
-  document.getElementById("resultadosAprendizaje");
-
-if (buscadorAprendizaje) {
-  buscadorAprendizaje.addEventListener("input", () => {
-    const texto = buscadorAprendizaje.value
-      .toLowerCase()
-      .trim();
-
-    resultadosAprendizaje.innerHTML = "";
-
-    if (texto.length < 2) return;
-
-    // 🔍 buscamos en TODAS las equivalencias cargadas
-    const resultados = Object.entries(referencia_a_descripcion)
-      .filter(([ref, desc]) =>
-        ref.toLowerCase().includes(texto) ||
-        desc.toLowerCase().includes(texto)
-      )
-      .slice(0, 25); // límite por rendimiento
-
-    resultados.forEach(([ref, desc]) => {
-      const li = document.createElement("li");
-      li.innerHTML = `<b>${desc}</b><br>Ref: ${ref}`;
-
-      li.onclick = () => {
-        document.getElementById(
-          "inputReferenciaAprendida"
-        ).value = ref;
-
-        buscadorAprendizaje.value = "";
-        resultadosAprendizaje.innerHTML = "";
-      };
-
-      resultadosAprendizaje.appendChild(li);
-    });
-  });
-}
-
-function abrirListadoEtiquetas() {
-
-  etiquetasSeleccionadas = [];
-  renderListaEtiquetas();
-
-  document.getElementById("buscadorEtiquetas").value = "";
-  document.getElementById("resultadosEtiquetas").innerHTML = "";
-
-  document.getElementById("modalEtiquetas").style.display = "flex";
-  cargarBuscadorEtiquetas();
-}
-
-function cerrarListadoEtiquetas() {
-  document.getElementById("modalEtiquetas").style.display = "none";
-}
-
-function cargarBuscadorEtiquetas() {
-
-  const input = document.getElementById("buscadorEtiquetas");
-  const resultados = document.getElementById("resultadosEtiquetas");
-
-  input.oninput = () => {
-
-    const texto = input.value.toLowerCase().trim();
-    resultados.innerHTML = "";
-
-    if (texto.length < 2) return;
-
-    const resultadosFiltrados = Object.entries(referencia_a_descripcion)
-      .filter(([ref, desc]) =>
-        ref.toLowerCase().includes(texto) ||
-        desc.toLowerCase().includes(texto)
-      )
-      .slice(0, 25);
-
-    resultadosFiltrados.forEach(([ref, desc]) => {
-
-      const li = document.createElement("li");
-      li.innerHTML = `<b>${desc}</b><br>Ref: ${ref}`;
-
-      li.onclick = () => añadirEtiqueta(ref, desc);
-
-      resultados.appendChild(li);
-    });
-  };
-}
-
-function añadirEtiqueta(referencia, descripcion) {
-
-  // 🔒 evitar duplicados
-  if (!etiquetasSeleccionadas.find(a => a.Referencia === referencia)) {
-    etiquetasSeleccionadas.push({
-      Referencia: referencia,
-      Descripcion: descripcion
-    });
-  }
-
-  renderListaEtiquetas();
-
-  // 🔥 LIMPIAR BUSCADOR
-  const input = document.getElementById("buscadorEtiquetas");
-  const resultados = document.getElementById("resultadosEtiquetas");
-
-  input.value = "";
-  resultados.innerHTML = "";
-
-  input.blur(); // 🔥 quita foco (muy importante en móvil)
-}
-
-function renderListaEtiquetas() {
-
-  const lista = document.getElementById("listaEtiquetas");
-  lista.innerHTML = "";
-
-  etiquetasSeleccionadas.forEach(a => {
-
-    const li = document.createElement("li");
-    li.textContent = a.Referencia + " - " + a.Descripcion;
-
-    lista.appendChild(li);
-
-  });
-}
-
-function eliminarEtiqueta(index) {
-  etiquetasSeleccionadas.splice(index, 1);
-  renderListaEtiquetas();
-}
-
-function generarPDFEtiquetasSeleccionadas() {
-
-  if (!etiquetasSeleccionadas || etiquetasSeleccionadas.length === 0) {
-    alert("No hay artículos seleccionados");
-    return;
-  }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("p", "mm", "a4");
-
-  const COLS = 3;
-  const ROWS = 8;
-
-  const LABEL_WIDTH = 70;
-  const LABEL_HEIGHT = 35;
-
-  const MARGIN_X = 10;
-  const MARGIN_Y = 15;
-
-  const BARCODE_HEIGHT_MM = 7.5;
-  const BARCODE_GAP = 2; // pequeño espacio visual
-
-  let col = 0;
-  let row = 0;
-
-  etiquetasSeleccionadas.forEach((a) => {
-
-    const codigo = referencia_a_codigo[a.Referencia];
-    if (!codigo) return;
-
-    let formato = "CODE128";
-    if (/^\d{13}$/.test(codigo)) formato = "EAN13";
-    else if (/^\d{12}$/.test(codigo)) formato = "UPC";
-
-    // === Posición base etiqueta (en jsPDF Y crece hacia abajo)
-    const x = MARGIN_X + col * LABEL_WIDTH;
-    const y = MARGIN_Y + row * LABEL_HEIGHT;
-
-    const centerX = x + LABEL_WIDTH / 2;
-
-    // ===== DESCRIPCIÓN (ARRIBA) =====
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-
-    const descripcionY = y + 6;
-
-    doc.text(
-      a.Descripcion.substring(0, 45),
-      centerX,
-      descripcionY,
-      { align: "center" }
-    );
-
-    // ===== REFERENCIA (DEBAJO) =====
-    doc.setFont("helvetica", "normal");
-
-    const refY = descripcionY + 4;
-
-    doc.text(
-      "Ref: " + a.Referencia,
-      centerX,
-      refY,
-      { align: "center" }
-    );
-
-    // ===== GENERAR BARCODE =====
-    const canvas = document.createElement("canvas");
-
-    JsBarcode(canvas, codigo, {
-      format: formato,
-      displayValue: false,
-      width: 1,
-      height: 40,
-      margin: 0
-    });
-
-    const imgData = canvas.toDataURL("image/png");
-
-    // Escalar solo por altura real
-    const pxToMm = 0.264583;
-
-    const realWidthMM = canvas.width * pxToMm;
-    const realHeightMM = canvas.height * pxToMm;
-
-    const scale = BARCODE_HEIGHT_MM / realHeightMM;
-
-    const finalWidth = realWidthMM * scale;
-    const finalHeight = BARCODE_HEIGHT_MM;
-
-    const barcodeY = refY + BARCODE_GAP;
-    const barcodeX = centerX - finalWidth / 2;
-
-    doc.addImage(
-      imgData,
-      "PNG",
-      barcodeX,
-      barcodeY,
-      finalWidth,
-      finalHeight
-    );
-
-    // ===== NÚMERO DEBAJO DEL CÓDIGO =====
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-
-    const codigoTextoY = barcodeY + finalHeight + 3;
-
-    doc.text(
-      codigo,
-      centerX,
-      codigoTextoY,
-      { align: "center" }
-    );
-    // ===== AVANZAR =====
-    col++;
-    if (col === COLS) {
-      col = 0;
-      row++;
-    }
-
-    if (row === ROWS) {
-      doc.addPage();
-      col = 0;
-      row = 0;
-    }
-
-  });
-
-  const ahora = new Date();
-
-  const year = ahora.getFullYear();
-  const month = String(ahora.getMonth() + 1).padStart(2, "0");
-  const day = String(ahora.getDate()).padStart(2, "0");
-  const hour = String(ahora.getHours()).padStart(2, "0");
-  const minute = String(ahora.getMinutes()).padStart(2, "0");
-
-  const nombreArchivo = `etiquetas_${year}.${month}.${day}.${hour}.${minute}.pdf`;
-
-  doc.save(nombreArchivo);
-
-  mostrarMensaje("✅ Etiquetas generadas correctamente", "ok");
 }
