@@ -108,25 +108,28 @@ scanner.addEventListener("click", () => {
   const cantidadInput = document.getElementById("cantidad");
   const inputPDA = document.getElementById("inputPDA");
 
-  // cerrar edición de cantidad
-  editandoCantidad = false;
+  // Si estábamos editando cantidad
+  if (document.activeElement === cantidadInput) {
 
-  // quitar foco SIEMPRE
-  if (cantidadInput) {
+    // simular ENTER
+    cantidadInput.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+    );
+
+    // cerrar input
     cantidadInput.blur();
+
+    editandoCantidad = false;
   }
 
-  // 🔴 esperar un momento para que el blur se aplique
-  setTimeout(() => {
+  // activar escaneo
+  permitirEscaneo = true;
 
-    if (inputPDA) {
-      inputPDA.value = "";
-      inputPDA.focus();
-    }
-
-    permitirEscaneo = true;
-
-  }, 50);
+  // mover foco al lector
+  if (inputPDA) {
+    inputPDA.value = "";
+    inputPDA.focus();
+  }
 
 });
 });
