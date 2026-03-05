@@ -73,7 +73,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
-    permitirEscaneo = true; // 📦 escáner normal
+
+  const inputPDA = document.getElementById("inputPDA");
+  const cantidadInput = document.getElementById("cantidad");
+
+  // cerrar teclado
+  cantidadInput.blur();
+
+  editandoCantidad = false;
+
+  // devolver foco al lector
+  if (inputPDA) {
+    inputPDA.focus();
+    inputPDA.value = "";
+  }
+
+  permitirEscaneo = true;
+
   });
   });
 
