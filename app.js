@@ -282,10 +282,17 @@ function activarModoPDA() {
 
   // 🔒 foco permanente (CLAVE)
   setInterval(() => {
-    if (document.activeElement !== input) {
-      input.focus();
-    }
-  }, 300);
+
+  const cantidadInput = document.getElementById("cantidad");
+
+  // 🔒 No robar foco si el usuario está escribiendo cantidad
+  if (document.activeElement === cantidadInput) return;
+
+  if (document.activeElement !== input) {
+    input.focus();
+  }
+
+}, 300);
 
   mostrarMensaje("📟 Modo PDA activo", "ok");
 
@@ -1217,7 +1224,7 @@ function generarPDFEtiquetasSeleccionadas() {
     JsBarcode(canvas, codigo, {
       format: formato,
       displayValue: false,
-      width: 1,
+      width: 1.7,
       height: 40,
       margin: 0
     });
