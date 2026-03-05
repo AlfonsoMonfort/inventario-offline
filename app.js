@@ -72,63 +72,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     permitirEscaneo = true;
   });
 
-  // -----------------------------
-  // DETECTOR DE ESCÁNER (ENTER AUTOMÁTICO)
-  // -----------------------------
-  let bufferEscaner = "";
-  let timerEscaner = null;
+  
 
-  document.addEventListener("keypress", function(e) {
+// -----------------------------
+// BOTÓN ESCÁNER
+// -----------------------------
+const scanner = document.getElementById("scanner");
 
-    // solo si estamos en cantidad
-    if (document.activeElement !== cantidadInput) return;
+scanner.addEventListener("click", () => {
 
-    bufferEscaner += e.key;
+  // 👉 si estamos escribiendo cantidad
+  if (document.activeElement === cantidadInput) {
 
-    clearTimeout(timerEscaner);
+    cantidadInput.blur();   // simula ENTER
+    editandoCantidad = false;
 
-    timerEscaner = setTimeout(() => {
-      bufferEscaner = "";
-    }, 50);
-
-    // si llegan muchos caracteres rápido → lector
-    if (bufferEscaner.length > 6) {
-
-      cantidadInput.blur();
-      editandoCantidad = false;
-      permitirEscaneo = true;
+    // pequeño delay para que el teclado se cierre
+    setTimeout(() => {
 
       if (inputPDA) {
         inputPDA.focus();
-        inputPDA.value = bufferEscaner;
+        inputPDA.value = "";
       }
 
-      bufferEscaner = "";
-    }
+      permitirEscaneo = true;
 
-  });
+    }, 100);
 
-  // -----------------------------
-  // BOTÓN ESCÁNER
-  // -----------------------------
-  const scanner = document.getElementById("scanner");
+    return;
+  }
 
-  scanner.addEventListener("click", () => {
+  if (inputPDA) {
+    inputPDA.focus();
+    inputPDA.value = "";
+  }
 
-    cantidadInput.blur();
-    editandoCantidad = false;
-
-    if (inputPDA) {
-      inputPDA.focus();
-      inputPDA.value = "";
-    }
-
-    permitirEscaneo = true;
-
-  });
+  permitirEscaneo = true;
 
 });
-
 
 
 async function cargarUsuarios() {
