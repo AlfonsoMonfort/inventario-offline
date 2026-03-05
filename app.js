@@ -305,28 +305,51 @@ function iniciarScanner() {
   });
 }
 
-function mantenerFocoPDA() {
+function activarModoPDA() {
 
-  if (editandoCantidad) return;
+  permitirEscaneo = false;
 
-  if (document.activeElement !== input) {
-    input.focus();
-  }
+  const input = document.getElementById("inputPDA");
+  input.value = "";
 
+  mostrarMensaje("📟 Modo PDA activo", "ok");
+
+  // foco inicial
+  input.focus();
+
+  input.onkeydown = (e) => {
+
+    if (e.key === "Enter") {
+
+      let codigo = input.value.replace(/\D/g, "").replace(/^0+/, "");
+      input.value = "";
+
+      if (!codigo) return;
+
+      if (modoAprendizaje) {
+
+        codigoPendienteAprender = codigo;
+
+        document.getElementById("codigoAprendidoMostrado").textContent =
+          "Código leído: " + codigo;
+
+        document.getElementById("codigoAprendidoMostrado").style.display = "block";
+
+        mostrarFormularioAprendizaje();
+        mostrarMensaje("🧠 Código listo para asociar", "ok");
+        return;
+      }
+
+      procesarCodigo(codigo);
+
+      permitirEscaneo = true;
+
+      setTimeout(() => {
+        input.focus();
+      }, 50);
+    }
+  };
 }
-
-// recuperar foco cuando se pierde
-input.addEventListener("blur", () => {
-  setTimeout(mantenerFocoPDA, 50);
-});
-
-// al tocar la pantalla
-document.addEventListener("click", () => {
-  setTimeout(mantenerFocoPDA, 50);
-});
-
-// foco inicial
-mantenerFocoPDA();
 
 function mostrarFormularioAprendizaje() {
   document.getElementById("aprendizajeBox").style.display = "block";
