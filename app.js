@@ -81,33 +81,20 @@ const scanner = document.getElementById("scanner");
 
 scanner.addEventListener("click", () => {
 
-  // 👉 si estamos escribiendo cantidad
+  // cerrar edición de cantidad
   if (document.activeElement === cantidadInput) {
-
-    cantidadInput.blur();   // simula ENTER
+    cantidadInput.blur();
     editandoCantidad = false;
-
-    // pequeño delay para que el teclado se cierre
-    setTimeout(() => {
-
-      if (inputPDA) {
-        inputPDA.focus();
-        inputPDA.value = "";
-      }
-
-      permitirEscaneo = true;
-
-    }, 100);
-
-    return;
   }
 
+  // poner foco en el lector ANTES del escaneo
   if (inputPDA) {
-    inputPDA.focus();
     inputPDA.value = "";
+    inputPDA.focus();
   }
 
   permitirEscaneo = true;
+
 });
 });
 
