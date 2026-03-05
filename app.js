@@ -12,11 +12,6 @@ let ocrUltimo = null;
 let ocrRepeticiones = 0;
 let ocrProcesado = false;
 
-let usuariosPermitidos = [];
-let usuarioLogueado = null;
-
-const DIAS_OFFLINE_PERMITIDOS = 15;
-
 const DEBUG_OCR = true;
 
 let inventario = {
@@ -38,11 +33,6 @@ let equivalenciasAprendidas = {};
 // INICIO
 // ----------------------------
 document.addEventListener("DOMContentLoaded", async () => {
-
-  await cargarUsuarios();
-  verificarSesion();
-
-  
 
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
@@ -73,18 +63,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 });
 
-async function cargarUsuarios() {
-  try {
-    const res = await fetch("usuarios.json");
-    if (!res.ok) throw new Error("No se pudo cargar usuarios");
-
-    usuariosPermitidos = await res.json();
-    console.log("Usuarios cargados:", usuariosPermitidos.length);
-  } catch (e) {
-    alert("Error cargando usuarios");
-    console.error(e);
-  }
-}
 
 async function cargarReferenciasSinCodigo() {
   try {
@@ -1159,68 +1137,6 @@ function registrarServiceWorker() {
         });
     });
   }
-}
-
-async function login() {
-  const u = document.getElementById("loginUsuario").value.trim();
-  const p = document.getElementById("loginPassword").value.trim();
-
-  try {
-    await cargarUsuarios();
-
-    const valido = usuariosPermitidos.find(
-      x => x.usuario === u && x.password === p
-    );
-
-    if (!valido) {
-      mostrarMensaje("❌ Usuario no autorizado", "error");
-      return;
-    }
-
-    const ahora = Date.now();
-
-    localStorage.setItem("auth_usuario", u);
-    localStorage.setItem("auth_ultimo_ok", ahora.toString());
-
-    usuarioLogueado = u;
-
-    document.getElementById("pantallaLogin").style.display = "none";
-    document.getElementById("pantallaInicio").style.display = "block";
-
-    mostrarMensaje("✅ Acceso correcto", "ok");
-
-  } catch (e) {
-    mostrarMensaje("❌ Sin conexión", "error");
-  }
-}
-
-function verificarSesion() {
-  const u = localStorage.getItem("auth_usuario");
-  const t = parseInt(localStorage.getItem("auth_ultimo_ok"), 10);
-
-  if (!u || !t) {
-    mostrarLogin();
-    return;
-  }
-
-  const dias = (Date.now() - t) / (1000 * 60 * 60 * 24);
-
-  if (dias > DIAS_OFFLINE_PERMITIDOS) {
-    localStorage.removeItem("auth_usuario");
-    localStorage.removeItem("auth_ultimo_ok");
-    mostrarLogin();
-    mostrarMensaje("🔒 Requiere conexión para validar", "error");
-    return;
-  }
-
-  usuarioLogueado = u;
-  document.getElementById("pantallaLogin").style.display = "none";
-  document.getElementById("pantallaInicio").style.display = "block";
-}
-
-function mostrarLogin() {
-  document.getElementById("pantallaLogin").style.display = "block";
-  document.getElementById("pantallaInicio").style.display = "none";
 }
 
 // ===============================
