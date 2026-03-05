@@ -62,15 +62,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   // CONTROL DE EDICIÓN CANTIDAD
   // -----------------------------
   cantidadInput.addEventListener("focus", function () {
+
+    // limpiar campo al empezar a editar
     this.value = "";
+
     editandoCantidad = true;
+
+    // bloquear escaneo mientras se escribe
     permitirEscaneo = false;
+
   });
 
   cantidadInput.addEventListener("blur", function () {
+
+    // cerrar modo edición
     editandoCantidad = false;
+
+    // permitir escaneo otra vez
     permitirEscaneo = true;
+
   });
+
+
+// 🔒 PROTECCIÓN PARA LECTOR LÁSER
+// evita que el código de barras se escriba en cantidad
+cantidadInput.addEventListener("keydown", function (e) {
+
+  // si NO estamos editando manualmente
+  if (!editandoCantidad) {
+    e.preventDefault();
+    return;
+  }
+
+});
 
   
 
@@ -81,19 +105,28 @@ const scanner = document.getElementById("scanner");
 
 scanner.addEventListener("click", () => {
 
+  const cantidadInput = document.getElementById("cantidad");
+  const inputPDA = document.getElementById("inputPDA");
+
   // cerrar edición de cantidad
-  if (document.activeElement === cantidadInput) {
+  editandoCantidad = false;
+
+  // quitar foco SIEMPRE
+  if (cantidadInput) {
     cantidadInput.blur();
-    editandoCantidad = false;
   }
 
-  // poner foco en el lector ANTES del escaneo
-  if (inputPDA) {
-    inputPDA.value = "";
-    inputPDA.focus();
-  }
+  // 🔴 esperar un momento para que el blur se aplique
+  setTimeout(() => {
 
-  permitirEscaneo = true;
+    if (inputPDA) {
+      inputPDA.value = "";
+      inputPDA.focus();
+    }
+
+    permitirEscaneo = true;
+
+  }, 50);
 
 });
 });
