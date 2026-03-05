@@ -50,32 +50,10 @@ window.addEventListener("load", function () {
 
 });
 
-// -----------------------------
-// CONTROL DE EDICIÓN CANTIDAD
-// -----------------------------
-cantidadInput.addEventListener("focus", function () {
-
-  this.value = "";
-  editandoCantidad = true;
-  permitirEscaneo = false;
-
-});
-
-cantidadInput.addEventListener("blur", function () {
-
-  editandoCantidad = false;
-  permitirEscaneo = true;
-
-  if (modoPDA) {
-    const inputPDA = document.getElementById("inputPDA");
-    if (inputPDA) inputPDA.focus();
-  }
-
-});
-
 // ----------------------------
 // INICIO
 // ----------------------------
+
 document.addEventListener("DOMContentLoaded", async () => {
 
   await cargarUsuarios();
@@ -98,68 +76,78 @@ document.addEventListener("DOMContentLoaded", async () => {
   const cantidadInput = document.getElementById("cantidad");
   const inputPDA = document.getElementById("inputPDA");
 
+  // -----------------------------
+  // CONTROL DE EDICIÓN CANTIDAD
+  // -----------------------------
+  cantidadInput.addEventListener("focus", function () {
 
+    this.value = "";
+    editandoCantidad = true;
+    permitirEscaneo = false;
 
+  });
 
-// 🔒 PROTECCIÓN PARA LECTOR LÁSER
-// evita que el código de barras se escriba en cantidad
-cantidadInput.addEventListener("keydown", function (e) {
+  cantidadInput.addEventListener("blur", function () {
 
-  // si NO estamos editando manualmente
-  if (!editandoCantidad) {
+    editandoCantidad = false;
+    permitirEscaneo = true;
 
-    e.preventDefault();
+    if (modoPDA) {
+      inputPDA.focus();
+    }
 
-    // mover foco al lector PDA
-    const inputPDA = document.getElementById("inputPDA");
+  });
+
+  // 🔒 PROTECCIÓN PARA LECTOR LÁSER
+  cantidadInput.addEventListener("keydown", function (e) {
+
+    if (!editandoCantidad) {
+
+      e.preventDefault();
+
+      if (inputPDA) {
+        inputPDA.focus();
+      }
+
+      return;
+
+    }
+
+  });
+
+  // 🔒 PROTECCIÓN GLOBAL PDA
+  document.addEventListener("keydown", function () {
+
+    if (modoPDA && !editandoCantidad) {
+
+      if (document.activeElement !== inputPDA) {
+        inputPDA.focus();
+      }
+
+    }
+
+  });
+
+  // -----------------------------
+  // BOTÓN ESCÁNER
+  // -----------------------------
+  const scanner = document.getElementById("scanner");
+
+  scanner.addEventListener("pointerdown", () => {
+
+    if (cantidadInput) cantidadInput.blur();
+
+    editandoCantidad = false;
 
     if (inputPDA) {
+      inputPDA.value = "";
       inputPDA.focus();
     }
 
-    return;
+    permitirEscaneo = true;
 
-  }
+  });
 
-});
-
-// 🔒 PROTECCIÓN GLOBAL PARA PDA
-document.addEventListener("keydown", function (e) {
-
-  if (modoPDA && !editandoCantidad) {
-
-    const inputPDA = document.getElementById("inputPDA");
-
-    if (document.activeElement !== inputPDA) {
-      inputPDA.focus();
-    }
-
-  }
-
-});
-  
-
-// -----------------------------
-// BOTÓN ESCÁNER
-// -----------------------------
-const scanner = document.getElementById("scanner");
-
-scanner.addEventListener("pointerdown", () => {
-
-  const cantidadInput = document.getElementById("cantidad");
-  const inputPDA = document.getElementById("inputPDA");
-
-  if (cantidadInput) cantidadInput.blur();
-
-  editandoCantidad = false;
-
-  if (inputPDA) {
-    inputPDA.value = "";
-    inputPDA.focus();
-  }
-
-  permitirEscaneo = true;
-});
 });
 
 
