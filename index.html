@@ -16,6 +16,7 @@ body{
   margin:0;
   font-family:Arial, sans-serif;
   background:#f2f2f2;
+  overflow-x: hidden;
 }
 
 header{
@@ -69,6 +70,19 @@ button.secondary{
   height: 100%;
   object-fit: cover;
   object-position: center center;
+}
+
+.scanner-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 85%;
+  height: 45%;
+  transform: translate(-50%, -50%);
+  border: 3px solid red;
+  border-radius: 12px;
+  box-sizing: border-box;
+  pointer-events: none;
 }
 
 .mensaje{
@@ -149,17 +163,85 @@ li{
   position: relative;
 }
 
-.scanner-frame {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 85%;
-  height: 45%;
-  transform: translate(-50%, -50%);
-  border: 3px solid red;
-  border-radius: 12px;
+/* ===== FILAS HORIZONTALES BIEN HECHAS ===== */
+
+.fila-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.fila-horizontal label {
+  font-weight: bold;
+  white-space: nowrap;
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.fila-horizontal input,
+.fila-horizontal select {
+  flex: 1;
+  min-width: 0;          /* 🔑 LA CLAVE QUE FALTABA */
   box-sizing: border-box;
-  pointer-events: none;
+  margin: 0;
+  width: 100%;
+}
+
+.logo-superior {
+  text-align: center;
+  margin: 10px 0 5px 0;
+}
+
+.logo-superior img {
+  max-width: 120px;
+  height: auto;
+}
+
+/* ===== AJUSTE GLOBAL DE ANCHOS ===== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+.container {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.card {
+  width: 100%;
+}
+
+#resultadosAprendizaje {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 6px;
+  padding-left: 0;
+}
+
+#resultadosAprendizaje li {
+  list-style: none;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+
+#resultadosAprendizaje li:hover {
+  background: #f0f0f0;
+}
+
+#listaEtiquetas {
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding-left: 0;
+}
+
+#listaEtiquetas li {
+  list-style: none;
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
 }
 
 </style>
@@ -169,10 +251,14 @@ li{
 
 <body>
 
+<div class="logo-superior">
+  <img src="Logo_BAL_copy.png" alt="Logo">
+</div>
+
 <audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.8</header>
+<header>Inventario Offline V.5</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -180,8 +266,31 @@ li{
 
 <div class="container">
 
+  <!-- PANTALLA LOGIN -->
+<div id="pantallaLogin" class="card" style="display:none">
+  <h3>🔐 Acceso</h3>
+
+  <input
+    type="text"
+    id="loginUsuario"
+    placeholder="Usuario"
+    autocomplete="username"
+  >
+
+  <input
+    type="password"
+    id="loginPassword"
+    placeholder="Contraseña"
+    autocomplete="current-password"
+  >
+
+  <button type="button" onclick="login()">
+    Entrar
+  </button>
+</div>
+
 <!-- PANTALLA 1 -->
-<div id="pantallaInicio" class="card">
+<div id="pantallaInicio" class="card" style="display:none">
   <h3>Inicio Inventario</h3>
   <input type="date" id="fecha">
   <input type="text" id="almacen" placeholder="Almacén">
@@ -196,72 +305,76 @@ li{
   <!-- ESCÁNER ARRIBA -->
   <div class="card">
     <div id="scanner">
-  <div class="scanner-frame"></div>
+     <div class="scanner-frame"></div>
 </div>
-<div id="ocrTextDebug"
-     style="margin-top:8px;
-            font-family:monospace;
-            font-size:14px;
-            color:#444;">
-</div>
+
   <div class="mensaje" id="mensajeEstado"></div>
   <div id="aprendizajeBox" class="card" style="display:none; margin-top:10px;">
-
-    <div id="ocrBox"
-      class="card"
-      style="display:none; margin-top:10px;">
-
-    <div id="ocrNumeroDetectado"
-        style="font-weight:bold; margin-bottom:8px;">
-    </div>
-
-    <button type="button" onclick="aceptarOCR()">
-      ✅ Usar este número
-    </button>
-
-    <button type="button"
-            class="secondary"
-            style="margin-top:8px;"
-            onclick="cancelarOCR()">
-      ❌ Cancelar
-    </button>
-  </div>
-
-
   <div id="codigoAprendidoMostrado"
        style="display:none;
               font-weight:bold;
               margin-bottom:8px;
               color:#111;">
   </div>
-
   <label style="font-weight:bold;">Referencia</label>
   <input type="text" id="inputReferenciaAprendida" placeholder="Escribe la referencia">
 
+  <label style="font-weight:bold;">Buscar artículo</label>
+  <input
+    type="text"
+    id="buscadorAprendizaje"
+    placeholder="Buscar por nombre o referencia"
+  >
+
+  <ul id="resultadosAprendizaje"></ul>
   <button type="button" onclick="guardarCodigoAprendido()">
     Aceptar
   </button>
+  <button id="btnCancelarAprendizaje"
+            style="display:none; margin-top:8px;"
+            onclick="cancelarAprendizaje()">
+      ❌ Cancelar
+    </button>
 </div>
 
 
   <!-- CANTIDAD -->
-  <div class="card" style="margin-top:15px;">
-    <label style="font-weight:bold;">Cantidad</label>
-    <input type="number" id="cantidad" value="1" min="1">
+<div class="card fila-horizontal" style="margin-top:4px;">
+  <label for="cantidad">Cantidad</label>
+
+  <div class="cantidad-wrapper">
+    <button
+      type="button"
+      id="btnCantidadNegativa"
+      class="btn-menos"
+      aria-label="Cambiar signo"
+    >−</button>
+
+    <input
+      type="number"
+      id="cantidad"
+      value="1"
+      inputmode="numeric"
+    >
   </div>
+</div>
+
 
   <!-- AÑADIR MANUAL -->
-<div class="card" style="margin-top:15px;">
-  <label style="font-weight:bold;">Añadir manual</label>
+<div class="card" style="margin-top:4px;">
+  <div class="fila-horizontal">
+    <label for="selectManual">Añadir manual</label>
+    <select id="selectManual">
+      <option value="">-- Selecciona artículo --</option>
+    </select>
+  </div>
 
-  <select id="selectManual">
-    <option value="">-- Selecciona artículo --</option>
-  </select>
-
-  <button type="button" onclick="añadirManual()">
+  <button type="button" onclick="añadirManual()" style="margin-top:4px;">
     ➕ Añadir artículo
   </button>
 </div>
+
+
 
 <button
   type="button"
@@ -270,16 +383,6 @@ li{
 >
   🧠 Grabar código
 </button>
-<button id="btnCancelarAprendizaje"
-        style="display:none; margin-top:8px;"
-        onclick="cancelarAprendizaje()">
-  ❌ Cancelar
-</button>
-
-<button class="secondary" onclick="activarModoOCR()">
-  🔢 Leer referencia impresa
-</button>
-
 
   <!-- LISTA ARTÍCULOS -->
   <div class="card" style="margin-top:15px;">
@@ -287,10 +390,23 @@ li{
     <ul id="listaArticulos"></ul>
   </div>
 
-  <!-- BOTON GUARDAR INVENTARIO -->
-  <button class="secondary" onclick="guardarInventario()">
-    💾 Guardar inventario
-  </button>
+  <!-- IMPORTAR INVENTARIO DESDE EXCEL -->
+<input
+  type="file"
+  id="importarExcel"
+  accept=".xlsx"
+  style="display:none"
+/>
+
+<button
+  type="button"
+  class="secondary"
+  onclick="document.getElementById('importarExcel').click()"
+  style="margin-top:8px;"
+>
+  📥 Importar inventario
+</button>
+
 
   <!-- BOTÓN FINALIZAR INVENTARIO -->
   <div style="margin-top:20px;">
@@ -306,6 +422,15 @@ li{
   style="margin-top:8px;"
 >
   📤 Exportar códigos aprendidos
+</button>
+
+<button
+  type="button"
+  class="secondary"
+  onclick="abrirListadoEtiquetas()"
+  style="margin-top:8px;"
+>
+  🏷 Listar etiquetas
 </button>
 
 </div>
@@ -330,10 +455,41 @@ li{
   </div>
 </div>
 
-<!-- OCR -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<input
+  type="text"
+  id="inputPDA"
+  inputmode="none"
+  autocomplete="off"
+  autofocus
+  style="opacity:0; position:fixed; top:0; left:0;"
+/>
+
+<div id="modalEtiquetas" class="modal-ayuda">
+  <div class="modal-contenido">
+    <h3>Generar etiquetas</h3>
+
+    <label><b>Buscar artículo</b></label>
+    <input type="text" id="buscadorEtiquetas" placeholder="Buscar por nombre o referencia">
+
+    <ul id="resultadosEtiquetas"></ul>
+
+    <hr>
+
+    <h4>Artículos seleccionados</h4>
+    <ul id="listaEtiquetas"></ul>
+
+    <button onclick="generarPDFEtiquetasSeleccionadas()">
+      🖨 Generar etiquetas
+    </button>
+
+    <br><br>
+    <button onclick="cerrarListadoEtiquetas()">Cerrar</button>
+  </div>
+</div>
 
 <!-- TU APP -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

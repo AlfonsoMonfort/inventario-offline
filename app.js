@@ -4,15 +4,15 @@
 let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
 let referenciasSinCodigo = [];
-let numeroOCRDetectado = null;
-let modoOCRActivo = false;
-let ocrInterval = null;
-let ocrTimeout = null;
-let ocrUltimo = null;
-let ocrRepeticiones = 0;
-let ocrProcesado = false;
 
-const DEBUG_OCR = true;
+let referencia_a_codigo = {};
+
+let usuariosPermitidos = [];
+let usuarioLogueado = null;
+
+let modoPDA = false;
+
+const DIAS_OFFLINE_PERMITIDOS = 15;
 
 let inventario = {
   fecha: "",
@@ -29,40 +29,87 @@ let modoAprendizaje = false;
 let codigoPendienteAprender = null;
 let equivalenciasAprendidas = {};
 
+let etiquetasSeleccionadas = [];
+
+let editandoCantidad = false;
+
 // ----------------------------
 // INICIO
 // ----------------------------
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
+  iniciarApp();
+});
 
-  document.getElementById("fecha").value =
-    new Date().toISOString().split("T")[0];
+async function iniciarApp() {
+
+  await cargarUsuarios();
+  verificarSesion();
+
+  const btnInstalar = document.getElementById("btnInstalar");
+
+  if (btnInstalar) {
+    btnInstalar.addEventListener("click", async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log("Resultado instalación:", outcome);
+        deferredPrompt = null;
+        btnInstalar.style.display = "none";
+      }
+    });
+  }
+
+  const fechaInput = document.getElementById("fecha");
+  if (fechaInput) {
+    fechaInput.value = new Date().toISOString().split("T")[0];
+  }
 
   const almacenInput = document.getElementById("almacen");
-
-  almacenInput.addEventListener("input", function () {
-    this.value = this.value.toUpperCase().slice(0, 3);
-  });
-
-  window.hayInventarioGuardado =
-  !!localStorage.getItem("inventario_guardado");
+  if (almacenInput) {
+    almacenInput.addEventListener("input", function () {
+      this.value = this.value.toUpperCase().slice(0, 3);
+    });
+  }
 
   await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
+
   registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
-  cantidadInput.addEventListener("focus", function () {
-    this.value = "";
-  });
+  if (cantidadInput) {
+    cantidadInput.addEventListener("focus", function () {
+      editandoCantidad = true;
+      this.value = "";
+    });
+
+    cantidadInput.addEventListener("blur", function () {
+      editandoCantidad = false;
+    });
+  }
+
   const scanner = document.getElementById("scanner");
+  if (scanner) {
+    scanner.addEventListener("click", () => {
+      permitirEscaneo = true;
+    });
+  }
 
-  scanner.addEventListener("click", () => {
+}
 
-    permitirEscaneo = true; // 📦 escáner normal
-  });
-});
+async function cargarUsuarios() {
+  try {
+    const res = await fetch("usuarios.json");
+    if (!res.ok) throw new Error("No se pudo cargar usuarios");
 
+    usuariosPermitidos = await res.json();
+    console.log("Usuarios cargados:", usuariosPermitidos.length);
+  } catch (e) {
+    alert("Error cargando usuarios");
+    console.error(e);
+  }
+}
 
 async function cargarReferenciasSinCodigo() {
   try {
@@ -97,87 +144,83 @@ async function cargarReferenciasSinCodigo() {
 // ----------------------------
 async function cargarEquivalencias() {
 
-    try {
+  try {
 
-        let datosGuardados = localStorage.getItem("equivalencias");
+    let datosGuardados = localStorage.getItem("equivalencias");
 
-        if (datosGuardados) {
-            console.log("Cargando equivalencias desde almacenamiento local");
-            let datos = JSON.parse(datosGuardados);
+    if (datosGuardados) {
+      console.log("Cargando equivalencias desde almacenamiento local");
+      let datos = JSON.parse(datosGuardados);
 
-            datos.forEach(item => {
-                codigo_a_referencia[item.codigo] = item.referencia;
-                referencia_a_descripcion[item.referencia] = item.descripcion;
-            });
+      datos.forEach(item => {
+        const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
 
-            console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
-            return;
-        }
+        codigo_a_referencia[codigoNormalizado] = item.referencia;
+        referencia_a_descripcion[item.referencia] = item.descripcion;
+        referencia_a_codigo[item.referencia] = codigoNormalizado;
+      });
 
-        console.log("Descargando equivalencias por primera vez");
-
-        const response = await fetch("equivalencias.json");
-
-        if (!response.ok) {
-            throw new Error("No se pudo cargar equivalencias.json");
-        }
-
-        const datos = await response.json();
-
-        console.log("Datos recibidos:", datos);
-
-        localStorage.setItem("equivalencias", JSON.stringify(datos));
-
-        datos.forEach(item => {
-            codigo_a_referencia[item.codigo] = item.referencia;
-            referencia_a_descripcion[item.referencia] = item.descripcion;
-        });
-
-        console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
-
-    } catch (error) {
-        console.log("Error cargando equivalencias:", error);
+      console.log(
+        "Total códigos cargados:",
+        Object.keys(codigo_a_referencia).length
+      );
+      return;
     }
+
+    console.log("Descargando equivalencias por primera vez");
+
+    const response = await fetch("equivalencias.json");
+
+    if (!response.ok) {
+      throw new Error("No se pudo cargar equivalencias.json");
+    }
+
+    const datos = await response.json();
+
+    console.log("Datos recibidos:", datos);
+
+    // Guardamos TAL CUAL llegaron (pero se normalizan al usar)
+    localStorage.setItem("equivalencias", JSON.stringify(datos));
+
+    datos.forEach(item => {
+
+      const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
+
+      codigo_a_referencia[codigoNormalizado] = item.referencia;
+      referencia_a_descripcion[item.referencia] = item.descripcion;
+      referencia_a_codigo[item.referencia] = codigoNormalizado; // 👈 AÑADIR
+    });
+
+    console.log(
+      "Total códigos cargados:",
+      Object.keys(codigo_a_referencia).length
+    );
+
+  } catch (error) {
+    console.log("Error cargando equivalencias:", error);
+  }
 }
 
-function esSamsung() {
-  return /samsung/i.test(navigator.userAgent);
-}
-
-// 🔧 NUEVO
 function cargarEquivalenciasAprendidas() {
-    const guardadas = localStorage.getItem("equivalencias_aprendidas");
-    if (!guardadas) return;
 
-    equivalenciasAprendidas = JSON.parse(guardadas);
+  const guardadas = localStorage.getItem("equivalencias_aprendidas");
+  if (!guardadas) return;
 
-    for (let codigo in equivalenciasAprendidas) {
-        codigo_a_referencia[codigo] = equivalenciasAprendidas[codigo];
-    }
+  equivalenciasAprendidas = JSON.parse(guardadas);
+
+  for (let codigo in equivalenciasAprendidas) {
+
+    const referencia = equivalenciasAprendidas[codigo];
+
+    codigo_a_referencia[codigo] = referencia;
+    referencia_a_codigo[referencia] = codigo; // 🔥 AÑADIR
+  }
 }
 
 // ----------------------------
 // EMPEZAR INVENTARIO
 // ----------------------------
 function empezar() {
-
-  if (window.hayInventarioGuardado) {
-
-    const continuar = confirm(
-      "Hay un inventario guardado.\n\n" +
-      "Aceptar → Continuar inventario\n" +
-      "Cancelar → Empezar uno nuevo"
-    );
-
-    if (continuar) {
-      cargarInventarioGuardado();
-      return;
-    } else {
-      localStorage.removeItem("inventario_guardado");
-      window.hayInventarioGuardado = false;
-      // sigue creando uno nuevo
-    }
-  }
 
   const fechaInput = document.getElementById("fecha");
   const almacenInput = document.getElementById("almacen");
@@ -196,66 +239,12 @@ function empezar() {
   document.getElementById("pantallaInicio").style.display = "none";
   document.getElementById("pantallaEscaner").style.display = "block";
 
-  iniciarScanner();
+  if (modoPDA) {
+  activarModoPDA();
+  return;
 }
 
-function cargarInventarioGuardado() {
-
-  const datos = JSON.parse(
-    localStorage.getItem("inventario_guardado")
-  );
-
-  inventario = datos.inventario;
-
-  document.getElementById("pantallaInicio").style.display = "none";
-  document.getElementById("pantallaEscaner").style.display = "block";
-
-  actualizarLista();
   iniciarScanner();
-
-  mostrarMensaje("↩️ Inventario recuperado", "ok");
-}
-
-
-
-function calcularAreaDesdeMarco() {
-  const scanner = document.getElementById("scanner");
-  const frame = document.querySelector(".scanner-frame");
-  const video = scanner.querySelector("video");
-
-  if (!video.videoWidth || !video.videoHeight) return null;
-
-  const frameRect = frame.getBoundingClientRect();
-  const videoRect = video.getBoundingClientRect();
-
-  // Posición del marco respecto al vídeo real
-  const topPx = frameRect.top - videoRect.top;
-  const leftPx = frameRect.left - videoRect.left;
-  const bottomPx = videoRect.bottom - frameRect.bottom;
-  const rightPx = videoRect.right - frameRect.right;
-
-  const top = (topPx / videoRect.height) * 100;
-  const bottom = (bottomPx / videoRect.height) * 100;
-  const left = (leftPx / videoRect.width) * 100;
-  const right = (rightPx / videoRect.width) * 100;
-
-  const clamp = v => Math.max(0, Math.min(100, v));
-  if (esSamsung()) {
-    return {
-      top: "15%",
-      bottom: "15%",
-      left: "5%",
-      right: "5%"
-    };
-  }
-
-  // resto de móviles → cálculo exacto
-  return {
-    top: `${clamp(top)}%`,
-    bottom: `${clamp(bottom)}%`,
-    left: `${clamp(left)}%`,
-    right: `${clamp(right)}%`
-  };
 }
 
 // ----------------------------
@@ -268,108 +257,100 @@ function iniciarScanner() {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#scanner'),
-     constraints: {
-      facingMode: "environment",
-      focusMode: "continuous"
-    }
+      constraints: {
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      area: {
+        top: "27.5%",
+        right: "7.5%",
+        left: "7.5%",
+        bottom: "27.5%"
+      }
     },
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
     },
-    locate: !esSamsung()
+    locate: false
   }, function (err) {
     if (err) {
       console.error(err);
       return;
     }
-
     Quagga.start();
-
-    const video = document.querySelector("#scanner video");
-    if (!video) return;
-
-    video.addEventListener("loadedmetadata", () => {
-
-      const area = calcularAreaDesdeMarco();
-      if (!area) return;
-
-      Quagga.stop();
-
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: document.querySelector('#scanner'),
-          constraints: {
-            facingMode: "environment"
-          },
-          area
-        },
-        decoder: {
-          readers: ["ean_reader", "ean_8_reader", "upc_reader"]
-        },
-        locate: !esSamsung()
-      }, () => Quagga.start());
-
-    }, { once: true });
   });
-
+  Quagga.offDetected();
   Quagga.onDetected(function (result) {
-  if (!permitirEscaneo) return;
-  if (!result?.codeResult?.code) return;
+    if (!permitirEscaneo) return;
+    if (!result?.codeResult?.code) return;
 
-  const code = result.codeResult.code.replace(/\D/g, "");
-  if (![8, 12, 13].includes(code.length)) return;
+    let code = result.codeResult.code.replace(/\D/g, "");
+    code = code.replace(/^0+/, "");
 
-  permitirEscaneo = false;
+    permitirEscaneo = false;
 
-  // 🧠 MODO APRENDIZAJE
-  if (modoAprendizaje) {
-  codigoPendienteAprender = code;
-
-  const divCodigo = document.getElementById("codigoAprendidoMostrado");
-  divCodigo.textContent = "Código leído: " + code;
-  divCodigo.style.display = "block";
-
-  mostrarMensaje("✅ Código leído", "ok");
-  mostrarFormularioAprendizaje();
-  return;
-}
-
-  // flujo normal
-  procesarCodigo(code);
-});
-
-}
-
-
-function activarModoOCR() {
-  if (ocrInterval) clearInterval(ocrInterval);
-  if (ocrTimeout) clearTimeout(ocrTimeout);
-
-  ocrProcesado = false; // 🔒 reset candado
-
-  modoOCRActivo = true;
-  permitirEscaneo = false;
-
-  mostrarMensaje("🔍 Buscando referencia…", "ok");
-
-  ocrInterval = setInterval(() => {
-    if (!modoOCRActivo) return;
-    leerOCRContinuo();
-  }, 700);
-
-  ocrTimeout = setTimeout(() => {
-    if (modoOCRActivo) {
-      cancelarOCR();
-      mostrarMensaje("❌ No se detectó referencia", "error");
+    if (modoAprendizaje) {
+      codigoPendienteAprender = code;
+      document.getElementById("codigoAprendidoMostrado").textContent =
+        "Código leído: " + code;
+      document.getElementById("codigoAprendidoMostrado").style.display = "block";
+      mostrarMensaje("✅ Código leído", "ok");
+      mostrarFormularioAprendizaje();
+      return;
     }
-  }, 10000);
+
+    procesarCodigo(code);
+  });
 }
 
+function activarModoPDA() {
 
+  permitirEscaneo = false;
 
+  const input = document.getElementById("inputPDA");
+  input.value = "";
 
+  // 🔒 foco permanente (CLAVE)
+  setInterval(() => {
+
+    if (editandoCantidad) return;
+
+    if (document.activeElement !== input) {
+      input.focus();
+    }
+
+  }, 300);
+
+  mostrarMensaje("📟 Modo PDA activo", "ok");
+
+  input.oninput = () => {
+    // el lector escribe aquí
+  };
+
+  input.onkeydown = (e) => {
+    if (e.key === "Enter") {
+      const codigo = input.value.replace(/\D/g, "").replace(/^0+/, "");
+      input.value = "";
+
+      if (!codigo) return;
+
+      if (modoAprendizaje) {
+        codigoPendienteAprender = codigo;
+
+        document.getElementById("codigoAprendidoMostrado").textContent =
+          "Código leído: " + codigo;
+        document.getElementById("codigoAprendidoMostrado").style.display = "block";
+
+        mostrarFormularioAprendizaje();
+        mostrarMensaje("🧠 Código listo para asociar", "ok");
+        return;
+      }
+
+procesarCodigo(codigo);
+    }
+  };
+}
 
 function mostrarFormularioAprendizaje() {
   document.getElementById("aprendizajeBox").style.display = "block";
@@ -432,15 +413,31 @@ window.addEventListener("beforeinstallprompt", (e) => {
     btn.style.display = "block";
 });
 
-document.getElementById("btnInstalar").addEventListener("click", async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log("Resultado instalación:", outcome);
-        deferredPrompt = null;
-        document.getElementById("btnInstalar").style.display = "none";
-    }
-});
+
+
+function esPWAenIOS() {
+  return (
+    /iphone|ipad|ipod/i.test(navigator.userAgent) &&
+    window.matchMedia('(display-mode: standalone)').matches
+  );
+}
+
+async function compartirExcelIOS(blob, nombreArchivo) {
+
+  const file = new File([blob], nombreArchivo, {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      files: [file],
+      title: "Inventario",
+      text: "Guardar inventario"
+    });
+  } else {
+    alert("Este iPhone no permite compartir archivos desde la app");
+  }
+}
 
 function esIOS() {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
@@ -527,11 +524,12 @@ function exportarCodigosAprendidos() {
 
   const url = URL.createObjectURL(blob);
 
-  // iOS → compartir
-  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-    window.open(url);
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  if (isIOS) {
+    // Truco iOS: abrir en la MISMA pestaña
+    window.location.href = url;
   } else {
-    // Android / PC → descarga
     const a = document.createElement("a");
     a.href = url;
     a.download = nombre;
@@ -547,229 +545,18 @@ function exportarCodigosAprendidos() {
 
 
 
-function leerOCRContinuo() {
-
-  // ⛔ seguridad básica
-  if (!modoOCRActivo || ocrProcesado) return;
-
-  const video = document.querySelector("#scanner video");
-  const frame = document.querySelector(".scanner-frame");
-  const debugText = document.getElementById("ocrTextDebug");
-
-  if (!video || !frame || !video.videoWidth) return;
-
-  if (debugText) {
-    debugText.innerText = "OCR activo…";
-  }
-
-  // ----------------------------
-  // 📐 CÁLCULO DE ZONA OCR
-  // ----------------------------
-  const videoRect = video.getBoundingClientRect();
-  const frameRect = frame.getBoundingClientRect();
-
-  const scaleX = video.videoWidth / videoRect.width;
-  const scaleY = video.videoHeight / videoRect.height;
-
-  let sx = (frameRect.left - videoRect.left) * scaleX;
-  let sy = (frameRect.top - videoRect.top) * scaleY;
-  let sw = frameRect.width * scaleX;
-  let sh = frameRect.height * scaleY;
-
-  // 🔍 recorte central (solo números)
-  const recorte = 0.45;
-  const dx = sw * (1 - recorte) / 2;
-  const dy = sh * (1 - recorte) / 2;
-
-  sx += dx;
-  sy += dy;
-  sw *= recorte;
-  sh *= recorte;
-
-  // ----------------------------
-  // 🎨 CANVAS OCR
-  // ----------------------------
-  const canvas = document.createElement("canvas");
-  canvas.width = sw * 2;
-  canvas.height = sh * 2;
-
-  const ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-
-  // 🔲 binarización fuerte
-  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imgData.data;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    const v = avg > 145 ? 255 : 0;
-    data[i] = data[i + 1] = data[i + 2] = v;
-  }
-
-  ctx.putImageData(imgData, 0, 0);
-
-  // ----------------------------
-  // 🔠 TESSERACT
-  // ----------------------------
-  Tesseract.recognize(
-    canvas,
-    "eng",
-    {
-      tessedit_char_whitelist: "0123456789",
-      classify_bln_numeric_mode: 1
-    }
-  ).then(result => {
-
-    if (ocrProcesado) return;
-
-    const texto = (result.data.text || "")
-      .replace(/\s+/g, "")
-      .replace(/[^0-9]/g, "");
-
-    if (debugText) {
-      debugText.innerText = `OCR lee: "${texto || "∅"}"`;
-    }
-
-    // ❌ no parece una referencia válida
-    if (!/^\d{5,7}$/.test(texto)) {
-      ocrUltimo = null;
-      ocrRepeticiones = 0;
-      return;
-    }
-
-    // ----------------------------
-    // 🔁 CONFIRMACIÓN POR REPETICIÓN
-    // ----------------------------
-    if (texto === ocrUltimo) {
-      ocrRepeticiones++;
-    } else {
-      ocrUltimo = texto;
-      ocrRepeticiones = 1;
-    }
-
-    if (ocrRepeticiones < 2) return;
-
-    // ----------------------------
-    // ✅ OCR CONFIRMADO (UNA SOLA VEZ)
-    // ----------------------------
-    ocrProcesado = true;
-    modoOCRActivo = false;
-
-    ocrUltimo = null;
-    ocrRepeticiones = 0;
-
-    cancelarOCR();
-
-    // 🔍 comprobar referencia existente
-    if (!referencia_a_descripcion[texto]) {
-      mostrarMensaje("❌ Referencia no existe", "error");
-      permitirEscaneo = true;
-      return;
-    }
-
-    const cantidad =
-      parseInt(document.getElementById("cantidad").value) || 1;
-
-    if (inventario.articulos[texto]) {
-  inventario.articulos[texto] += cantidad;
-
-  // 🔼 mover arriba (último usado)
-  inventario.orden = inventario.orden.filter(r => r !== texto);
-  inventario.orden.unshift(texto);
-
-} else {
-  inventario.articulos[texto] = cantidad;
-
-  // 🆕 nuevo → arriba del todo
-  inventario.orden.unshift(texto);
-}
-
-actualizarLista();
-document.getElementById("cantidad").value = 1;
-
-mostrarMensaje("✅ Artículo añadido (OCR)", "ok");
-permitirEscaneo = true;
-
-  });
-}
-
-
-function aceptarOCR() {
-
-  modoOCR = false;
-  document.getElementById("ocrBox").style.display = "none";
-
-  if (!numeroOCRDetectado) return;
-
-  if (!referencia_a_descripcion[numeroOCRDetectado]) {
-    mostrarMensaje("❌ Referencia no existe", "error");
-    permitirEscaneo = true;
-    return;
-  }
-
-  const cantidad =
-    parseInt(document.getElementById("cantidad").value) || 1;
-
-  // ➕ añadir o sumar cantidad
-  if (inventario.articulos[numeroOCRDetectado]) {
-    inventario.articulos[numeroOCRDetectado] += cantidad;
-
-    // 🔼 mover arriba (último usado)
-    inventario.orden = inventario.orden.filter(
-      r => r !== numeroOCRDetectado
-    );
-    inventario.orden.unshift(numeroOCRDetectado);
-
-  } else {
-    inventario.articulos[numeroOCRDetectado] = cantidad;
-
-    // 🆕 nuevo → arriba del todo
-    inventario.orden.unshift(numeroOCRDetectado);
-  }
-
-  actualizarLista();
-
-  // 🔄 reset
-  numeroOCRDetectado = null;
-  permitirEscaneo = true;
-  document.getElementById("cantidad").value = 1;
-
-  mostrarMensaje("✅ Referencia añadida", "ok");
-}
-
-
-function cancelarOCR() {
-  modoOCR = false;
-  modoOCRActivo = false;
-  numeroOCRDetectado = null;
-
-  if (ocrInterval) {
-    clearInterval(ocrInterval);
-    ocrInterval = null;
-  }
-
-  if (ocrTimeout) {
-    clearTimeout(ocrTimeout);
-    ocrTimeout = null;
-  }
-
-  document.getElementById("ocrBox").style.display = "none";
-  permitirEscaneo = true;
-  const debugCanvas = document.getElementById("ocr-debug-canvas");
-  if (debugCanvas) debugCanvas.remove();    
-}
-
-
 
 // ===============================
 // BOTÓN AYUDA
 // ===============================
 
-document.getElementById("btnAyuda").addEventListener("click", () => {
-  document.getElementById("modalAyuda").style.display = "flex";
-});
+const btnAyuda = document.getElementById("btnAyuda");
+
+if (btnAyuda) {
+  btnAyuda.addEventListener("click", () => {
+    document.getElementById("modalAyuda").style.display = "flex";
+  });
+}
 
 function cerrarAyuda() {
   document.getElementById("modalAyuda").style.display = "none";
@@ -821,20 +608,28 @@ function añadirManual() {
 function activarModoAprendizaje() {
   modoAprendizaje = true;
   codigoPendienteAprender = null;
-  permitirEscaneo = true;
+  permitirEscaneo = false;
 
   document.getElementById("btnCancelarAprendizaje").style.display = "block";
+  document.getElementById("aprendizajeBox").style.display = "block";
 
-  mostrarMensaje("📸 Toca pantalla y escanea el código", "ok");
+  // 🔄 limpiar buscador
+  document.getElementById("buscadorAprendizaje").value = "";
+  document.getElementById("resultadosAprendizaje").innerHTML = "";
+
+  mostrarMensaje("🧠 Escanea el código para asociar", "ok");
 }
 
 function cancelarAprendizaje() {
   modoAprendizaje = false;
   codigoPendienteAprender = null;
+
   permitirEscaneo = false;
 
   document.getElementById("btnCancelarAprendizaje").style.display = "none";
   document.getElementById("aprendizajeBox").style.display = "none";
+  document.getElementById("codigoAprendidoMostrado").style.display = "none";
+  document.getElementById("inputReferenciaAprendida").value = "";
 
   mostrarMensaje("❌ Grabación cancelada", "error");
 }
@@ -854,6 +649,13 @@ function variantesCodigo(codigo) {
     variantes.add("0" + codigo);
   }
 
+  if (codigo.length === 11) {
+    variantes.add("00" + codigo);
+  }
+  if (codigo.length === 10) {
+    variantes.add("000" + codigo);
+  }
+
   return [...variantes];
 }
 
@@ -863,16 +665,13 @@ function variantesCodigo(codigo) {
 // ----------------------------
 function procesarCodigo(codigo) {
 
-  let cantidad = parseInt(document.getElementById("cantidad").value) || 1;
+  // 🔒 seguridad extra (por si alguien llama sin normalizar)
+  codigo = String(codigo).replace(/^0+/, "");
 
-  let referencia = null;
+  let cantidad =
+    parseInt(document.getElementById("cantidad").value) || 1;
 
-  for (const v of variantesCodigo(codigo)) {
-    if (codigo_a_referencia[v]) {
-      referencia = codigo_a_referencia[v];
-      break;
-    }
-  }
+  const referencia = codigo_a_referencia[codigo];
 
   if (!referencia) {
     mostrarMensaje("❌ Código no encontrado", "error");
@@ -900,7 +699,9 @@ function procesarCodigo(codigo) {
   actualizarLista();
 }
 
-
+function esSamsung() {
+  return /samsung/i.test(navigator.userAgent);
+}
 
 // ----------------------------
 // ACTUALIZAR LISTA
@@ -957,77 +758,189 @@ function formatearFecha(fechaISO) {
     return `${dia}/${mes}/${anio}`;
 }
 
-function guardarInventario() {
-
-  const datos = {
-    inventario: inventario
-  };
-
-  localStorage.setItem(
-    "inventario_guardado",
-    JSON.stringify(datos)
-  );
-
-  window.hayInventarioGuardado = true;
-
-  mostrarMensaje("💾 Inventario guardado", "ok");
-}
-
 // ----------------------------
 // FINALIZAR Y GENERAR EXCEL
 // ----------------------------
 function finalizar() {
 
-    let datos = [];
+  /* ========= 1. PREPARAR DATOS ========= */
 
-    for (let ref in inventario.articulos) {
+  const datos = [];
 
-        datos.push({
-            fecha: formatearFecha(inventario.fecha),
-            almacen: inventario.almacen,
-            referencia: ref,
-            cantidad: inventario.articulos[ref],
-            numero_vendedor: inventario.vendedor
-        });
+  for (let ref in inventario.articulos) {
+    datos.push({
+      fecha: formatearFecha(inventario.fecha),
+      almacen: inventario.almacen,
+      referencia: ref,
+      cantidad: inventario.articulos[ref],
+      numero_vendedor: inventario.vendedor
+    });
+  }
+
+  if (datos.length === 0) {
+    mostrarMensaje("❌ No hay artículos para exportar", "error");
+    return;
+  }
+
+  /* ========= 2. CREAR EXCEL ========= */
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(datos);
+  XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+
+  const wbout = XLSX.write(wb, {
+    bookType: "xlsx",
+    type: "array"
+  });
+
+  const blob = new Blob([wbout], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+
+  const nombreArchivo =
+  `${inventario.almacen}_${obtenerFechaHoraArchivo()}.xlsx`;
+
+  /* ========= 3. DETECCIÓN ENTORNO ========= */
+
+  const ua = navigator.userAgent.toLowerCase();
+  const esIOS = /iphone|ipad|ipod/.test(ua);
+  const esPWA = window.matchMedia("(display-mode: standalone)").matches;
+
+  /* ========= 4. iOS PWA → SHARE API ========= */
+
+  if (esIOS && esPWA) {
+
+    const file = new File([blob], nombreArchivo, {
+      type: blob.type
+    });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+
+      mostrarMensaje(
+        "📤 Pulsa Guardar en Archivos para conservar el Excel",
+        "ok"
+      );
+
+      navigator.share({
+        files: [file],
+        title: "Inventario",
+        text: "Guardar inventario"
+      });
+
+    } else {
+      alert("Este iPhone no permite compartir archivos desde la app.");
     }
 
-    let wb = XLSX.utils.book_new();
-    let ws = XLSX.utils.json_to_sheet(datos);
-    XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+    return;
+  }
 
-    let nombre = `inventario.${inventario.almacen}.${formatearFecha(inventario.fecha)}.xlsx`;
+  /* ========= 5. iOS SAFARI → ABRIR ARCHIVO ========= */
 
-    const wbout = XLSX.write(wb, {
-  bookType: "xlsx",
-  type: "array"
-});
+  if (esIOS && !esPWA) {
 
-const blob = new Blob([wbout], {
-  type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-});
+    const url = URL.createObjectURL(blob);
 
-const url = URL.createObjectURL(blob);
+    mostrarMensaje(
+      "📂 Se abrirá el Excel. Pulsa Compartir → Guardar en Archivos",
+      "ok"
+    );
 
-// iOS → abrir para compartir
-if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-  window.open(url);
-} else {
-  // resto → descarga normal
+    setTimeout(() => {
+      window.open(url, "_blank");
+    }, 300);
+
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    return;
+  }
+
+  /* ========= 6. ANDROID / PC → DESCARGA NORMAL ========= */
+
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
-  a.download = nombre;
+  a.download = nombreArchivo;
+
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+  mostrarMensaje("✅ Inventario descargado correctamente", "ok");
 }
 
-setTimeout(() => URL.revokeObjectURL(url), 1000);
+function importarInventarioExcel(e) {
+  const file = e.target.files[0];
+  if (!file) return;
 
+  const reader = new FileReader();
 
-    location.reload();
+  reader.onload = evt => {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const filas = XLSX.utils.sheet_to_json(sheet);
+
+      sumarInventarioDesdeExcel(filas);
+      mostrarMensaje("✅ Inventario importado y sumado", "ok");
+
+    } catch (error) {
+      console.error(error);
+      mostrarMensaje("❌ Error al importar Excel", "error");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+
+  // 🔄 permitir volver a importar el mismo archivo si hace falta
+  e.target.value = "";
 }
 
+function obtenerFechaHoraArchivo() {
+  const ahora = new Date();
 
+  const dia = String(ahora.getDate()).padStart(2, "0");
+  const mes = String(ahora.getMonth() + 1).padStart(2, "0");
+  const anio = ahora.getFullYear();
+
+  const hora = String(ahora.getHours()).padStart(2, "0");
+  const minuto = String(ahora.getMinutes()).padStart(2, "0");
+
+  return `${dia}_${mes}_${anio}_${hora}_${minuto}`;
+}
+
+function sumarInventarioDesdeExcel(filas) {
+  if (!Array.isArray(filas)) return;
+
+  filas.forEach(fila => {
+    const ref = String(fila.referencia || "").trim();
+    const cantidad = parseInt(fila.cantidad, 10) || 0;
+
+    if (!ref || cantidad <= 0) return;
+
+    if (inventario.articulos[ref]) {
+      inventario.articulos[ref] += cantidad;
+
+      // mover arriba (último usado)
+      inventario.orden = inventario.orden.filter(r => r !== ref);
+      inventario.orden.unshift(ref);
+
+    } else {
+      inventario.articulos[ref] = cantidad;
+      inventario.orden.unshift(ref);
+    }
+  });
+
+  actualizarLista();
+}
+
+const inputImportar = document.getElementById("importarExcel");
+
+if (inputImportar) {
+  inputImportar.addEventListener("change", importarInventarioExcel);
+}
 
 // ----------------------------
 // SERVICE WORKER
@@ -1045,4 +958,366 @@ function registrarServiceWorker() {
         });
     });
   }
+}
+
+async function login() {
+  const u = document.getElementById("loginUsuario").value.trim();
+  const p = document.getElementById("loginPassword").value.trim();
+
+  try {
+    await cargarUsuarios();
+
+    const valido = usuariosPermitidos.find(
+      x => x.usuario === u && x.password === p
+    );
+
+    if (!valido) {
+      mostrarMensaje("❌ Usuario no autorizado", "error");
+      return;
+    }
+
+    const ahora = Date.now();
+
+    localStorage.setItem("auth_usuario", u);
+    localStorage.setItem("auth_ultimo_ok", ahora.toString());
+
+    usuarioLogueado = u;
+
+    document.getElementById("pantallaLogin").style.display = "none";
+    document.getElementById("pantallaInicio").style.display = "block";
+
+    mostrarMensaje("✅ Acceso correcto", "ok");
+
+  } catch (e) {
+    mostrarMensaje("❌ Sin conexión", "error");
+  }
+
+  if (u === "PDA") {
+  modoPDA = true;
+}
+}
+
+function verificarSesion() {
+  const u = localStorage.getItem("auth_usuario");
+  const t = parseInt(localStorage.getItem("auth_ultimo_ok"), 10);
+
+  if (!u || !t) {
+    mostrarLogin();
+    return;
+  }
+
+  const dias = (Date.now() - t) / (1000 * 60 * 60 * 24);
+
+  if (dias > DIAS_OFFLINE_PERMITIDOS) {
+    localStorage.removeItem("auth_usuario");
+    localStorage.removeItem("auth_ultimo_ok");
+    mostrarLogin();
+    mostrarMensaje("🔒 Requiere conexión para validar", "error");
+    return;
+  }
+
+  usuarioLogueado = u;
+  document.getElementById("pantallaLogin").style.display = "none";
+  document.getElementById("pantallaInicio").style.display = "block";
+  if (usuarioLogueado === "PDA") {
+  modoPDA = true;
+}
+}
+
+function mostrarLogin() {
+  document.getElementById("pantallaLogin").style.display = "block";
+  document.getElementById("pantallaInicio").style.display = "none";
+}
+
+// ===============================
+// BOTÓN MENOS EN CANTIDAD (SOLO NEGATIVO)
+// ===============================
+const btnMenos = document.getElementById("btnCantidadNegativa");
+
+if (btnMenos) {
+  btnMenos.addEventListener("click", () => {
+    const input = document.getElementById("cantidad");
+    let valor = parseInt(input.value, 10);
+
+    if (isNaN(valor) || valor === 0) {
+      input.value = -1;
+      return;
+    }
+
+    // 👉 SOLO poner negativo, nunca volver a positivo
+    input.value = Math.abs(valor) * -1;
+  });
+}
+
+const buscadorAprendizaje =
+  document.getElementById("buscadorAprendizaje");
+const resultadosAprendizaje =
+  document.getElementById("resultadosAprendizaje");
+
+if (buscadorAprendizaje) {
+  buscadorAprendizaje.addEventListener("input", () => {
+    const texto = buscadorAprendizaje.value
+      .toLowerCase()
+      .trim();
+
+    resultadosAprendizaje.innerHTML = "";
+
+    if (texto.length < 2) return;
+
+    // 🔍 buscamos en TODAS las equivalencias cargadas
+    const resultados = Object.entries(referencia_a_descripcion)
+      .filter(([ref, desc]) =>
+        ref.toLowerCase().includes(texto) ||
+        desc.toLowerCase().includes(texto)
+      )
+      .slice(0, 25); // límite por rendimiento
+
+    resultados.forEach(([ref, desc]) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<b>${desc}</b><br>Ref: ${ref}`;
+
+      li.onclick = () => {
+        document.getElementById(
+          "inputReferenciaAprendida"
+        ).value = ref;
+
+        buscadorAprendizaje.value = "";
+        resultadosAprendizaje.innerHTML = "";
+      };
+
+      resultadosAprendizaje.appendChild(li);
+    });
+  });
+}
+
+function abrirListadoEtiquetas() {
+
+  etiquetasSeleccionadas = [];
+  renderListaEtiquetas();
+
+  document.getElementById("buscadorEtiquetas").value = "";
+  document.getElementById("resultadosEtiquetas").innerHTML = "";
+
+  document.getElementById("modalEtiquetas").style.display = "flex";
+  cargarBuscadorEtiquetas();
+}
+
+function cerrarListadoEtiquetas() {
+  document.getElementById("modalEtiquetas").style.display = "none";
+}
+
+function cargarBuscadorEtiquetas() {
+
+  const input = document.getElementById("buscadorEtiquetas");
+  const resultados = document.getElementById("resultadosEtiquetas");
+
+  input.oninput = () => {
+
+    const texto = input.value.toLowerCase().trim();
+    resultados.innerHTML = "";
+
+    if (texto.length < 2) return;
+
+    const resultadosFiltrados = Object.entries(referencia_a_descripcion)
+      .filter(([ref, desc]) =>
+        ref.toLowerCase().includes(texto) ||
+        desc.toLowerCase().includes(texto)
+      )
+      .slice(0, 25);
+
+    resultadosFiltrados.forEach(([ref, desc]) => {
+
+      const li = document.createElement("li");
+      li.innerHTML = `<b>${desc}</b><br>Ref: ${ref}`;
+
+      li.onclick = () => añadirEtiqueta(ref, desc);
+
+      resultados.appendChild(li);
+    });
+  };
+}
+
+function añadirEtiqueta(referencia, descripcion) {
+
+  // 🔒 evitar duplicados
+  if (!etiquetasSeleccionadas.find(a => a.Referencia === referencia)) {
+    etiquetasSeleccionadas.push({
+      Referencia: referencia,
+      Descripcion: descripcion
+    });
+  }
+
+  renderListaEtiquetas();
+
+  // 🔥 LIMPIAR BUSCADOR
+  const input = document.getElementById("buscadorEtiquetas");
+  const resultados = document.getElementById("resultadosEtiquetas");
+
+  input.value = "";
+  resultados.innerHTML = "";
+
+  input.blur(); // 🔥 quita foco (muy importante en móvil)
+}
+
+function renderListaEtiquetas() {
+
+  const lista = document.getElementById("listaEtiquetas");
+  lista.innerHTML = "";
+
+  etiquetasSeleccionadas.forEach(a => {
+
+    const li = document.createElement("li");
+    li.textContent = a.Referencia + " - " + a.Descripcion;
+
+    lista.appendChild(li);
+
+  });
+}
+
+function eliminarEtiqueta(index) {
+  etiquetasSeleccionadas.splice(index, 1);
+  renderListaEtiquetas();
+}
+
+function generarPDFEtiquetasSeleccionadas() {
+
+  if (!etiquetasSeleccionadas || etiquetasSeleccionadas.length === 0) {
+    alert("No hay artículos seleccionados");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p", "mm", "a4");
+
+  const COLS = 3;
+  const ROWS = 8;
+
+  const LABEL_WIDTH = 70;
+  const LABEL_HEIGHT = 35;
+
+  const MARGIN_X = 10;
+  const MARGIN_Y = 15;
+
+  const BARCODE_HEIGHT_MM = 7.5;
+  const BARCODE_GAP = 2; // pequeño espacio visual
+
+  let col = 0;
+  let row = 0;
+
+  etiquetasSeleccionadas.forEach((a) => {
+
+    const codigo = referencia_a_codigo[a.Referencia];
+    if (!codigo) return;
+
+    let formato = "CODE128";
+    if (/^\d{13}$/.test(codigo)) formato = "EAN13";
+    else if (/^\d{12}$/.test(codigo)) formato = "UPC";
+
+    // === Posición base etiqueta (en jsPDF Y crece hacia abajo)
+    const x = MARGIN_X + col * LABEL_WIDTH;
+    const y = MARGIN_Y + row * LABEL_HEIGHT;
+
+    const centerX = x + LABEL_WIDTH / 2;
+
+    // ===== DESCRIPCIÓN (ARRIBA) =====
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+
+    const descripcionY = y + 6;
+
+    doc.text(
+      a.Descripcion.substring(0, 45),
+      centerX,
+      descripcionY,
+      { align: "center" }
+    );
+
+    // ===== REFERENCIA (DEBAJO) =====
+    doc.setFont("helvetica", "normal");
+
+    const refY = descripcionY + 4;
+
+    doc.text(
+      "Ref: " + a.Referencia,
+      centerX,
+      refY,
+      { align: "center" }
+    );
+
+    // ===== GENERAR BARCODE =====
+    const canvas = document.createElement("canvas");
+
+    JsBarcode(canvas, codigo, {
+      format: formato,
+      displayValue: false,
+      width: 1,
+      height: 40,
+      margin: 0
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+
+    // Escalar solo por altura real
+    const pxToMm = 0.264583;
+
+    const realWidthMM = canvas.width * pxToMm;
+    const realHeightMM = canvas.height * pxToMm;
+
+    const scale = BARCODE_HEIGHT_MM / realHeightMM;
+
+    const finalWidth = realWidthMM * scale;
+    const finalHeight = BARCODE_HEIGHT_MM;
+
+    const barcodeY = refY + BARCODE_GAP;
+    const barcodeX = centerX - finalWidth / 2;
+
+    doc.addImage(
+      imgData,
+      "PNG",
+      barcodeX,
+      barcodeY,
+      finalWidth,
+      finalHeight
+    );
+
+    // ===== NÚMERO DEBAJO DEL CÓDIGO =====
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+
+    const codigoTextoY = barcodeY + finalHeight + 3;
+
+    doc.text(
+      codigo,
+      centerX,
+      codigoTextoY,
+      { align: "center" }
+    );
+    // ===== AVANZAR =====
+    col++;
+    if (col === COLS) {
+      col = 0;
+      row++;
+    }
+
+    if (row === ROWS) {
+      doc.addPage();
+      col = 0;
+      row = 0;
+    }
+
+  });
+
+  const ahora = new Date();
+
+  const year = ahora.getFullYear();
+  const month = String(ahora.getMonth() + 1).padStart(2, "0");
+  const day = String(ahora.getDate()).padStart(2, "0");
+  const hour = String(ahora.getHours()).padStart(2, "0");
+  const minute = String(ahora.getMinutes()).padStart(2, "0");
+
+  const nombreArchivo = `etiquetas_${year}.${month}.${day}.${hour}.${minute}.pdf`;
+
+  doc.save(nombreArchivo);
+
+  mostrarMensaje("✅ Etiquetas generadas correctamente", "ok");
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v196";
+const CACHE_NAME = "inventario-cache-v5";
 
 const urlsToCache = [
   "./",
@@ -11,23 +11,26 @@ const urlsToCache = [
   "./icon-512.png",
   "./equivalencias.json",
   "./referencias_sin_codigo_barras.json"
-  
 ];
-
 
 // --------------------
 // INSTALL
 // --------------------
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(async cache => {
+      for (const url of urlsToCache) {
+        try {
+          await cache.add(url);
+        } catch (err) {
+          console.log("No se pudo cachear:", url);
+        }
+      }
+    })
   );
 
-  // 🔥 Fuerza activación inmediata
   self.skipWaiting();
 });
-
 
 // --------------------
 // ACTIVATE
@@ -35,7 +38,6 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     Promise.all([
-      // Borra versiones antiguas
       caches.keys().then(cacheNames => {
         return Promise.all(
           cacheNames.map(cache => {
@@ -45,21 +47,24 @@ self.addEventListener("activate", event => {
           })
         );
       }),
-      // 🔥 Toma control inmediato
       self.clients.claim()
     ])
   );
 });
-
 
 // --------------------
 // FETCH
 // --------------------
 self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
-      })
+    caches.match(event.request).then(response => {
+      if (response) {
+        return response;
+      }
+
+      return fetch(event.request).catch(() => {
+        return caches.match("./index.html");
+      });
+    })
   );
 });
