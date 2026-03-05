@@ -33,13 +33,19 @@ let etiquetasSeleccionadas = [];
 
 let editandoCantidad = false;
 
+window.onerror = function (msg, url, line, col, error) {
+  console.log("ERROR GLOBAL:", msg, "linea:", line, "col:", col);
+  alert("ERROR: " + msg + " linea:" + line);
+};
+
 // ----------------------------
 // INICIO
 // ----------------------------
 window.onload = iniciarApp;
 
 function iniciarApp() {
-
+  console.log("APP INICIANDO");
+  alert("APP INICIANDO");
   registrarServiceWorker();
 
   cargarUsuarios().then(() => {
