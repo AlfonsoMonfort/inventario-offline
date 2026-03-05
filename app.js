@@ -56,16 +56,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
+
   cantidadInput.addEventListener("focus", function () {
     this.value = "";
+    permitirEscaneo = false; // 🔒 evitar que el lector escriba aquí
   });
+
+  cantidadInput.addEventListener("blur", function () {
+    permitirEscaneo = true; // 🔓 volver a permitir escaneo
+  });
+
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
-
     permitirEscaneo = true; // 📦 escáner normal
   });
-});
+  });
 
 async function cargarUsuarios() {
   try {
@@ -282,23 +288,16 @@ function activarModoPDA() {
 
   // 🔒 foco permanente (CLAVE)
   setInterval(() => {
+    if (document.activeElement !== input) {
+      input.focus();
+    }
+  }, 300);
 
-  const cantidadInput = document.getElementById("cantidad");
+    mostrarMensaje("📟 Modo PDA activo", "ok");
 
-  // 🔒 No robar foco si el usuario está escribiendo cantidad
-  if (document.activeElement === cantidadInput) return;
-
-  if (document.activeElement !== input) {
-    input.focus();
-  }
-
-}, 300);
-
-  mostrarMensaje("📟 Modo PDA activo", "ok");
-
-  input.oninput = () => {
-    // el lector escribe aquí
-  };
+    input.oninput = () => {
+      // el lector escribe aquí
+    };
 
   input.onkeydown = (e) => {
     if (e.key === "Enter") {
