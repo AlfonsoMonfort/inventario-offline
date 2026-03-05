@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
  await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
-  registrarServiceWorker();
+  // registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
 
