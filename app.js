@@ -108,7 +108,7 @@ scanner.addEventListener("click", () => {
   }
 
   permitirEscaneo = true;
-
+});
 });
 
 
