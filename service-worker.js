@@ -1,31 +1,28 @@
-const CACHE_NAME = "inventario-cache-v6";
+const CACHE_NAME = "inventario-cache-v1";
 
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/app.js",
-  "/manifest.json",
-
-  "/xlsx.full.min.js",
-  "/jspdf.umd.min.js",
-  "/JsBarcode.all.min.js",
-
-  "/equivalencias.json",
-  "/referencias_sin_codigo_barras.json",
-  "/usuarios.json",
-
-  "/icon-192.png",
-  "/icon-512.png",
-  "/Logo_BAL_copy.png",
-
-  "/wood_plank_flicks.ogg",
-  "/beep_short.ogg"
+  "./",
+  "./index.html",
+  "./app.js",
+  "./manifest.json",
+  "./xlsx.full.min.js",
+  "./jspdf.umd.min.js",
+  "./JsBarcode.all.min.js",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache);
+    caches.open(CACHE_NAME).then(async cache => {
+      for (const url of urlsToCache) {
+        try {
+          await cache.add(url);
+          console.log("Cache OK:", url);
+        } catch (e) {
+          console.log("Cache ERROR:", url);
+        }
+      }
     })
   );
 
@@ -50,8 +47,6 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
+    caches.match(event.request).then(res => res || fetch(event.request))
   );
 });
