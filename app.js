@@ -36,12 +36,14 @@ let editandoCantidad = false;
 // ----------------------------
 // INICIO
 // ----------------------------
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
+  iniciarApp();
+});
+
+async function iniciarApp() {
 
   await cargarUsuarios();
   verificarSesion();
-
-  
 
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
@@ -52,14 +54,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     this.value = this.value.toUpperCase().slice(0, 3);
   });
 
- await cargarEquivalencias();
+  await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
-  // registrarServiceWorker();
+  registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
 
-  // 👇 controlar cuando se está editando cantidad
+  // controlar cuando se está editando cantidad
   cantidadInput.addEventListener("focus", function () {
     editandoCantidad = true;
     this.value = "";
@@ -72,9 +74,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
-    permitirEscaneo = true; // 📦 escáner normal
+    permitirEscaneo = true;
   });
-  });
+
+}
 
 async function cargarUsuarios() {
   try {
