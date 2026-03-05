@@ -58,30 +58,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   const cantidadInput = document.getElementById("cantidad");
   const inputPDA = document.getElementById("inputPDA");
 
-  // -----------------------------
-  // CONTROL DE EDICIÓN CANTIDAD
-  // -----------------------------
-  cantidadInput.addEventListener("focus", function () {
+// -----------------------------
+// CONTROL DE EDICIÓN CANTIDAD
+// -----------------------------
+cantidadInput.addEventListener("focus", function () {
 
-    // limpiar campo al empezar a editar
-    this.value = "";
+  // limpiar campo al empezar a editar
+  this.value = "";
 
-    editandoCantidad = true;
+  editandoCantidad = true;
 
-    // bloquear escaneo mientras se escribe
-    permitirEscaneo = false;
+  // bloquear escaneo mientras se escribe
+  permitirEscaneo = false;
 
-  });
+});
 
-  cantidadInput.addEventListener("blur", function () {
+cantidadInput.addEventListener("blur", function () {
 
-    // cerrar modo edición
-    editandoCantidad = false;
+  // cerrar modo edición
+  editandoCantidad = false;
 
-    // permitir escaneo otra vez
-    permitirEscaneo = true;
+  // permitir escaneo otra vez
+  permitirEscaneo = true;
 
-  });
+});
 
 
 // 🔒 PROTECCIÓN PARA LECTOR LÁSER
@@ -90,12 +90,36 @@ cantidadInput.addEventListener("keydown", function (e) {
 
   // si NO estamos editando manualmente
   if (!editandoCantidad) {
+
     e.preventDefault();
+
+    // mover foco al lector PDA
+    const inputPDA = document.getElementById("inputPDA");
+
+    if (inputPDA) {
+      inputPDA.focus();
+    }
+
     return;
+
   }
 
 });
 
+// 🔒 PROTECCIÓN GLOBAL PARA PDA
+document.addEventListener("keydown", function (e) {
+
+  if (modoPDA && !editandoCantidad) {
+
+    const inputPDA = document.getElementById("inputPDA");
+
+    if (document.activeElement !== inputPDA) {
+      inputPDA.focus();
+    }
+
+  }
+
+});
   
 
 // -----------------------------
@@ -103,34 +127,21 @@ cantidadInput.addEventListener("keydown", function (e) {
 // -----------------------------
 const scanner = document.getElementById("scanner");
 
-scanner.addEventListener("click", () => {
+scanner.addEventListener("pointerdown", () => {
 
   const cantidadInput = document.getElementById("cantidad");
   const inputPDA = document.getElementById("inputPDA");
 
-  // Si estábamos editando cantidad
-  if (document.activeElement === cantidadInput) {
+  if (cantidadInput) cantidadInput.blur();
 
-    // simular ENTER
-    cantidadInput.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
-    );
+  editandoCantidad = false;
 
-    // cerrar input
-    cantidadInput.blur();
-
-    editandoCantidad = false;
-  }
-
-  // activar escaneo
-  permitirEscaneo = true;
-
-  // mover foco al lector
   if (inputPDA) {
     inputPDA.value = "";
     inputPDA.focus();
   }
 
+  permitirEscaneo = true;
 });
 });
 
