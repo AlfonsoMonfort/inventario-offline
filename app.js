@@ -33,6 +33,46 @@ let etiquetasSeleccionadas = [];
 
 let editandoCantidad = false;
 
+
+window.addEventListener("load", function () {
+
+  if (modoPDA) {
+
+    const inputPDA = document.getElementById("inputPDA");
+
+    if (inputPDA) {
+      setTimeout(() => {
+        inputPDA.focus();
+      }, 300);
+    }
+
+  }
+
+});
+
+// -----------------------------
+// CONTROL DE EDICIÓN CANTIDAD
+// -----------------------------
+cantidadInput.addEventListener("focus", function () {
+
+  this.value = "";
+  editandoCantidad = true;
+  permitirEscaneo = false;
+
+});
+
+cantidadInput.addEventListener("blur", function () {
+
+  editandoCantidad = false;
+  permitirEscaneo = true;
+
+  if (modoPDA) {
+    const inputPDA = document.getElementById("inputPDA");
+    if (inputPDA) inputPDA.focus();
+  }
+
+});
+
 // ----------------------------
 // INICIO
 // ----------------------------
@@ -58,30 +98,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const cantidadInput = document.getElementById("cantidad");
   const inputPDA = document.getElementById("inputPDA");
 
-// -----------------------------
-// CONTROL DE EDICIÓN CANTIDAD
-// -----------------------------
-cantidadInput.addEventListener("focus", function () {
 
-  // limpiar campo al empezar a editar
-  this.value = "";
-
-  editandoCantidad = true;
-
-  // bloquear escaneo mientras se escribe
-  permitirEscaneo = false;
-
-});
-
-cantidadInput.addEventListener("blur", function () {
-
-  // cerrar modo edición
-  editandoCantidad = false;
-
-  // permitir escaneo otra vez
-  permitirEscaneo = true;
-
-});
 
 
 // 🔒 PROTECCIÓN PARA LECTOR LÁSER
