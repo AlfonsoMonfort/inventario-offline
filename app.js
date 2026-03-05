@@ -36,14 +36,19 @@ let editandoCantidad = false;
 // ----------------------------
 // INICIO
 // ----------------------------
-document.addEventListener("DOMContentLoaded", () => {
-  iniciarApp();
-});
+window.onload = iniciarApp;
 
-async function iniciarApp() {
+function iniciarApp() {
 
-  await cargarUsuarios();
-  verificarSesion();
+  registrarServiceWorker();
+
+  cargarUsuarios().then(() => {
+    verificarSesion();
+  });
+
+  cargarEquivalencias();
+  cargarEquivalenciasAprendidas();
+  cargarReferenciasSinCodigo();
 
   const btnInstalar = document.getElementById("btnInstalar");
 
@@ -52,7 +57,6 @@ async function iniciarApp() {
       if (deferredPrompt) {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        console.log("Resultado instalación:", outcome);
         deferredPrompt = null;
         btnInstalar.style.display = "none";
       }
@@ -68,31 +72,6 @@ async function iniciarApp() {
   if (almacenInput) {
     almacenInput.addEventListener("input", function () {
       this.value = this.value.toUpperCase().slice(0, 3);
-    });
-  }
-
-  await cargarEquivalencias();
-  cargarEquivalenciasAprendidas();
-  await cargarReferenciasSinCodigo();
-
-  registrarServiceWorker();
-
-  const cantidadInput = document.getElementById("cantidad");
-  if (cantidadInput) {
-    cantidadInput.addEventListener("focus", function () {
-      editandoCantidad = true;
-      this.value = "";
-    });
-
-    cantidadInput.addEventListener("blur", function () {
-      editandoCantidad = false;
-    });
-  }
-
-  const scanner = document.getElementById("scanner");
-  if (scanner) {
-    scanner.addEventListener("click", () => {
-      permitirEscaneo = true;
     });
   }
 
@@ -955,16 +934,14 @@ if (inputImportar) {
 // ----------------------------
 function registrarServiceWorker() {
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-      navigator.serviceWorker
-        .register('./service-worker.js')
-        .then(function (registration) {
-          console.log('Service Worker registrado:', registration.scope);
-        })
-        .catch(function (error) {
-          console.log('Error registrando Service Worker:', error);
-        });
-    });
+    navigator.serviceWorker
+      .register('./service-worker.js')
+      .then(function (registration) {
+        console.log('Service Worker registrado:', registration.scope);
+      })
+      .catch(function (error) {
+        console.log('Error registrando Service Worker:', error);
+      });
   }
 }
 
