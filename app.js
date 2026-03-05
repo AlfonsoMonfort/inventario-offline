@@ -1,3 +1,35 @@
+function logError(mensaje) {
+
+  const ahora = new Date().toISOString();
+  const texto = ahora + " - " + mensaje + "\n";
+
+  let logActual = localStorage.getItem("debug_log") || "";
+  logActual += texto;
+
+  localStorage.setItem("debug_log", logActual);
+}
+
+window.onerror = function(msg, url, line, col, error) {
+
+  logError(
+    "ERROR JS -> " +
+    msg +
+    " | " +
+    url +
+    ":" +
+    line +
+    ":" +
+    col
+  );
+
+};
+
+window.addEventListener("unhandledrejection", function(e){
+
+  logError("PROMISE ERROR -> " + e.reason);
+
+});
+
 // ----------------------------
 // VARIABLES GLOBALES
 // ----------------------------
@@ -80,6 +112,20 @@ function iniciarApp() {
       this.value = this.value.toUpperCase().slice(0, 3);
     });
   }
+
+}
+
+function descargarLog() {
+
+  const log = localStorage.getItem("debug_log") || "Sin errores registrados";
+
+  const blob = new Blob([log], {type:"text/plain"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "debug_log.txt";
+  a.click();
 
 }
 
@@ -225,7 +271,7 @@ function cargarEquivalenciasAprendidas() {
 // EMPEZAR INVENTARIO
 // ----------------------------
 function empezar() {
-
+  logError("FUNCION EMPEZAR");
   const fechaInput = document.getElementById("fecha");
   const almacenInput = document.getElementById("almacen");
   const vendedorInput = document.getElementById("vendedor");

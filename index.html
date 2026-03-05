@@ -258,7 +258,7 @@ li{
 <audio id="okSound" src="wood_plank_flicks.ogg"></audio>
 <audio id="errorSound" src="beep_short.ogg"></audio>
 
-<header>Inventario Offline V.1</header>
+<header>Inventario Offline V.2</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -490,6 +490,29 @@ li{
 <!-- TU APP -->
 <script src="jspdf.umd.min.js"></script>
 <script src="JsBarcode.all.min.js"></script>
+
+<script>
+
+function logError(m){
+  try{
+    let log = localStorage.getItem("debug_log") || "";
+    log += new Date().toISOString() + " - " + m + "\n";
+    localStorage.setItem("debug_log", log);
+  }catch(e){}
+}
+
+window.onerror=function(msg,url,line,col){
+  logError("JS ERROR -> "+msg+" | "+url+":"+line+":"+col);
+};
+
+window.addEventListener("unhandledrejection",function(e){
+  logError("PROMISE ERROR -> "+e.reason);
+});
+
+logError("INDEX HTML CARGADO");
+
+</script>
+
 <script src="app.js"></script>
 </body>
 </html>
