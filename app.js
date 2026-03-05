@@ -45,37 +45,56 @@ async function iniciarApp() {
   await cargarUsuarios();
   verificarSesion();
 
-  document.getElementById("fecha").value =
-    new Date().toISOString().split("T")[0];
+  const btnInstalar = document.getElementById("btnInstalar");
+
+  if (btnInstalar) {
+    btnInstalar.addEventListener("click", async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log("Resultado instalación:", outcome);
+        deferredPrompt = null;
+        btnInstalar.style.display = "none";
+      }
+    });
+  }
+
+  const fechaInput = document.getElementById("fecha");
+  if (fechaInput) {
+    fechaInput.value = new Date().toISOString().split("T")[0];
+  }
 
   const almacenInput = document.getElementById("almacen");
-
-  almacenInput.addEventListener("input", function () {
-    this.value = this.value.toUpperCase().slice(0, 3);
-  });
+  if (almacenInput) {
+    almacenInput.addEventListener("input", function () {
+      this.value = this.value.toUpperCase().slice(0, 3);
+    });
+  }
 
   await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
+
   registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
+  if (cantidadInput) {
+    cantidadInput.addEventListener("focus", function () {
+      editandoCantidad = true;
+      this.value = "";
+    });
 
-  // controlar cuando se está editando cantidad
-  cantidadInput.addEventListener("focus", function () {
-    editandoCantidad = true;
-    this.value = "";
-  });
-
-  cantidadInput.addEventListener("blur", function () {
-    editandoCantidad = false;
-  });
+    cantidadInput.addEventListener("blur", function () {
+      editandoCantidad = false;
+    });
+  }
 
   const scanner = document.getElementById("scanner");
-
-  scanner.addEventListener("click", () => {
-    permitirEscaneo = true;
-  });
+  if (scanner) {
+    scanner.addEventListener("click", () => {
+      permitirEscaneo = true;
+    });
+  }
 
 }
 
@@ -394,19 +413,7 @@ window.addEventListener("beforeinstallprompt", (e) => {
     btn.style.display = "block";
 });
 
-const btnInstalar = document.getElementById("btnInstalar");
 
-if (btnInstalar) {
-  btnInstalar.addEventListener("click", async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log("Resultado instalación:", outcome);
-      deferredPrompt = null;
-      btnInstalar.style.display = "none";
-    }
-  });
-}
 
 function esPWAenIOS() {
   return (
