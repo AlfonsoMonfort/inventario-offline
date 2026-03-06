@@ -1230,7 +1230,7 @@ function generarPDFEtiquetasSeleccionadas() {
     JsBarcode(canvas, codigo, {
       format: formato,
       displayValue: false,
-      width: 1.7,
+      width: 1.8,
       height: 40,
       margin: 0
     });
