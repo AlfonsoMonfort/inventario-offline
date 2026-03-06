@@ -1,35 +1,3 @@
-function logError(mensaje) {
-
-  const ahora = new Date().toISOString();
-  const texto = ahora + " - " + mensaje + "\n";
-
-  let logActual = localStorage.getItem("debug_log") || "";
-  logActual += texto;
-
-  localStorage.setItem("debug_log", logActual);
-}
-
-window.onerror = function(msg, url, line, col, error) {
-
-  logError(
-    "ERROR JS -> " +
-    msg +
-    " | " +
-    url +
-    ":" +
-    line +
-    ":" +
-    col
-  );
-
-};
-
-window.addEventListener("unhandledrejection", function(e){
-
-  logError("PROMISE ERROR -> " + e.reason);
-
-});
-
 // ----------------------------
 // VARIABLES GLOBALES
 // ----------------------------
@@ -65,69 +33,48 @@ let etiquetasSeleccionadas = [];
 
 let editandoCantidad = false;
 
-window.onerror = function (msg, url, line, col, error) {
-  console.log("ERROR GLOBAL:", msg, "linea:", line, "col:", col);
-  alert("ERROR: " + msg + " linea:" + line);
-};
-
 // ----------------------------
 // INICIO
 // ----------------------------
-window.onload = iniciarApp;
+document.addEventListener("DOMContentLoaded", async () => {
 
-function iniciarApp() {
-  console.log("APP INICIANDO");
-  alert("APP INICIANDO");
-  registrarServiceWorker();
+  await cargarUsuarios();
+  verificarSesion();
 
-  cargarUsuarios().then(() => {
-    verificarSesion();
-  });
+  
 
-  cargarEquivalencias();
-  cargarEquivalenciasAprendidas();
-  cargarReferenciasSinCodigo();
-
-  const btnInstalar = document.getElementById("btnInstalar");
-
-  if (btnInstalar) {
-    btnInstalar.addEventListener("click", async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        btnInstalar.style.display = "none";
-      }
-    });
-  }
-
-  const fechaInput = document.getElementById("fecha");
-  if (fechaInput) {
-    fechaInput.value = new Date().toISOString().split("T")[0];
-  }
+  document.getElementById("fecha").value =
+    new Date().toISOString().split("T")[0];
 
   const almacenInput = document.getElementById("almacen");
-  if (almacenInput) {
-    almacenInput.addEventListener("input", function () {
-      this.value = this.value.toUpperCase().slice(0, 3);
-    });
-  }
 
-}
+  almacenInput.addEventListener("input", function () {
+    this.value = this.value.toUpperCase().slice(0, 3);
+  });
 
-function descargarLog() {
+ await cargarEquivalencias();
+  cargarEquivalenciasAprendidas();
+  await cargarReferenciasSinCodigo();
+  registrarServiceWorker();
 
-  const log = localStorage.getItem("debug_log") || "Sin errores registrados";
+  const cantidadInput = document.getElementById("cantidad");
 
-  const blob = new Blob([log], {type:"text/plain"});
-  const url = URL.createObjectURL(blob);
+  // 👇 controlar cuando se está editando cantidad
+  cantidadInput.addEventListener("focus", function () {
+    editandoCantidad = true;
+    this.value = "";
+  });
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "debug_log.txt";
-  a.click();
+  cantidadInput.addEventListener("blur", function () {
+    editandoCantidad = false;
+  });
 
-}
+  const scanner = document.getElementById("scanner");
+
+  scanner.addEventListener("click", () => {
+    permitirEscaneo = true; // 📦 escáner normal
+  });
+  });
 
 async function cargarUsuarios() {
   try {
@@ -137,11 +84,8 @@ async function cargarUsuarios() {
     usuariosPermitidos = await res.json();
     console.log("Usuarios cargados:", usuariosPermitidos.length);
   } catch (e) {
-    console.error("Error cargando usuarios:", e);
-
-    usuariosPermitidos = [];
-
-    mostrarMensaje("⚠️ Usuarios no cargados", "error");
+    alert("Error cargando usuarios");
+    console.error(e);
   }
 }
 
@@ -172,22 +116,6 @@ async function cargarReferenciasSinCodigo() {
 };
 
 
-function cargarQuaggaSiNecesario() {
-
-  if (modoPDA) {
-    console.log("Modo PDA: no cargar Quagga");
-    return;
-  }
-
-  const script = document.createElement("script");
-  script.src = "/quagga.min.js";
-
-  script.onload = function () {
-    console.log("Quagga cargado");
-  };
-
-  document.body.appendChild(script);
-}
 
 // ----------------------------
 // CARGAR EXCEL EQUIVALENCIAS
@@ -271,7 +199,7 @@ function cargarEquivalenciasAprendidas() {
 // EMPEZAR INVENTARIO
 // ----------------------------
 function empezar() {
-  logError("FUNCION EMPEZAR");
+
   const fechaInput = document.getElementById("fecha");
   const almacenInput = document.getElementById("almacen");
   const vendedorInput = document.getElementById("vendedor");
@@ -289,30 +217,18 @@ function empezar() {
   document.getElementById("pantallaInicio").style.display = "none";
   document.getElementById("pantallaEscaner").style.display = "block";
 
-  // 🔴 Si es PDA no cargar cámara
   if (modoPDA) {
-    activarModoPDA();
-    return;
-  }
+  activarModoPDA();
+  return;
+}
 
-  // 📱 Solo móviles
-  cargarQuaggaSiNecesario();
   iniciarScanner();
 }
+
 // ----------------------------
 // INICIAR ESCÁNER
 // ----------------------------
 function iniciarScanner() {
-
-  if (modoPDA) {
-    console.log("Modo PDA: usando lector físico");
-    return;
-  }
-
-  if (typeof Quagga === "undefined") {
-    console.log("Quagga no disponible");
-    return;
-  }
 
   Quagga.init({
     inputStream: {
@@ -342,12 +258,10 @@ function iniciarScanner() {
     }
     Quagga.start();
   });
-
   Quagga.offDetected();
-
   Quagga.onDetected(function (result) {
     if (!permitirEscaneo) return;
-    if (!result || !result.codeResult || !result.codeResult.code) return;
+    if (!result?.codeResult?.code) return;
 
     let code = result.codeResult.code.replace(/\D/g, "");
     code = code.replace(/^0+/, "");
@@ -470,19 +384,22 @@ function guardarCodigoAprendido() {
 let deferredPrompt;
 
 window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
 
-  e.preventDefault();
-  deferredPrompt = e;
-
-  const btn = document.getElementById("btnInstalar");
-
-  if (btn) {
+    const btn = document.getElementById("btnInstalar");
     btn.style.display = "block";
-  }
-
 });
 
-
+document.getElementById("btnInstalar").addEventListener("click", async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log("Resultado instalación:", outcome);
+        deferredPrompt = null;
+        document.getElementById("btnInstalar").style.display = "none";
+    }
+});
 
 function esPWAenIOS() {
   return (
@@ -619,13 +536,9 @@ function exportarCodigosAprendidos() {
 // BOTÓN AYUDA
 // ===============================
 
-const btnAyuda = document.getElementById("btnAyuda");
-
-if (btnAyuda) {
-  btnAyuda.addEventListener("click", () => {
-    document.getElementById("modalAyuda").style.display = "flex";
-  });
-}
+document.getElementById("btnAyuda").addEventListener("click", () => {
+  document.getElementById("modalAyuda").style.display = "flex";
+});
 
 function cerrarAyuda() {
   document.getElementById("modalAyuda").style.display = "none";
@@ -1005,36 +918,31 @@ function sumarInventarioDesdeExcel(filas) {
   actualizarLista();
 }
 
-const inputImportar = document.getElementById("importarExcel");
-
-if (inputImportar) {
-  inputImportar.addEventListener("change", importarInventarioExcel);
-}
+document
+  .getElementById("importarExcel")
+  .addEventListener("change", importarInventarioExcel);
 
 // ----------------------------
 // SERVICE WORKER
 // ----------------------------
 function registrarServiceWorker() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker
-      .register('/service-worker.js')
-      .then(function (registration) {
-        console.log('Service Worker registrado:', registration.scope);
-      })
-      .catch(function (error) {
-        console.log('Error registrando Service Worker:', error);
-      });
+    window.addEventListener('load', function () {
+      navigator.serviceWorker
+        .register('service-worker.js')
+        .then(function (registration) {
+          console.log('Service Worker registrado:', registration.scope);
+        })
+        .catch(function (error) {
+          console.log('Error registrando Service Worker:', error);
+        });
+    });
   }
 }
 
 async function login() {
   const u = document.getElementById("loginUsuario").value.trim();
   const p = document.getElementById("loginPassword").value.trim();
-
-  // 🔴 detectar modo PDA antes de todo
-  if (u === "PDA") {
-    modoPDA = true;
-  }
 
   try {
     await cargarUsuarios();
@@ -1063,6 +971,10 @@ async function login() {
   } catch (e) {
     mostrarMensaje("❌ Sin conexión", "error");
   }
+
+  if (u === "PDA") {
+  modoPDA = true;
+}
 }
 
 function verificarSesion() {

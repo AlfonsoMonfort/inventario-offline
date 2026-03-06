@@ -1,52 +1,63 @@
-const CACHE_NAME = "inventario-cache-v3";
+const CACHE_NAME = "inventario-cache-v8";
 
 const urlsToCache = [
   "./",
   "./index.html",
   "./app.js",
   "./manifest.json",
+  "./quagga.min.js",
   "./xlsx.full.min.js",
-  "./jspdf.umd.min.js",
-  "./JsBarcode.all.min.js",
   "./icon-192.png",
-  "./icon-512.png"
+  "./icon-512.png",
+  "./equivalencias.json",
+  "./referencias_sin_codigo_barras.json"
+  
 ];
 
+// --------------------
+// INSTALL
+// --------------------
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      for (const url of urlsToCache) {
-        try {
-          await cache.add(url);
-          console.log("Cache OK:", url);
-        } catch (e) {
-          console.log("Cache ERROR:", url);
-        }
-      }
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
   );
 
+  // 🔥 Fuerza activación inmediata
   self.skipWaiting();
 });
 
+// --------------------
+// ACTIVATE
+// --------------------
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      )
-    )
+    Promise.all([
+      // Borra versiones antiguas
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cache => {
+            if (cache !== CACHE_NAME) {
+              return caches.delete(cache);
+            }
+          })
+        );
+      }),
+      // 🔥 Toma control inmediato
+      self.clients.claim()
+    ])
   );
-
-  self.clients.claim();
 });
 
+
+// --------------------
+// FETCH
+// --------------------
 self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request).then(res => res || fetch(event.request))
+    caches.match(event.request)
+      .then(response => {
+        return response || fetch(event.request);
+      })
   );
 });

@@ -7,7 +7,7 @@
 
 <link rel="manifest" href="manifest.json">
 
-
+<script src="quagga.min.js"></script>
 <script src="xlsx.full.min.js"></script>
 
 
@@ -255,10 +255,10 @@ li{
   <img src="Logo_BAL_copy.png" alt="Logo">
 </div>
 
-<audio id="okSound" src="wood_plank_flicks.ogg"></audio>
-<audio id="errorSound" src="beep_short.ogg"></audio>
+<audio id="okSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<header>Inventario Offline V.3</header>
+<header>Inventario Offline V.8</header>
 
 <button id="btnInstalar" style="display:none; margin:15px;">
   📲 Instalar aplicación
@@ -488,31 +488,8 @@ li{
 </div>
 
 <!-- TU APP -->
-<script src="jspdf.umd.min.js"></script>
-<script src="JsBarcode.all.min.js"></script>
-
-<script>
-
-function logError(m){
-  try{
-    let log = localStorage.getItem("debug_log") || "";
-    log += new Date().toISOString() + " - " + m + "\n";
-    localStorage.setItem("debug_log", log);
-  }catch(e){}
-}
-
-window.onerror=function(msg,url,line,col){
-  logError("JS ERROR -> "+msg+" | "+url+":"+line+":"+col);
-};
-
-window.addEventListener("unhandledrejection",function(e){
-  logError("PROMISE ERROR -> "+e.reason);
-});
-
-logError("INDEX HTML CARGADO");
-
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
