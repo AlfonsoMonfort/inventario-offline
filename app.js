@@ -130,6 +130,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       mostrarMensaje("📦 Inventario recuperado", "ok");
 
+      if (modoPDA) {
+        activarModoPDA();
+      } else {
+        iniciarScanner();
+      }
+
     } else {
 
       localStorage.removeItem("inventario_en_progreso");
