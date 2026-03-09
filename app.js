@@ -1,6 +1,45 @@
+const DB_NAME = "inventarioDB";
+const STORE_NAME = "datos";
+
+function abrirDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+
+    request.onupgradeneeded = e => {
+      const db = e.target.result;
+      db.createObjectStore(STORE_NAME);
+    };
+
+    request.onsuccess = e => resolve(e.target.result);
+    request.onerror = e => reject(e);
+  });
+}
+
+async function guardarDatos(clave, datos) {
+  const db = await abrirDB();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  const store = tx.objectStore(STORE_NAME);
+  store.put(datos, clave);
+}
+
+async function leerDatos(clave) {
+  const db = await abrirDB();
+  const tx = db.transaction(STORE_NAME, "readonly");
+  const store = tx.objectStore(STORE_NAME);
+
+  return new Promise(resolve => {
+    const req = store.get(clave);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+  });
+}
+
+
 // ----------------------------
 // VARIABLES GLOBALES
 // ----------------------------
+
+
 let codigo_a_referencia = {};
 let referencia_a_descripcion = {};
 let referenciasSinCodigo = [];
@@ -124,60 +163,33 @@ async function cargarEquivalencias() {
 
   try {
 
-    let datosGuardados = localStorage.getItem("equivalencias");
-
-    if (datosGuardados) {
-      console.log("Cargando equivalencias desde almacenamiento local");
-      let datos = JSON.parse(datosGuardados);
-
-      datos.forEach(item => {
-        const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
-
-        codigo_a_referencia[codigoNormalizado] = item.referencia;
-        referencia_a_descripcion[item.referencia] = item.descripcion;
-        referencia_a_codigo[item.referencia] = codigoNormalizado;
-      });
-
-      console.log(
-        "Total códigos cargados:",
-        Object.keys(codigo_a_referencia).length
-      );
-      return;
-    }
-
-    console.log("Descargando equivalencias por primera vez");
-
     const response = await fetch("equivalencias.json");
+    const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error("No se pudo cargar equivalencias.json");
-    }
+    equivalencias = data;
 
-    const datos = await response.json();
+    await guardarDatos("equivalencias", data);
 
-    console.log("Datos recibidos:", datos);
-
-    // Guardamos TAL CUAL llegaron (pero se normalizan al usar)
-    localStorage.setItem("equivalencias", JSON.stringify(datos));
-
-    datos.forEach(item => {
-
-      const codigoNormalizado = String(item.codigo).replace(/^0+/, "");
-
-      codigo_a_referencia[codigoNormalizado] = item.referencia;
-      referencia_a_descripcion[item.referencia] = item.descripcion;
-      referencia_a_codigo[item.referencia] = codigoNormalizado; // 👈 AÑADIR
-    });
-
-    console.log(
-      "Total códigos cargados:",
-      Object.keys(codigo_a_referencia).length
-    );
+    console.log("Equivalencias cargadas desde internet");
 
   } catch (error) {
-    console.log("Error cargando equivalencias:", error);
+
+    console.log("Sin internet, cargando desde IndexedDB");
+
+    const data = await leerDatos("equivalencias");
+
+    if (data) {
+      equivalencias = data;
+      console.log("Equivalencias cargadas desde almacenamiento local");
+    } else {
+      console.error("No hay datos guardados");
+    }
+
   }
+
 }
+
+cargarEquivalencias();
 
 function cargarEquivalenciasAprendidas() {
 
