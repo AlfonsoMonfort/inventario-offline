@@ -111,6 +111,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarUsuarios();
   verificarSesion();
 
+  document.getElementById("fecha").value =
+    new Date().toISOString().split("T")[0];
+
+  const almacenInput = document.getElementById("almacen");
+
+  almacenInput.addEventListener("input", function () {
+    this.value = this.value.toUpperCase().slice(0, 3);
+  });
+
+  await cargarEquivalencias();
+  cargarEquivalenciasAprendidas();
+  await cargarReferenciasSinCodigo();
+
+  registrarServiceWorker();
+
   const inventarioGuardado = localStorage.getItem("inventario_en_progreso");
 
   if (inventarioGuardado) {
@@ -122,6 +137,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (recuperar) {
 
       inventario = JSON.parse(inventarioGuardado);
+
+      // 🔎 reconstruir nombres
+      inventario.forEach(item => {
+
+        const eq = equivalencias.find(e => e.codigo === item.codigo);
+
+        if (eq) {
+          item.nombre = eq.nombre;
+        } else {
+          item.nombre = item.codigo;
+        }
+
+      });
 
       document.getElementById("pantallaInicio").style.display = "none";
       document.getElementById("pantallaEscaner").style.display = "block";
@@ -143,20 +171,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
   }
-
-  document.getElementById("fecha").value =
-    new Date().toISOString().split("T")[0];
-
-  const almacenInput = document.getElementById("almacen");
-
-  almacenInput.addEventListener("input", function () {
-    this.value = this.value.toUpperCase().slice(0, 3);
-  });
-
-  await cargarEquivalencias();
-  cargarEquivalenciasAprendidas();
-  await cargarReferenciasSinCodigo();
-  registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
 
