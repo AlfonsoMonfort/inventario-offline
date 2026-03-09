@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v3";
+const CACHE_NAME = "inventario-cache-v4";
 
 const urlsToCache = [
   "./",
@@ -9,43 +9,64 @@ const urlsToCache = [
   "./xlsx.full.min.js",
   "./jspdf.umd.min.js",
   "./JsBarcode.all.min.js",
-  "./icon-192.png",
-  "./icon-512.png",
   "./equivalencias.json",
   "./referencias_sin_codigo_barras.json",
   "./usuarios.json",
+  "./icon-192.png",
+  "./icon-512.png",
   "./wood_plank_flicks.ogg",
   "./beep_short.ogg",
   "./Logo_BAL_copy.png"
 ];
 
+
 // INSTALL
 self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
 
   self.skipWaiting();
+
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+
+      return Promise.all(
+        urlsToCache.map(url => {
+          return cache.add(url).catch(err => {
+            console.log("No se pudo cachear:", url);
+          });
+        })
+      );
+
+    })
+  );
+
 });
+
 
 // ACTIVATE
 self.addEventListener("activate", event => {
+
   event.waitUntil(
-    Promise.all([
-      caches.keys().then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cache => {
-            if (cache !== CACHE_NAME) {
-              return caches.delete(cache);
-            }
-          })
-        );
-      }),
-      self.clients.claim()
-    ])
+
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+
+        cacheNames.map(cache => {
+
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+
+        })
+
+      );
+    })
+
   );
+
+  self.clients.claim();
+
 });
+
 
 // FETCH
 self.addEventListener("fetch", event => {
@@ -58,7 +79,17 @@ self.addEventListener("fetch", event => {
         return response;
       }
 
-      return fetch(event.request).catch(() => {
+      return fetch(event.request).then(networkResponse => {
+
+        return caches.open(CACHE_NAME).then(cache => {
+
+          cache.put(event.request, networkResponse.clone());
+
+          return networkResponse;
+
+        });
+
+      }).catch(() => {
 
         if (event.request.mode === "navigate") {
           return caches.match("./index.html");
