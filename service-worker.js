@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v4";
+const CACHE_NAME = "inventario-cache-v6";
 
 const urlsToCache = [
   "/",
@@ -19,7 +19,6 @@ const urlsToCache = [
   "/Logo_BAL_copy.png"
 ];
 
-// INSTALL
 self.addEventListener("install", event => {
 
   self.skipWaiting();
@@ -32,7 +31,6 @@ self.addEventListener("install", event => {
 
 });
 
-// ACTIVATE
 self.addEventListener("activate", event => {
 
   event.waitUntil(
@@ -51,10 +49,14 @@ self.addEventListener("activate", event => {
 
 });
 
-// FETCH
 self.addEventListener("fetch", event => {
 
   const req = event.request;
+
+  // 🔧 IMPORTANTE: no interceptar peticiones de rango (audio/video)
+  if (req.headers.has("range")) {
+    return;
+  }
 
   event.respondWith(
 
@@ -66,11 +68,16 @@ self.addEventListener("fetch", event => {
 
       return fetch(req).then(networkResponse => {
 
-        const clone = networkResponse.clone();
+        // solo guardar respuestas completas
+        if (networkResponse.status === 200) {
 
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(req, clone);
-        });
+          const clone = networkResponse.clone();
+
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(req, clone);
+          });
+
+        }
 
         return networkResponse;
 
