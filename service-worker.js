@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v3";
+const CACHE_NAME = "inventario-cache-v4";
 
 const urlsToCache = [
   "/",
@@ -19,7 +19,6 @@ const urlsToCache = [
   "/Logo_BAL_copy.png"
 ];
 
-
 // INSTALL
 self.addEventListener("install", event => {
 
@@ -32,7 +31,6 @@ self.addEventListener("install", event => {
   );
 
 });
-
 
 // ACTIVATE
 self.addEventListener("activate", event => {
@@ -53,16 +51,10 @@ self.addEventListener("activate", event => {
 
 });
 
-
 // FETCH
 self.addEventListener("fetch", event => {
 
   const req = event.request;
-
-  // 🔊 dejar pasar audio sin interceptar (arregla sonidos offline)
-  if (req.destination === "audio") {
-    return;
-  }
 
   event.respondWith(
 
