@@ -1,11 +1,25 @@
 const DB_NAME = "inventarioDB";
 const STORE_NAME = "datos";
 
-const okSound = new Audio("/wood_plank_flicks.ogg");
-const errorSound = new Audio("/beep_short.ogg");
+let okSound;
+let errorSound;
 
-okSound.load();
-errorSound.load();
+async function cargarSonidos() {
+  try {
+    const okBlob = await fetch("/wood_plank_flicks.ogg").then(r => r.blob());
+    const errorBlob = await fetch("/beep_short.ogg").then(r => r.blob());
+
+    okSound = new Audio(URL.createObjectURL(okBlob));
+    errorSound = new Audio(URL.createObjectURL(errorBlob));
+
+    okSound.load();
+    errorSound.load();
+
+    console.log("Sonidos cargados");
+  } catch (e) {
+    console.error("No se pudieron cargar los sonidos", e);
+  }
+}
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
@@ -83,6 +97,8 @@ let editandoCantidad = false;
 // ----------------------------
 document.addEventListener("DOMContentLoaded", async () => {
 
+  await cargarSonidos();   // 🔊 cargar sonidos primero
+
   document.body.addEventListener("click", () => {
     okSound.play().then(()=> okSound.pause()).catch(()=>{});
     errorSound.play().then(()=> errorSound.pause()).catch(()=>{});
@@ -90,8 +106,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await cargarUsuarios();
   verificarSesion();
-
-  
 
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
@@ -102,14 +116,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     this.value = this.value.toUpperCase().slice(0, 3);
   });
 
- await cargarEquivalencias();
+  await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
   registrarServiceWorker();
 
   const cantidadInput = document.getElementById("cantidad");
 
-  // 👇 controlar cuando se está editando cantidad
   cantidadInput.addEventListener("focus", function () {
     editandoCantidad = true;
     this.value = "";
@@ -122,9 +135,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
-    permitirEscaneo = true; // 📦 escáner normal
+    permitirEscaneo = true;
   });
-  });
+
+});
 
 async function cargarUsuarios() {
   try {
