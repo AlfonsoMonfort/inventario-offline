@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v1";
+const CACHE_NAME = "inventario-cache-v2";
 
 const urlsToCache = [
   "/",
@@ -57,31 +57,38 @@ self.addEventListener("activate", event => {
 // FETCH
 self.addEventListener("fetch", event => {
 
+  const request = event.request;
+
+  // dejar pasar peticiones parciales (audio/video)
+  if (request.headers.get("range")) {
+    return;
+  }
+
   event.respondWith(
 
-    caches.match(event.request).then(response => {
+    caches.match(request).then(response => {
 
-      // 1️⃣ si está en caché → usarlo
       if (response) {
         return response;
       }
 
-      // 2️⃣ si no → intentar red
-      return fetch(event.request).then(networkResponse => {
+      return fetch(request).then(networkResponse => {
 
-        // guardar copia en caché
-        const responseClone = networkResponse.clone();
+        if (!networkResponse || networkResponse.status !== 200) {
+          return networkResponse;
+        }
+
+        const clone = networkResponse.clone();
 
         caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseClone);
+          cache.put(request, clone);
         });
 
         return networkResponse;
 
       }).catch(() => {
 
-        // 3️⃣ fallback navegación
-        if (event.request.mode === "navigate") {
+        if (request.mode === "navigate") {
           return caches.match("/index.html");
         }
 
