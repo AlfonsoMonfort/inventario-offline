@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v6";
+const CACHE_NAME = "inventario-cache-v1";
 
 const urlsToCache = [
   "/",
@@ -53,14 +53,11 @@ self.addEventListener("fetch", event => {
 
   const req = event.request;
 
-  // 🔧 IMPORTANTE: no interceptar peticiones de rango (audio/video)
-  if (req.headers.has("range")) {
-    return;
-  }
+  if (req.headers.has("range")) return;
 
   event.respondWith(
 
-    caches.match(req).then(response => {
+    caches.match(req, { ignoreSearch: true }).then(response => {
 
       if (response) {
         return response;
@@ -68,7 +65,6 @@ self.addEventListener("fetch", event => {
 
       return fetch(req).then(networkResponse => {
 
-        // solo guardar respuestas completas
         if (networkResponse.status === 200) {
 
           const clone = networkResponse.clone();
