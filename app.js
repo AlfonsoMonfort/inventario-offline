@@ -1,6 +1,10 @@
 const DB_NAME = "inventarioDB";
 const STORE_NAME = "datos";
 
+// SONIDOS (funcionan offline)
+const okSound = new Audio("/wood_plank_flicks.ogg");
+const errorSound = new Audio("/beep_short.ogg");
+
 function abrirDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1);
@@ -753,15 +757,13 @@ function mostrarMensaje(texto, tipo) {
     m.style.display = "block";
 
     if (tipo === "ok") {
-        let okSound = document.getElementById("okSound");
         okSound.currentTime = 0;
-        okSound.play();
+        okSound.play().catch(()=>{});
     }
 
     if (tipo === "error") {
-        let errorSound = document.getElementById("errorSound");
         errorSound.currentTime = 0;
-        errorSound.play();
+        errorSound.play().catch(()=>{});
     }
 
     setTimeout(() => {
