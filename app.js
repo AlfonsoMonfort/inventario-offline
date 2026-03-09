@@ -159,6 +159,8 @@ async function cargarReferenciasSinCodigo() {
 // ----------------------------
 // CARGAR EXCEL EQUIVALENCIAS
 // ----------------------------
+let equivalencias = {};
+
 async function cargarEquivalencias() {
 
   try {
@@ -183,13 +185,33 @@ async function cargarEquivalencias() {
       console.log("Equivalencias cargadas desde almacenamiento local");
     } else {
       console.error("No hay datos guardados");
+      return;
     }
 
   }
 
+  // 🔥 CONSTRUIR MAPAS PARA EL ESCÁNER
+  codigo_a_referencia = {};
+  referencia_a_codigo = {};
+  referencia_a_descripcion = referencia_a_descripcion || {};
+
+  equivalencias.forEach(item => {
+
+    let codigo = String(item.codigo).replace(/^0+/, "");
+    const referencia = item.referencia;
+    const descripcion = item.descripcion;
+
+    codigo_a_referencia[codigo] = referencia;
+    referencia_a_codigo[referencia] = codigo;
+    referencia_a_descripcion[referencia] = descripcion;
+
+  });
+
+  console.log("Total códigos cargados:", Object.keys(codigo_a_referencia).length);
+
 }
 
-cargarEquivalencias();
+
 
 function cargarEquivalenciasAprendidas() {
 
