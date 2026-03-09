@@ -121,26 +121,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (recuperar) {
 
-      inventario = JSON.parse(inventarioGuardado);
+    inventario = JSON.parse(inventarioGuardado);
 
-      document.getElementById("pantallaInicio").style.display = "none";
-      document.getElementById("pantallaEscaner").style.display = "block";
+    // 🔎 reconstruir nombres usando equivalencias
+    inventario.forEach(item => {
 
-      actualizarLista();
+      const eq = equivalencias.find(e => e.codigo === item.codigo);
 
-      mostrarMensaje("📦 Inventario recuperado", "ok");
-
-      if (modoPDA) {
-        activarModoPDA();
+      if (eq) {
+        item.nombre = eq.nombre;
       } else {
-        iniciarScanner();
+        item.nombre = item.codigo;
       }
 
+    });
+
+    document.getElementById("pantallaInicio").style.display = "none";
+    document.getElementById("pantallaEscaner").style.display = "block";
+
+    actualizarLista();
+
+    mostrarMensaje("📦 Inventario recuperado", "ok");
+
+    if (modoPDA) {
+      activarModoPDA();
     } else {
-
-      localStorage.removeItem("inventario_en_progreso");
-
+      iniciarScanner();
     }
+
+  } else {
+
+    localStorage.removeItem("inventario_en_progreso");
 
   }
 
