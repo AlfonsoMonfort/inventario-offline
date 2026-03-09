@@ -960,18 +960,20 @@ document
 // SERVICE WORKER
 // ----------------------------
 function registrarServiceWorker() {
+
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-      navigator.serviceWorker
-        .register('service-worker.js')
-        .then(function (registration) {
-          console.log('Service Worker registrado:', registration.scope);
-        })
-        .catch(function (error) {
-          console.log('Error registrando Service Worker:', error);
-        });
-    });
+
+    navigator.serviceWorker
+      .register('service-worker.js')
+      .then(reg => {
+        console.log("Service Worker registrado:", reg.scope);
+      })
+      .catch(err => {
+        console.log("Error registrando SW:", err);
+      });
+
   }
+
 }
 
 async function login() {
