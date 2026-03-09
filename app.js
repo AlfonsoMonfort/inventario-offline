@@ -155,6 +155,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   }
 
+  }
+
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
 
