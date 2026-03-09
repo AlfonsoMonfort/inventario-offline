@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v4";
+const CACHE_NAME = "inventario-cache-v1";
 
 const urlsToCache = [
   "./",
@@ -73,13 +73,18 @@ self.addEventListener("fetch", event => {
 
   event.respondWith(
 
-    caches.match(event.request).then(response => {
+    caches.match(event.request).then(cachedResponse => {
 
-      if (response) {
-        return response;
+      if (cachedResponse) {
+        return cachedResponse;
       }
 
       return fetch(event.request).then(networkResponse => {
+
+        // 🚨 NO guardar respuestas parciales
+        if (!networkResponse || networkResponse.status === 206) {
+          return networkResponse;
+        }
 
         return caches.open(CACHE_NAME).then(cache => {
 
