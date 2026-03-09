@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v3";
+const CACHE_NAME = "inventario-cache-v4";
 
 const urlsToCache = [
   "/",
@@ -57,38 +57,34 @@ self.addEventListener("activate", event => {
 // FETCH
 self.addEventListener("fetch", event => {
 
-  const request = event.request;
+  const req = event.request;
 
-  // dejar pasar peticiones parciales (audio/video)
-  if (request.headers.get("range")) {
+  // 🔊 dejar pasar audio sin interceptar (arregla sonidos offline)
+  if (req.destination === "audio") {
     return;
   }
 
   event.respondWith(
 
-    caches.match(request).then(response => {
+    caches.match(req).then(response => {
 
       if (response) {
         return response;
       }
 
-      return fetch(request).then(networkResponse => {
-
-        if (!networkResponse || networkResponse.status !== 200) {
-          return networkResponse;
-        }
+      return fetch(req).then(networkResponse => {
 
         const clone = networkResponse.clone();
 
         caches.open(CACHE_NAME).then(cache => {
-          cache.put(request, clone);
+          cache.put(req, clone);
         });
 
         return networkResponse;
 
       }).catch(() => {
 
-        if (request.mode === "navigate") {
+        if (req.mode === "navigate") {
           return caches.match("/index.html");
         }
 
