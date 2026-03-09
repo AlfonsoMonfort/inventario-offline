@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v1";
+const CACHE_NAME = "inventario-cache-v2";
 
 const urlsToCache = [
   "./",
@@ -7,11 +7,16 @@ const urlsToCache = [
   "./manifest.json",
   "./quagga.min.js",
   "./xlsx.full.min.js",
+  "./jspdf.umd.min.js",
+  "./JsBarcode.all.min.js",
   "./icon-192.png",
   "./icon-512.png",
   "./equivalencias.json",
   "./referencias_sin_codigo_barras.json",
-  "./usuarios.json"
+  "./usuarios.json",
+  "./wood_plank_flicks.ogg",
+  "./beep_short.ogg",
+  "./Logo_BAL_copy.png"
 ];
 
 // INSTALL
