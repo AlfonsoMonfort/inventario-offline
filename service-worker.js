@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v2";
+const CACHE_NAME = "inventario-cache-v3";
 
 const urlsToCache = [
   "/",
@@ -19,6 +19,7 @@ const urlsToCache = [
   "/Logo_BAL_copy.png"
 ];
 
+
 // INSTALL
 self.addEventListener("install", event => {
 
@@ -26,17 +27,12 @@ self.addEventListener("install", event => {
 
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return Promise.all(
-        urlsToCache.map(url =>
-          cache.add(url).catch(err =>
-            console.log("No se pudo cachear:", url)
-          )
-        )
-      );
+      return cache.addAll(urlsToCache);
     })
   );
 
 });
+
 
 // ACTIVATE
 self.addEventListener("activate", event => {
@@ -61,21 +57,30 @@ self.addEventListener("activate", event => {
 // FETCH
 self.addEventListener("fetch", event => {
 
-  // ignorar peticiones de rango (audio/video)
-  if (event.request.headers.has("range")) {
-    return;
-  }
-
   event.respondWith(
 
     caches.match(event.request).then(response => {
 
+      // 1️⃣ si está en caché → usarlo
       if (response) {
         return response;
       }
 
-      return fetch(event.request).catch(() => {
+      // 2️⃣ si no → intentar red
+      return fetch(event.request).then(networkResponse => {
 
+        // guardar copia en caché
+        const responseClone = networkResponse.clone();
+
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
+        });
+
+        return networkResponse;
+
+      }).catch(() => {
+
+        // 3️⃣ fallback navegación
         if (event.request.mode === "navigate") {
           return caches.match("/index.html");
         }
