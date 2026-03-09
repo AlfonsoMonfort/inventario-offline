@@ -121,14 +121,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function cargarUsuarios() {
   try {
+
     const res = await fetch("usuarios.json");
-    if (!res.ok) throw new Error("No se pudo cargar usuarios");
+
+    if (!res.ok) throw new Error("offline");
 
     usuariosPermitidos = await res.json();
-    console.log("Usuarios cargados:", usuariosPermitidos.length);
+
+    localStorage.setItem("usuarios_cache", JSON.stringify(usuariosPermitidos));
+
+    console.log("Usuarios cargados desde internet");
+
   } catch (e) {
-    alert("Error cargando usuarios");
-    console.error(e);
+
+    const cache = localStorage.getItem("usuarios_cache");
+
+    if (cache) {
+      usuariosPermitidos = JSON.parse(cache);
+      console.log("Usuarios cargados desde cache");
+    } else {
+      console.error("No hay usuarios disponibles");
+    }
+
   }
 }
 
