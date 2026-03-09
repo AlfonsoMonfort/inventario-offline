@@ -81,6 +81,11 @@ let editandoCantidad = false;
 // ----------------------------
 document.addEventListener("DOMContentLoaded", async () => {
 
+  document.body.addEventListener("click", () => {
+    okSound.play().then(()=> okSound.pause()).catch(()=>{});
+    errorSound.play().then(()=> errorSound.pause()).catch(()=>{});
+  }, { once: true });
+  
   await cargarUsuarios();
   verificarSesion();
 
