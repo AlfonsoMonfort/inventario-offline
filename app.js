@@ -81,6 +81,10 @@ let inventario = {
   orden: []             // 👈 orden de entrada
 };
 
+function guardarInventarioTemporal() {
+  localStorage.setItem("inventario_en_progreso", JSON.stringify(inventario));
+}
+
 let permitirEscaneo = false;
 
 // 🔧 NUEVO — aprendizaje
@@ -106,6 +110,33 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await cargarUsuarios();
   verificarSesion();
+
+  const inventarioGuardado = localStorage.getItem("inventario_en_progreso");
+
+  if (inventarioGuardado) {
+
+    const recuperar = confirm(
+      "Hay un inventario sin guardar. ¿Quieres recuperarlo?"
+    );
+
+    if (recuperar) {
+
+      inventario = JSON.parse(inventarioGuardado);
+
+      document.getElementById("pantallaInicio").style.display = "none";
+      document.getElementById("pantallaEscaner").style.display = "block";
+
+      actualizarLista();
+
+      mostrarMensaje("📦 Inventario recuperado", "ok");
+
+    } else {
+
+      localStorage.removeItem("inventario_en_progreso");
+
+    }
+
+  }
 
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
@@ -654,6 +685,7 @@ function añadirManual() {
 
   mostrarMensaje("✅ Artículo añadido manualmente", "ok");
   actualizarLista();
+  guardarInventarioTemporal();
 }
 
 
@@ -752,6 +784,7 @@ function procesarCodigo(codigo) {
 
   mostrarMensaje("✅ Artículo añadido", "ok");
   actualizarLista();
+  guardarInventarioTemporal();
 }
 
 function esSamsung() {
@@ -921,6 +954,7 @@ function finalizar() {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 
   mostrarMensaje("✅ Inventario descargado correctamente", "ok");
+  localStorage.removeItem("inventario_en_progreso");
 }
 
 function importarInventarioExcel(e) {
