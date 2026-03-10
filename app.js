@@ -172,9 +172,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
-    permitirEscaneo = true;
-  });
 
+    permitirEscaneo = true;
+
+    try {
+      const track = Quagga.CameraAccess.getActiveTrack();
+
+      if (track && track.applyConstraints) {
+        track.applyConstraints({
+          advanced: [
+            { focusMode: "continuous" }
+          ]
+        });
+      }
+
+    } catch(e) {
+      console.log("Tap focus no disponible");
+    }
+
+  });
 });
 
 async function cargarUsuarios() {
