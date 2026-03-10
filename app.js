@@ -156,7 +156,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
+
   registrarServiceWorker();
+
+  // ⭐ CARGAR CÁMARAS DISPONIBLES
+  if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+    cargarCamaras();
+  }
 
   const cantidadInput = document.getElementById("cantidad");
 
@@ -191,6 +197,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
   });
+
 });
 
 async function cargarUsuarios() {
@@ -351,26 +358,60 @@ function empezar() {
   iniciarScanner();
 }
 
+async function cargarCamaras() {
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+
+  const videoDevices = devices.filter(d => d.kind === "videoinput");
+
+  const select = document.getElementById("selectorCamara");
+
+  select.innerHTML = "";
+
+  videoDevices.forEach((device, i) => {
+
+    const option = document.createElement("option");
+
+    option.value = device.deviceId;
+
+    option.text = device.label || "Cámara " + (i + 1);
+
+    select.appendChild(option);
+
+  });
+
+  select.onchange = () => {
+
+    Quagga.stop();
+
+    iniciarScanner(select.value);
+
+  };
+
+}
+
 // ----------------------------
 // INICIAR ESCÁNER
 // ----------------------------
-function iniciarScanner() {
+function iniciarScanner(deviceId = null) {
 
   Quagga.init({
     inputStream: {
       name: "Live",
       type: "LiveStream",
       target: document.querySelector('#scanner'),
-      constraints: {
-        facingMode: { ideal: "environment" },
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        focusMode: "continuous",
-        advanced: [
-          { focusMode: "continuous" },
-          { zoom: 2.0 }
-        ]
-      },
+      constraints: deviceId
+        ? {
+            deviceId: { exact: deviceId },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        : {
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+
       area: {
         top: "27.5%",
         right: "7.5%",
@@ -378,35 +419,28 @@ function iniciarScanner() {
         bottom: "27.5%"
       }
     },
+
     decoder: {
       readers: ["ean_reader", "ean_8_reader", "upc_reader"]
     },
-    locate: false
+
+    locate: true
+
   }, function (err) {
+
     if (err) {
       console.error(err);
       return;
     }
-    Quagga.start();
-        setTimeout(() => {
-      try {
-        const track = Quagga.CameraAccess.getActiveTrack();
 
-        if (track && track.applyConstraints) {
-          track.applyConstraints({
-            advanced: [
-              { focusMode: "continuous" },
-              { zoom: 2.0 }
-            ]
-          });
-        }
-      } catch(e) {
-        console.log("No se pudo aplicar autofocus avanzado");
-      }
-    }, 500);
+    Quagga.start();
+
   });
+
   Quagga.offDetected();
+
   Quagga.onDetected(function (result) {
+
     if (!permitirEscaneo) return;
     if (!result?.codeResult?.code) return;
 
@@ -416,17 +450,23 @@ function iniciarScanner() {
     permitirEscaneo = false;
 
     if (modoAprendizaje) {
+
       codigoPendienteAprender = code;
+
       document.getElementById("codigoAprendidoMostrado").textContent =
         "Código leído: " + code;
+
       document.getElementById("codigoAprendidoMostrado").style.display = "block";
+
       mostrarMensaje("✅ Código leído", "ok");
       mostrarFormularioAprendizaje();
       return;
     }
 
     procesarCodigo(code);
+
   });
+
 }
 
 function activarModoPDA() {
