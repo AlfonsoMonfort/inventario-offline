@@ -346,9 +346,14 @@ function iniciarScanner() {
       type: "LiveStream",
       target: document.querySelector('#scanner'),
       constraints: {
-        facingMode: "environment",
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        focusMode: "continuous",
+        advanced: [
+          { focusMode: "continuous" },
+          { zoom: 2.0 }
+        ]
       },
       area: {
         top: "27.5%",
@@ -367,6 +372,22 @@ function iniciarScanner() {
       return;
     }
     Quagga.start();
+        setTimeout(() => {
+      try {
+        const track = Quagga.CameraAccess.getActiveTrack();
+
+        if (track && track.applyConstraints) {
+          track.applyConstraints({
+            advanced: [
+              { focusMode: "continuous" },
+              { zoom: 2.0 }
+            ]
+          });
+        }
+      } catch(e) {
+        console.log("No se pudo aplicar autofocus avanzado");
+      }
+    }, 500);
   });
   Quagga.offDetected();
   Quagga.onDetected(function (result) {
