@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v2";
+const CACHE_NAME = "inventario-cache-v3";
 
 const urlsToCache = [
   "/",
@@ -10,6 +10,7 @@ const urlsToCache = [
   "/jspdf.umd.min.js",
   "/JsBarcode.all.min.js",
   "/equivalencias.json",
+  "/equivalencias_tierra.json",
   "/referencias_sin_codigo_barras.json",
   "/usuarios.json",
   "/icon-192.png",
