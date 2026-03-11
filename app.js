@@ -81,8 +81,23 @@ let inventario = {
   orden: []             // 👈 orden de entrada
 };
 
-function guardarInventarioTemporal() {
-  localStorage.setItem("inventario_en_progreso", JSON.stringify(inventario));
+async function guardarInventarioTemporal() {
+
+  try {
+
+    await guardarDatos("inventario_en_progreso", inventario);
+
+    localStorage.setItem(
+      "inventario_backup",
+      JSON.stringify(inventario)
+    ); // backup rápido
+
+  } catch (e) {
+
+    console.error("Error guardando inventario", e);
+
+  }
+
 }
 
 let permitirEscaneo = false;
@@ -99,19 +114,61 @@ let editandoCantidad = false;
 // ----------------------------
 // INICIO
 // ----------------------------
+
 document.addEventListener("DOMContentLoaded", async () => {
 
   await cargarSonidos();   // 🔊 cargar sonidos primero
 
+  /* ========= AUTOSAVE CADA 5s ========= */
+
+  setInterval(() => {
+
+    if (inventario && Object.keys(inventario.articulos).length > 0) {
+      guardarInventarioTemporal();
+    }
+
+  }, 5000);
+
+
+  /* ========= GUARDADO DE EMERGENCIA ========= */
+
+  document.addEventListener("visibilitychange", () => {
+
+    if (document.visibilityState === "hidden") {
+      guardarInventarioTemporal();
+    }
+
+  });
+
+  window.addEventListener("pagehide", () => {
+    guardarInventarioTemporal();
+  });
+
+
+  /* ========= ACTIVAR SONIDOS EN PRIMER CLICK ========= */
+
   document.body.addEventListener("click", () => {
+
     okSound.play().then(()=> okSound.pause()).catch(()=>{});
     errorSound.play().then(()=> errorSound.pause()).catch(()=>{});
+
   }, { once: true });
+
+
+  /* ========= LOGIN ========= */
 
   await cargarUsuarios();
   verificarSesion();
 
-  const inventarioGuardado = localStorage.getItem("inventario_en_progreso");
+
+  /* ========= RECUPERAR INVENTARIO ========= */
+
+  const backup = localStorage.getItem("inventario_backup");
+
+  const inventarioGuardado =
+    await leerDatos("inventario_en_progreso")
+    || (backup ? JSON.parse(backup) : null);
+
 
   if (inventarioGuardado) {
 
@@ -121,7 +178,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (recuperar) {
 
-      inventario = JSON.parse(inventarioGuardado);
+      inventario =
+        typeof inventarioGuardado === "string"
+          ? JSON.parse(inventarioGuardado)
+          : inventarioGuardado;
 
       document.getElementById("pantallaInicio").style.display = "none";
       document.getElementById("pantallaEscaner").style.display = "block";
@@ -138,14 +198,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } else {
 
-      localStorage.removeItem("inventario_en_progreso");
+      /* eliminar inventario antiguo */
+
+      localStorage.removeItem("inventario_backup");
+
+      const db = await abrirDB();
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.objectStore(STORE_NAME).delete("inventario_en_progreso");
 
     }
 
   }
 
+
+  /* ========= FECHA POR DEFECTO ========= */
+
   document.getElementById("fecha").value =
     new Date().toISOString().split("T")[0];
+
+
+  /* ========= ALMACEN (3 letras mayúsculas) ========= */
 
   const almacenInput = document.getElementById("almacen");
 
@@ -153,16 +225,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     this.value = this.value.toUpperCase().slice(0, 3);
   });
 
+
+  /* ========= CARGA DE DATOS ========= */
+
   await cargarEquivalencias();
   cargarEquivalenciasAprendidas();
   await cargarReferenciasSinCodigo();
 
+
+  /* ========= SERVICE WORKER ========= */
+
   registrarServiceWorker();
 
-  // ⭐ CARGAR CÁMARAS DISPONIBLES
+
+  /* ========= DETECTAR CÁMARAS ========= */
+
   if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
     cargarCamaras();
   }
+
+
+  /* ========= INPUT CANTIDAD ========= */
 
   const cantidadInput = document.getElementById("cantidad");
 
@@ -175,6 +258,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     editandoCantidad = false;
   });
 
+
+  /* ========= TAP PARA ENFOQUE ========= */
+
   const scanner = document.getElementById("scanner");
 
   scanner.addEventListener("click", () => {
@@ -182,23 +268,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     permitirEscaneo = true;
 
     try {
+
       const track = Quagga.CameraAccess.getActiveTrack();
 
       if (track && track.applyConstraints) {
+
         track.applyConstraints({
           advanced: [
             { focusMode: "continuous" }
           ]
         });
+
       }
 
     } catch(e) {
+
       console.log("Tap focus no disponible");
+
     }
 
   });
 
 });
+
 
 async function cargarUsuarios() {
   try {
@@ -346,6 +438,7 @@ function empezar() {
   inventario.almacen = almacenInput.value;
   inventario.vendedor = vendedorInput.value;
   inventario.articulos = {};
+  inventario.orden = [];
 
   document.getElementById("pantallaInicio").style.display = "none";
   document.getElementById("pantallaEscaner").style.display = "block";
@@ -833,7 +926,7 @@ function variantesCodigo(codigo) {
 // ----------------------------
 // PROCESAR CÓDIGO
 // ----------------------------
-function procesarCodigo(codigo) {
+async function procesarCodigo(codigo) {
 
   // 🔒 seguridad extra (por si alguien llama sin normalizar)
   codigo = String(codigo).replace(/^0+/, "");
@@ -865,9 +958,10 @@ function procesarCodigo(codigo) {
 
   document.getElementById("cantidad").value = 1;
 
-  mostrarMensaje("✅ Artículo añadido", "ok");
+  await guardarInventarioTemporal();
   actualizarLista();
-  guardarInventarioTemporal();
+  mostrarMensaje("✅ Artículo añadido", "ok");
+      
 }
 
 function esSamsung() {
@@ -930,7 +1024,7 @@ function formatearFecha(fechaISO) {
 // ----------------------------
 // FINALIZAR Y GENERAR EXCEL
 // ----------------------------
-function finalizar() {
+async function finalizar() {
 
   /* ========= 1. PREPARAR DATOS ========= */
 
@@ -955,6 +1049,7 @@ function finalizar() {
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(datos);
+
   XLSX.utils.book_append_sheet(wb, ws, "Inventario");
 
   const wbout = XLSX.write(wb, {
@@ -967,7 +1062,7 @@ function finalizar() {
   });
 
   const nombreArchivo =
-  `${inventario.almacen}_${obtenerFechaHoraArchivo()}.xlsx`;
+    `${inventario.almacen}_${obtenerFechaHoraArchivo()}.xlsx`;
 
   /* ========= 3. DETECCIÓN ENTORNO ========= */
 
@@ -975,7 +1070,25 @@ function finalizar() {
   const esIOS = /iphone|ipad|ipod/.test(ua);
   const esPWA = window.matchMedia("(display-mode: standalone)").matches;
 
-  /* ========= 4. iOS PWA → SHARE API ========= */
+  /* ========= 4. FUNCIÓN LIMPIAR INVENTARIO ========= */
+
+  async function limpiarInventarioGuardado() {
+
+    try {
+
+      localStorage.removeItem("inventario_backup");
+
+      const db = await abrirDB();
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.objectStore(STORE_NAME).delete("inventario_en_progreso");
+
+    } catch (e) {
+      console.error("Error limpiando inventario guardado", e);
+    }
+
+  }
+
+  /* ========= 5. iOS PWA → SHARE API ========= */
 
   if (esIOS && esPWA) {
 
@@ -990,20 +1103,24 @@ function finalizar() {
         "ok"
       );
 
-      navigator.share({
+      await navigator.share({
         files: [file],
         title: "Inventario",
         text: "Guardar inventario"
       });
 
+      await limpiarInventarioGuardado();
+
     } else {
+
       alert("Este iPhone no permite compartir archivos desde la app.");
+
     }
 
     return;
   }
 
-  /* ========= 5. iOS SAFARI → ABRIR ARCHIVO ========= */
+  /* ========= 6. iOS SAFARI → ABRIR ARCHIVO ========= */
 
   if (esIOS && !esPWA) {
 
@@ -1019,12 +1136,16 @@ function finalizar() {
     }, 300);
 
     setTimeout(() => URL.revokeObjectURL(url), 30000);
+
+    await limpiarInventarioGuardado();
+
     return;
   }
 
-  /* ========= 6. ANDROID / PC → DESCARGA NORMAL ========= */
+  /* ========= 7. ANDROID / PC → DESCARGA NORMAL ========= */
 
   const url = URL.createObjectURL(blob);
+
   const a = document.createElement("a");
 
   a.href = url;
@@ -1037,7 +1158,9 @@ function finalizar() {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 
   mostrarMensaje("✅ Inventario descargado correctamente", "ok");
-  localStorage.removeItem("inventario_en_progreso");
+
+  await limpiarInventarioGuardado();
+
 }
 
 function importarInventarioExcel(e) {
