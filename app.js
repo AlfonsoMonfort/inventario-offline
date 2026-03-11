@@ -1019,12 +1019,12 @@ function mostrarMensaje(texto, tipo) {
     m.style.display = "block";
 
     if (tipo === "ok") {
-        okSound.cloneNode().play().catch(()=>{});
+        okSound.currentTime = 0;
         okSound.play().catch(()=>{});
     }
 
     if (tipo === "error") {
-        errorSound.cloneNode().play().catch(()=>{});
+        errorSound.currentTime = 0;
         errorSound.play().catch(()=>{});
     }
 
