@@ -453,7 +453,8 @@ function empezar() {
 
 async function cargarCamaras() {
 
-  await navigator.mediaDevices.getUserMedia({ video: true });
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  stream.getTracks().forEach(track => track.stop());
 
   const devices = await navigator.mediaDevices.enumerateDevices();
   const videoDevices = devices.filter(d => d.kind === "videoinput");
@@ -468,8 +469,8 @@ async function cargarCamaras() {
     select.appendChild(option);
   });
 
-  // 🔥 CAMBIAR CÁMARA
-  select.addEventListener("change", () => {
+  // cambiar cámara
+  select.onchange = () => {
 
     const deviceId = select.value;
 
@@ -477,8 +478,12 @@ async function cargarCamaras() {
       Quagga.stop();
     } catch(e){}
 
-    iniciarScanner(deviceId);
-  });
+    // esperar un poco a que libere la cámara
+    setTimeout(() => {
+      iniciarScanner(deviceId);
+    }, 300);
+
+  };
 
 }
 // ----------------------------
