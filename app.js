@@ -365,7 +365,9 @@ async function cargarEquivalencias() {
 
   try {
 
-    const response = await fetch(archivoEquivalencias);
+    const response = await fetch(archivoEquivalencias + "?v=" + Date.now(), {
+      cache: "no-store"
+    });
     const data = await response.json();
 
     equivalencias = data;
