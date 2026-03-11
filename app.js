@@ -186,6 +186,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("pantallaInicio").style.display = "none";
       document.getElementById("pantallaEscaner").style.display = "block";
 
+      await cargarCamaras();
+      
       actualizarLista();
 
       mostrarMensaje("📦 Inventario recuperado", "ok");
