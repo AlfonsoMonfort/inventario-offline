@@ -372,7 +372,7 @@ async function cargarEquivalencias() {
 
     equivalencias = data;
 
-    await guardarDatos("equivalencias", data);
+    await guardarDatos("equivalencias_" + archivoEquivalencias, data);
 
     console.log("Equivalencias cargadas desde internet:", archivoEquivalencias);
 
@@ -380,7 +380,7 @@ async function cargarEquivalencias() {
 
     console.log("Sin internet, cargando desde IndexedDB");
 
-    const data = await leerDatos("equivalencias");
+    const data = await leerDatos("equivalencias_" + archivoEquivalencias);
 
     if (data) {
       equivalencias = data;
