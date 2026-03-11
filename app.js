@@ -158,7 +158,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* ========= LOGIN ========= */
 
   await cargarUsuarios();
-  verificarSesion();
+  await verificarSesion();
 
 
   /* ========= RECUPERAR INVENTARIO ========= */
@@ -1302,7 +1302,7 @@ async function login() {
 }
 }
 
-function verificarSesion() {
+async function verificarSesion() {
   const u = localStorage.getItem("auth_usuario");
   const t = parseInt(localStorage.getItem("auth_ultimo_ok"), 10);
 
@@ -1322,11 +1322,15 @@ function verificarSesion() {
   }
 
   usuarioLogueado = u;
+
+  console.log("Usuario detectado:", usuarioLogueado); // 👈 para debug
+
   document.getElementById("pantallaLogin").style.display = "none";
   document.getElementById("pantallaInicio").style.display = "block";
+
   if (usuarioLogueado === "PDA") {
-  modoPDA = true;
-}
+    modoPDA = true;
+  }
 }
 
 function mostrarLogin() {
