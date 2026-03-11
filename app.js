@@ -6,15 +6,22 @@ let errorSound;
 
 async function cargarSonidos() {
 
-  okSound = new Audio("wood_plank_flicks.mp3");
-  errorSound = new Audio("beep_short.mp3");
+  const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  if (esIOS) {
+    okSound = new Audio("wood_plank_flicks.mp3");
+    errorSound = new Audio("beep_short.mp3");
+  } else {
+    okSound = new Audio("wood_plank_flicks.ogg");
+    errorSound = new Audio("beep_short.ogg");
+  }
 
   okSound.preload = "auto";
   errorSound.preload = "auto";
 
   okSound.playsInline = true;
   errorSound.playsInline = true;
-
 }
 
 document.addEventListener("touchstart", function () {
