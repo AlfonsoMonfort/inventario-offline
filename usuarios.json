@@ -10,5 +10,9 @@
   {
     "usuario": "PDA",
     "password": "PDA"
+  },
+  {
+    "usuario": "CEU",
+    "password": "CEU"
   }
 ]
