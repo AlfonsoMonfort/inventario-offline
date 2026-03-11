@@ -5,42 +5,21 @@ let okSound;
 let errorSound;
 
 async function cargarSonidos() {
+  try {
+    const okBlob = await fetch("/wood_plank_flicks.ogg").then(r => r.blob());
+    const errorBlob = await fetch("/beep_short.ogg").then(r => r.blob());
 
-  const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    okSound = new Audio(URL.createObjectURL(okBlob));
+    errorSound = new Audio(URL.createObjectURL(errorBlob));
 
-  if (esIOS) {
-    okSound = new Audio("wood_plank_flicks.mp3");
-    errorSound = new Audio("beep_short.mp3");
-  } else {
-    okSound = new Audio("wood_plank_flicks.ogg");
-    errorSound = new Audio("beep_short.ogg");
+    okSound.load();
+    errorSound.load();
+
+    console.log("Sonidos cargados");
+  } catch (e) {
+    console.error("No se pudieron cargar los sonidos", e);
   }
-
-  okSound.preload = "auto";
-  errorSound.preload = "auto";
-
-  okSound.playsInline = true;
-  errorSound.playsInline = true;
 }
-
-document.addEventListener("touchstart", function () {
-
-  if (!okSound || !errorSound) return;
-
-  okSound.play().then(() => {
-    okSound.pause();
-    okSound.cloneNode().play().catch(()=>{});
-  }).catch(()=>{});
-
-  errorSound.play().then(() => {
-    errorSound.pause();
-    errorSound.cloneNode().play().catch(()=>{});
-  }).catch(()=>{});
-
-}, { once: true });
-
-
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
@@ -165,6 +144,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     guardarInventarioTemporal();
   });
 
+
+  /* ========= ACTIVAR SONIDOS EN PRIMER CLICK ========= */
+
+  document.body.addEventListener("click", () => {
+
+    okSound.play().then(()=> okSound.pause()).catch(()=>{});
+    errorSound.play().then(()=> errorSound.pause()).catch(()=>{});
+
+  }, { once: true });
 
 
   /* ========= LOGIN ========= */
@@ -368,16 +356,23 @@ let equivalencias = {};
 
 async function cargarEquivalencias() {
 
+  let archivoEquivalencias = "equivalencias.json";
+
+  // 👇 si el usuario es CEU usamos el otro archivo
+  if (usuarioLogueado === "CEU") {
+    archivoEquivalencias = "equivalencias_tierra.json";
+  }
+
   try {
 
-    const response = await fetch("equivalencias.json");
+    const response = await fetch(archivoEquivalencias);
     const data = await response.json();
 
     equivalencias = data;
 
     await guardarDatos("equivalencias", data);
 
-    console.log("Equivalencias cargadas desde internet");
+    console.log("Equivalencias cargadas desde internet:", archivoEquivalencias);
 
   } catch (error) {
 
