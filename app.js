@@ -23,12 +23,12 @@ document.addEventListener("touchstart", function () {
 
   okSound.play().then(() => {
     okSound.pause();
-    okSound.currentTime = 0;
+    okSound.cloneNode().play().catch(()=>{});
   }).catch(()=>{});
 
   errorSound.play().then(() => {
     errorSound.pause();
-    errorSound.currentTime = 0;
+    errorSound.cloneNode().play().catch(()=>{});
   }).catch(()=>{});
 
 }, { once: true });
@@ -1012,12 +1012,12 @@ function mostrarMensaje(texto, tipo) {
     m.style.display = "block";
 
     if (tipo === "ok") {
-        okSound.currentTime = 0;
+        okSound.cloneNode().play().catch(()=>{});
         okSound.play().catch(()=>{});
     }
 
     if (tipo === "error") {
-        errorSound.currentTime = 0;
+        errorSound.cloneNode().play().catch(()=>{});
         errorSound.play().catch(()=>{});
     }
 
