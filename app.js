@@ -12,29 +12,28 @@ async function cargarSonidos() {
   okSound.preload = "auto";
   errorSound.preload = "auto";
 
+  okSound.playsInline = true;
+  errorSound.playsInline = true;
+
 }
 
-function desbloquearAudio() {
+document.addEventListener("touchstart", function () {
 
   if (!okSound || !errorSound) return;
 
-  const p1 = okSound.play();
-  const p2 = errorSound.play();
-
-  if (p1) p1.then(() => {
+  okSound.play().then(() => {
     okSound.pause();
     okSound.currentTime = 0;
   }).catch(()=>{});
 
-  if (p2) p2.then(() => {
+  errorSound.play().then(() => {
     errorSound.pause();
     errorSound.currentTime = 0;
   }).catch(()=>{});
 
-}
+}, { once: true });
 
-document.addEventListener("touchstart", desbloquearAudio, { once: true });
-document.addEventListener("click", desbloquearAudio, { once: true });
+
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
