@@ -5,21 +5,36 @@ let okSound;
 let errorSound;
 
 async function cargarSonidos() {
-  try {
-    const okBlob = await fetch("/wood_plank_flicks.ogg").then(r => r.blob());
-    const errorBlob = await fetch("/beep_short.ogg").then(r => r.blob());
 
-    okSound = new Audio(URL.createObjectURL(okBlob));
-    errorSound = new Audio(URL.createObjectURL(errorBlob));
+  okSound = new Audio("wood_plank_flicks.ogg");
+  errorSound = new Audio("beep_short.ogg");
 
-    okSound.load();
-    errorSound.load();
+  okSound.preload = "auto";
+  errorSound.preload = "auto";
 
-    console.log("Sonidos cargados");
-  } catch (e) {
-    console.error("No se pudieron cargar los sonidos", e);
-  }
 }
+
+function desbloquearAudio() {
+
+  if (!okSound || !errorSound) return;
+
+  const p1 = okSound.play();
+  const p2 = errorSound.play();
+
+  if (p1) p1.then(() => {
+    okSound.pause();
+    okSound.currentTime = 0;
+  }).catch(()=>{});
+
+  if (p2) p2.then(() => {
+    errorSound.pause();
+    errorSound.currentTime = 0;
+  }).catch(()=>{});
+
+}
+
+document.addEventListener("touchstart", desbloquearAudio, { once: true });
+document.addEventListener("click", desbloquearAudio, { once: true });
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
@@ -144,15 +159,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     guardarInventarioTemporal();
   });
 
-
-  /* ========= ACTIVAR SONIDOS EN PRIMER CLICK ========= */
-
-  document.body.addEventListener("click", () => {
-
-    okSound.play().then(()=> okSound.pause()).catch(()=>{});
-    errorSound.play().then(()=> errorSound.pause()).catch(()=>{});
-
-  }, { once: true });
 
 
   /* ========= LOGIN ========= */
