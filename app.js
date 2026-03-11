@@ -6,8 +6,8 @@ let errorSound;
 
 async function cargarSonidos() {
 
-  okSound = new Audio("wood_plank_flicks.ogg");
-  errorSound = new Audio("beep_short.ogg");
+  okSound = new Audio("wood_plank_flicks.mp3");
+  errorSound = new Audio("beep_short.mp3");
 
   okSound.preload = "auto";
   errorSound.preload = "auto";
