@@ -453,6 +453,9 @@ function empezar() {
 
 async function cargarCamaras() {
 
+  // 🔴 pedir permiso primero
+  await navigator.mediaDevices.getUserMedia({ video: true });
+
   const devices = await navigator.mediaDevices.enumerateDevices();
 
   const videoDevices = devices.filter(d => d.kind === "videoinput");
@@ -472,14 +475,6 @@ async function cargarCamaras() {
     select.appendChild(option);
 
   });
-
-  select.onchange = () => {
-
-    Quagga.stop();
-
-    iniciarScanner(select.value);
-
-  };
 
 }
 
