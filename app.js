@@ -135,13 +135,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("visibilitychange", () => {
 
     if (document.visibilityState === "hidden") {
+
       guardarInventarioTemporal();
+
+      try {
+        Quagga.stop(); // 🔥 liberar cámara (clave para iOS)
+      } catch(e){}
+
     }
 
   });
 
   window.addEventListener("pagehide", () => {
+
     guardarInventarioTemporal();
+
+    try {
+      Quagga.stop(); // 🔥 liberar cámara
+    } catch(e){}
+
   });
 
 
@@ -195,8 +207,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (modoPDA) {
         activarModoPDA();
       } else {
+        setTimeout(() => {
         iniciarScanner();
-      }
+      }, 500);
+            }
 
     } else {
 
@@ -528,7 +542,15 @@ function iniciarScanner(deviceId = null) {
     },
 
     decoder: {
-      readers: ["ean_reader", "ean_8_reader", "upc_reader"]
+     readers: [
+    "ean_reader",
+    "ean_8_reader",
+    "upc_reader",
+    "code_128_reader",
+    "code_39_reader",
+    "i2of5_reader",
+    "codabar_reader"
+  ]
     },
 
     locate: true
