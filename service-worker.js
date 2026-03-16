@@ -1,4 +1,4 @@
-const CACHE_NAME = "inventario-cache-v2";
+const CACHE_NAME = "inventario-cache-v1";
 
 const urlsToCache = [
   "/",
@@ -12,7 +12,6 @@ const urlsToCache = [
   "/equivalencias.json",
   "/equivalencias_tierra.json",
   "/referencias_sin_codigo_barras.json",
-  "/usuarios.json",
   "/icon-192.png",
   "/icon-512.png",
   "/wood_plank_flicks.ogg",
@@ -21,19 +20,15 @@ const urlsToCache = [
 ];
 
 self.addEventListener("install", event => {
-
   self.skipWaiting();
-
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(urlsToCache);
     })
   );
-
 });
 
 self.addEventListener("activate", event => {
-
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(

@@ -66,7 +66,6 @@ let referenciasSinCodigo = [];
 
 let referencia_a_codigo = {};
 
-let usuariosPermitidos = [];
 let usuarioLogueado = null;
 
 let modoPDA = false;
@@ -168,8 +167,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
   /* ========= LOGIN ========= */
-
-  await cargarUsuarios();
   await verificarSesion();
 
 
@@ -307,33 +304,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 });
 
-
-async function cargarUsuarios() {
-  try {
-
-    const res = await fetch("usuarios.json");
-
-    if (!res.ok) throw new Error("offline");
-
-    usuariosPermitidos = await res.json();
-
-    localStorage.setItem("usuarios_cache", JSON.stringify(usuariosPermitidos));
-
-    console.log("Usuarios cargados desde internet");
-
-  } catch (e) {
-
-    const cache = localStorage.getItem("usuarios_cache");
-
-    if (cache) {
-      usuariosPermitidos = JSON.parse(cache);
-      console.log("Usuarios cargados desde cache");
-    } else {
-      console.error("No hay usuarios disponibles");
-    }
-
-  }
-}
 
 async function cargarReferenciasSinCodigo() {
   try {
@@ -1290,17 +1260,26 @@ function registrarServiceWorker() {
 }
 
 async function login() {
+
   const u = document.getElementById("loginUsuario").value.trim();
   const p = document.getElementById("loginPassword").value.trim();
 
   try {
-    await cargarUsuarios();
 
-    const valido = usuariosPermitidos.find(
-      x => x.usuario === u && x.password === p
-    );
+    const res = await fetch("https://inventario-offline-backend.onrender.com/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        usuario: u,
+        password: p
+      })
+    });
 
-    if (!valido) {
+    const data = await res.json();
+
+    if (!data.ok) {
       mostrarMensaje("❌ Usuario no autorizado", "error");
       return;
     }
@@ -1308,6 +1287,7 @@ async function login() {
     const ahora = Date.now();
 
     localStorage.setItem("auth_usuario", u);
+    localStorage.setItem("auth_token", data.token);
     localStorage.setItem("auth_ultimo_ok", ahora.toString());
 
     usuarioLogueado = u;
@@ -1315,15 +1295,18 @@ async function login() {
     document.getElementById("pantallaLogin").style.display = "none";
     document.getElementById("pantallaInicio").style.display = "block";
 
+    if (u === "PDA") {
+      modoPDA = true;
+    }
+
     mostrarMensaje("✅ Acceso correcto", "ok");
 
   } catch (e) {
-    mostrarMensaje("❌ Sin conexión", "error");
+
+    mostrarMensaje("❌ Error conexión", "error");
+
   }
 
-  if (u === "PDA") {
-  modoPDA = true;
-}
 }
 
 async function verificarSesion() {
