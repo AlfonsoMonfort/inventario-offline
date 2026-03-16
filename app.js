@@ -443,7 +443,7 @@ function cargarEquivalenciasAprendidas() {
 // ----------------------------
 // EMPEZAR INVENTARIO
 // ----------------------------
-function empezar() {
+async function empezar() {
 
   const fechaInput = document.getElementById("fecha");
   const almacenInput = document.getElementById("almacen");
@@ -467,29 +467,23 @@ function empezar() {
     activarModoPDA();
     return;
   }
-  cargarCamaras();   
-  iniciarScanner();
+  await cargarCamaras();
+  iniciarScanner(document.getElementById("selectorCamara").value);
 }
 
 async function cargarCamaras() {
 
   try {
-
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     stream.getTracks().forEach(track => track.stop());
-
   } catch(e) {
-
     console.error("Permiso cámara denegado", e);
     alert("Debes permitir acceso a la cámara");
     return;
-
   }
 
   const devices = await navigator.mediaDevices.enumerateDevices();
   const videoDevices = devices.filter(d => d.kind === "videoinput");
-
-  console.log("Camaras detectadas:", videoDevices);
 
   const select = document.getElementById("selectorCamara");
   select.innerHTML = "";
@@ -500,19 +494,29 @@ async function cargarCamaras() {
     option.text = device.label || "Cámara " + (i + 1);
     select.appendChild(option);
   });
+
+  // 🔥 buscar cámara trasera
+  const trasera = videoDevices.find(d =>
+    d.label.toLowerCase().includes("back") ||
+    d.label.toLowerCase().includes("rear") ||
+    d.label.toLowerCase().includes("environment")
+  );
+
+  if (trasera) {
+    select.value = trasera.deviceId;
+  } else {
+    select.selectedIndex = videoDevices.length - 1;
+  }
+
   select.onchange = () => {
+    const deviceId = select.value;
 
-  const deviceId = select.value;
+    try { Quagga.stop(); } catch(e){}
 
-  try {
-    Quagga.stop();
-  } catch(e){}
-
-  setTimeout(() => {
-    iniciarScanner(deviceId);
-  }, 300);
-
-};
+    setTimeout(() => {
+      iniciarScanner(deviceId);
+    }, 300);
+  };
 
 }
 // ----------------------------
