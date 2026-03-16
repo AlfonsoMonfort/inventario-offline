@@ -135,13 +135,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("visibilitychange", () => {
 
     if (document.visibilityState === "hidden") {
+
       guardarInventarioTemporal();
+
+      try {
+        Quagga.stop(); // 🔥 liberar cámara (clave para iOS)
+      } catch(e){}
+
     }
 
   });
 
   window.addEventListener("pagehide", () => {
+
     guardarInventarioTemporal();
+
+    try {
+      Quagga.stop(); // 🔥 liberar cámara
+    } catch(e){}
+
   });
 
 
@@ -195,8 +207,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (modoPDA) {
         activarModoPDA();
       } else {
+        setTimeout(() => {
         iniciarScanner();
-      }
+      }, 500);
+            }
 
     } else {
 
@@ -240,11 +254,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   registrarServiceWorker();
 
 
-  /* ========= DETECTAR CÁMARAS ========= */
-
-  if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-    cargarCamaras();
-  }
 
 
   /* ========= INPUT CANTIDAD ========= */
@@ -455,20 +464,32 @@ function empezar() {
   document.getElementById("pantallaEscaner").style.display = "block";
 
   if (modoPDA) {
-  activarModoPDA();
-  return;
-}
-
+    activarModoPDA();
+    return;
+  }
+  cargarCamaras();   
   iniciarScanner();
 }
 
 async function cargarCamaras() {
 
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-  stream.getTracks().forEach(track => track.stop());
+  try {
+
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream.getTracks().forEach(track => track.stop());
+
+  } catch(e) {
+
+    console.error("Permiso cámara denegado", e);
+    alert("Debes permitir acceso a la cámara");
+    return;
+
+  }
 
   const devices = await navigator.mediaDevices.enumerateDevices();
   const videoDevices = devices.filter(d => d.kind === "videoinput");
+
+  console.log("Camaras detectadas:", videoDevices);
 
   const select = document.getElementById("selectorCamara");
   select.innerHTML = "";
@@ -479,22 +500,19 @@ async function cargarCamaras() {
     option.text = device.label || "Cámara " + (i + 1);
     select.appendChild(option);
   });
-
-  // cambiar cámara
   select.onchange = () => {
 
-    const deviceId = select.value;
+  const deviceId = select.value;
 
-    try {
-      Quagga.stop();
-    } catch(e){}
+  try {
+    Quagga.stop();
+  } catch(e){}
 
-    // esperar un poco a que libere la cámara
-    setTimeout(() => {
-      iniciarScanner(deviceId);
-    }, 300);
+  setTimeout(() => {
+    iniciarScanner(deviceId);
+  }, 300);
 
-  };
+};
 
 }
 // ----------------------------
@@ -528,7 +546,15 @@ function iniciarScanner(deviceId = null) {
     },
 
     decoder: {
-      readers: ["ean_reader", "ean_8_reader", "upc_reader"]
+     readers: [
+    "ean_reader",
+    "ean_8_reader",
+    "upc_reader",
+    "code_128_reader",
+    "code_39_reader",
+    "i2of5_reader",
+    "codabar_reader"
+  ]
     },
 
     locate: true
